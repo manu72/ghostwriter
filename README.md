@@ -1,17 +1,17 @@
 # Ghostwriter
 
-Ghostwriter is a tool that empowers non-technical users to create their own personal writing AI.
-It helps you fine-tune a language model so it learns your style, tone, and preferences.
-Over time, your Ghostwriter becomes a unique "author" that improves through feedback and edits you provide.
+Ghostwriter is a tool that empowers non technical users to create their own personal writing AI.
+It helps you finetune a language model so it learns your style, tone, and preferences.
+Over time, your Ghostwriter becomes a unique voice or author that improves through feedback and edits you provide.
 
 ---
 
 ## Vision
 
-The goal of Ghostwriter is to democratize fine-tuning. Anyone, not just developers, should be able to:
+The goal of Ghostwriter is to democratise finetuning. Anyone, not just developers, should be able to:
 
 - Collect and structure a small dataset of writing samples.
-- Fine-tune an existing large language model (LLM) into a personal "author."
+- Fine-tune an existing large language model (LLM) into a personal voice or author.
 - Generate content that reflects their voice: blog posts, articles, essays, or even books.
 - Provide feedback on drafts and see the author evolve continuously.
 
@@ -19,8 +19,8 @@ The goal of Ghostwriter is to democratize fine-tuning. Anyone, not just develope
 
 ## Features (Stage 1)
 
-- **Dataset Builder**: Guided prompts help you build a small training dataset (100–500 examples).
-- **Fine-Tune Runner**: Simple CLI to start a fine-tune job with a commercial LLM (OpenAI first).
+- **Dataset Builder**: Guided prompts help you prepare a small training dataset in the correct format for the LLM.
+- **Fine-Tune Runner**: Simple CLI to start a finetuning job with a commercial LLM.
 - **Author Runtime**: Generate drafts from your tuned author with a single command.
 - **Feedback Loop**: Rate or edit drafts, turning feedback into new training examples.
 
@@ -28,7 +28,7 @@ The goal of Ghostwriter is to democratize fine-tuning. Anyone, not just develope
 
 ## Roadmap
 
-### Stage 1: Terminal-based Proof of Concept
+### Stage 1: Terminal based POC
 
 - CLI tool for dataset building, validation, and fine-tuning.
 - Adaptor for a single commercial provider (OpenAI or Gemini).
@@ -41,19 +41,19 @@ The goal of Ghostwriter is to democratize fine-tuning. Anyone, not just develope
 - Inline editor for reviewing drafts and logging feedback.
 - Backend built on FastAPI or Flask, frontend with React or Svelte.
 
-### Stage 3: Multi-Model Support
+### Stage 3: Multiple model support
 
 - Support multiple LLMs (OpenAI, Gemini).
 - Local model support via Ollama (DeepSeek, Mistral Small).
 - LoRA or PEFT-based fine-tuning for open models.
 
-### Stage 4: Multi-User Accounts
+### Stage 4: Multiple user accounts
 
 - Secure account creation and login.
 - Each user has isolated storage and their own fine-tuned authors.
 - Bring-your-own-key support for provider APIs.
 
-### Stage 5: Production-Ready UI/UX
+### Stage 5: Production ready UI/UX
 
 - Full author dashboard with progress tracking and dataset versioning.
 - Job queueing, monitoring, and error handling.
