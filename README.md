@@ -91,7 +91,7 @@ ghostwriter/
 1. Clone the repo:
 
 ```bash
-git clone https://github.com/<your-username>/ghostwriter.git
+git clone https://github.com/manu72/ghostwriter.git
 cd ghostwriter
 ```
 
@@ -103,7 +103,12 @@ source .venv/bin/activate
 pip install -r requirements.txt
 ```
 
-3. Copy `.env.example` → `.env` and add your API key.
+3. Copy `.env.example` → `.env` and add your API keys:
+
+```bash
+cp .env.example .env
+# Edit .env to add your OPENAI_API_KEY and/or GEMINI_API_KEY
+```
 
 4. Run the CLI:
 
@@ -119,6 +124,10 @@ Currently in Stage 1 (terminal-based proof of concept). Expect rapid iteration.
 
 ---
 
+## Contributing
+
+This project is in early development. Contributions, feedback, and suggestions are welcome!
+
 ## License
 
-MIT (to be confirmed).
+MIT
