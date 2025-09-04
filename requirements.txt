@@ -1,5 +1,10 @@
 typer
 rich
 pydantic
+pydantic-settings
 httpx
 python-dotenv
+openai
+google-genai
+jsonlines
+PyYAML
