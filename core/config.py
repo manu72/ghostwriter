@@ -10,7 +10,7 @@ load_dotenv()
 
 class Settings(BaseSettings):
     openai_api_key: Optional[str] = Field(None, validation_alias="OPENAI_API_KEY")
-    openai_org_id: Optional[str] = Field(None, validation_alias="OPENAI_ORG_ID") 
+    openai_org_id: Optional[str] = Field(None, validation_alias="OPENAI_ORG_ID")
     gemini_api_key: Optional[str] = Field(None, validation_alias="GEMINI_API_KEY")
 
     debug: bool = Field(False, validation_alias="DEBUG")
@@ -26,7 +26,7 @@ class Settings(BaseSettings):
     model_config = SettingsConfigDict(
         env_file=".env",
         case_sensitive=False,
-        extra="allow"  # Allow extra fields like _skip_directory_creation
+        extra="allow",  # Allow extra fields like _skip_directory_creation
     )
 
     def __init__(self, **kwargs: Any) -> None:
