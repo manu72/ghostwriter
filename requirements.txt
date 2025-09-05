@@ -5,7 +5,7 @@ pydantic-settings
 httpx
 python-dotenv
 openai
-google-genai
+google-generativeai
 jsonlines
 PyYAML
 
