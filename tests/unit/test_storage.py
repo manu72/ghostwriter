@@ -275,14 +275,16 @@ class TestModuleFunctions:
             
             # Create some authors
             storage1 = AuthorStorage("author1")
-            storage1.save_profile(sample_author_profile._replace(
-                author_id="author1", name="Author 1"
-            ))
+            profile1 = sample_author_profile.copy()
+            profile1.author_id = "author1"
+            profile1.name = "Author 1"
+            storage1.save_profile(profile1)
             
             storage2 = AuthorStorage("author2")
-            storage2.save_profile(sample_author_profile._replace(
-                author_id="author2", name="Author 2"
-            ))
+            profile2 = sample_author_profile.copy()
+            profile2.author_id = "author2"
+            profile2.name = "Author 2"
+            storage2.save_profile(profile2)
             
             authors = list_authors()
             assert sorted(authors) == ["author1", "author2"]
@@ -312,9 +314,10 @@ class TestModuleFunctions:
         with patch('core.storage.settings', mock_settings):
             # Valid author
             storage_valid = AuthorStorage("valid_author")
-            storage_valid.save_profile(sample_author_profile._replace(
-                author_id="valid_author", name="Valid Author"
-            ))
+            profile_valid = sample_author_profile.copy()
+            profile_valid.author_id = "valid_author"
+            profile_valid.name = "Valid Author"
+            storage_valid.save_profile(profile_valid)
             
             # Directory without profile
             incomplete_dir = mock_settings.authors_dir / "incomplete_author"

@@ -301,18 +301,17 @@ class TestFullWorkflow:
         # Step 1: Create author (non-interactive)
         with patch('cli.commands.author.create_author_simple') as mock_create:
             # Mock the profile creation
-            profile = AuthorProfile(
-                author_id="workflow_test",
-                name="Workflow Test",
-                description="Test workflow"
-            )
-            
-            def save_profile_side_effect(*args):
+            def create_mock_profile(*args, **kwargs):
+                profile = AuthorProfile(
+                    author_id="workflow_test",
+                    name="Workflow Test",
+                    description="Test workflow"
+                )
                 # Simulate saving the profile
                 storage = AuthorStorage("workflow_test")
                 storage.save_profile(profile)
             
-            mock_create.side_effect = save_profile_side_effect
+            mock_create.side_effect = create_mock_profile
             
             result = runner.invoke(app, [
                 "author", "create", "workflow_test",
