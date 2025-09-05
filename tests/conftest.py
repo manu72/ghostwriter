@@ -299,7 +299,7 @@ def sample_jsonl_content(sample_training_examples):
     """Sample JSONL content for dataset testing."""
     lines = []
     for example in sample_training_examples:
-        lines.append(json.dumps(example.dict()))
+        lines.append(json.dumps(example.model_dump()))
     return "\n".join(lines)
 
 

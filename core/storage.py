@@ -17,11 +17,11 @@ class AuthorStorage:
     def save_profile(self, profile: AuthorProfile) -> None:
         profile_path = self.author_dir / "profile.json"
         with open(profile_path, "w") as f:
-            json.dump(profile.dict(), f, indent=2, default=str)
+            json.dump(profile.model_dump(), f, indent=2, default=str)
 
         style_guide_path = self.author_dir / "style_guide.yml"
         with open(style_guide_path, "w") as f:
-            yaml.dump(profile.style_guide.dict(), f, default_flow_style=False)
+            yaml.dump(profile.style_guide.model_dump(), f, default_flow_style=False)
 
     def load_profile(self) -> Optional[AuthorProfile]:
         profile_path = self.author_dir / "profile.json"
@@ -36,7 +36,7 @@ class AuthorStorage:
         dataset_path = self.author_dir / "train.jsonl"
         with jsonlines.open(dataset_path, "w") as writer:
             for example in dataset.examples:
-                writer.write(example.dict())
+                writer.write(example.model_dump())
 
     def load_dataset(self) -> Optional[Dataset]:
         dataset_path = self.author_dir / "train.jsonl"
@@ -53,7 +53,7 @@ class AuthorStorage:
     def save_model_metadata(self, metadata: ModelMetadata) -> None:
         models_path = self.author_dir / "models.json"
         with open(models_path, "w") as f:
-            json.dump(metadata.dict(), f, indent=2, default=str)
+            json.dump(metadata.model_dump(), f, indent=2, default=str)
 
     def load_model_metadata(self) -> ModelMetadata:
         models_path = self.author_dir / "models.json"

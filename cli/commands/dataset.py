@@ -190,7 +190,7 @@ def export_dataset(
 
         with jsonlines.open(output_file, "w") as writer:
             for example in dataset.examples:
-                writer.write(example.dict())
+                writer.write(example.model_dump())
 
         console.print(
             f"[green]✅ Dataset exported to '{output_file}' ({dataset.size} examples)[/green]"

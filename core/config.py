@@ -2,19 +2,19 @@ from pathlib import Path
 from typing import Any, Optional
 
 from dotenv import load_dotenv
-from pydantic import Field
+from pydantic import AliasChoices, Field
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 load_dotenv()
 
 
 class Settings(BaseSettings):
-    openai_api_key: Optional[str] = Field(None, validation_alias="OPENAI_API_KEY")
-    openai_org_id: Optional[str] = Field(None, validation_alias="OPENAI_ORG_ID")
-    gemini_api_key: Optional[str] = Field(None, validation_alias="GEMINI_API_KEY")
+    openai_api_key: Optional[str] = Field(None, validation_alias=AliasChoices("openai_api_key", "OPENAI_API_KEY"))
+    openai_org_id: Optional[str] = Field(None, validation_alias=AliasChoices("openai_org_id", "OPENAI_ORG_ID"))
+    gemini_api_key: Optional[str] = Field(None, validation_alias=AliasChoices("gemini_api_key", "GEMINI_API_KEY"))
 
-    debug: bool = Field(False, validation_alias="DEBUG")
-    log_level: str = Field("info", validation_alias="LOG_LEVEL")
+    debug: bool = Field(False, validation_alias=AliasChoices("debug", "DEBUG"))
+    log_level: str = Field("info", validation_alias=AliasChoices("log_level", "LOG_LEVEL"))
 
     data_dir: Path = Field(
         Path("data"), description="Base directory for all data storage"

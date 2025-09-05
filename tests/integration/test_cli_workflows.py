@@ -165,10 +165,16 @@ class TestAuthorCommands:
 class TestDatasetCommands:
     """Test dataset management commands."""
 
+    @patch("cli.commands.dataset.get_author_profile")
     @patch("cli.commands.dataset.AuthorStorage")
     @patch("cli.commands.dataset.DatasetBuilder")
-    def test_dataset_build_command(self, mock_builder_class, mock_storage_class):
+    def test_dataset_build_command(self, mock_builder_class, mock_storage_class, mock_get_author):
         """Test dataset build command."""
+        # Mock author profile
+        mock_profile = Mock()
+        mock_profile.name = "Test Author"
+        mock_get_author.return_value = mock_profile
+        
         # Mock storage exists check
         mock_storage = Mock()
         mock_storage.exists.return_value = True
@@ -186,9 +192,13 @@ class TestDatasetCommands:
         mock_builder_class.assert_called_once_with("test_author")
         mock_builder.interactive_build.assert_called_once()
 
+    @patch("cli.commands.dataset.get_author_profile")
     @patch("cli.commands.dataset.AuthorStorage")
-    def test_dataset_build_author_not_exists(self, mock_storage_class):
+    def test_dataset_build_author_not_exists(self, mock_storage_class, mock_get_author):
         """Test dataset build with non-existent author."""
+        # Mock get_author_profile to return None (author doesn't exist)
+        mock_get_author.return_value = None
+        
         mock_storage = Mock()
         mock_storage.exists.return_value = False
         mock_storage_class.return_value = mock_storage
@@ -196,12 +206,18 @@ class TestDatasetCommands:
         runner = CliRunner()
         result = runner.invoke(app, ["dataset", "build", "nonexistent_author"])
 
-        assert result.exit_code == 0
+        assert result.exit_code == 1  # Should fail when author doesn't exist
         assert "Author 'nonexistent_author' not found" in result.stdout
 
+    @patch("cli.commands.dataset.get_author_profile")
     @patch("cli.commands.dataset.AuthorStorage")
-    def test_dataset_validate_command(self, mock_storage_class):
+    def test_dataset_validate_command(self, mock_storage_class, mock_get_author):
         """Test dataset validate command."""
+        # Mock author profile
+        mock_profile = Mock()
+        mock_profile.name = "Test Author"
+        mock_get_author.return_value = mock_profile
+        
         # Mock storage and dataset
         mock_storage = Mock()
         mock_storage.exists.return_value = True
@@ -213,6 +229,7 @@ class TestDatasetCommands:
         with patch("cli.commands.dataset.DatasetValidator") as mock_validator_class:
             mock_validator = Mock()
             mock_validator.validate.return_value = {"is_valid": True, "issues": []}
+            mock_validator.get_validation_summary.return_value = "ready"
             mock_validator_class.return_value = mock_validator
 
             runner = CliRunner()
@@ -225,23 +242,39 @@ class TestDatasetCommands:
 class TestTrainCommands:
     """Test training commands."""
 
+    @patch("cli.commands.train.get_author_profile")
     @patch("cli.commands.train.AuthorStorage")
     @patch("cli.commands.train.OpenAIAdapter")
-    def test_train_start_command(self, mock_adapter_class, mock_storage_class):
+    @patch("cli.commands.train.DatasetValidator")
+    def test_train_start_command(self, mock_validator_class, mock_adapter_class, mock_storage_class, mock_get_author):
         """Test train start command."""
+        # Mock author profile
+        mock_profile = Mock()
+        mock_profile.name = "Test Author"
+        mock_get_author.return_value = mock_profile
+        
         # Mock storage
         mock_storage = Mock()
         mock_storage.exists.return_value = True
         mock_dataset = Mock()
         mock_dataset.size = 20
         mock_storage.load_dataset.return_value = mock_dataset
+        mock_metadata = Mock()
+        mock_storage.load_model_metadata.return_value = mock_metadata
         mock_storage_class.return_value = mock_storage
+
+        # Mock dataset validator
+        mock_validator = Mock()
+        mock_validator.get_validation_summary.return_value = "ready"
+        mock_validator_class.return_value = mock_validator
 
         # Mock OpenAI adapter
         mock_adapter = Mock()
         mock_adapter.upload_training_file.return_value = "file-123"
         mock_job = Mock()
         mock_job.job_id = "ft-job-123"
+        mock_job.status = Mock()
+        mock_job.status.value = "pending"
         mock_adapter.create_fine_tune_job.return_value = mock_job
         mock_adapter_class.return_value = mock_adapter
 
@@ -252,9 +285,15 @@ class TestTrainCommands:
         mock_adapter.upload_training_file.assert_called_once()
         mock_adapter.create_fine_tune_job.assert_called_once()
 
+    @patch("cli.commands.train.get_author_profile")
     @patch("cli.commands.train.AuthorStorage")
-    def test_train_start_no_dataset(self, mock_storage_class):
+    def test_train_start_no_dataset(self, mock_storage_class, mock_get_author):
         """Test train start with no dataset."""
+        # Mock author profile
+        mock_profile = Mock()
+        mock_profile.name = "Test Author"
+        mock_get_author.return_value = mock_profile
+        
         mock_storage = Mock()
         mock_storage.exists.return_value = True
         mock_dataset = Mock()
@@ -265,12 +304,18 @@ class TestTrainCommands:
         runner = CliRunner()
         result = runner.invoke(app, ["train", "start", "test_author"])
 
-        assert result.exit_code == 0
-        assert "No training data found" in result.stdout
+        assert result.exit_code == 1  # Should fail when no dataset
+        assert "No dataset found" in result.stdout
 
+    @patch("cli.commands.train.get_author_profile")
     @patch("cli.commands.train.AuthorStorage")
-    def test_train_status_command(self, mock_storage_class):
+    def test_train_status_command(self, mock_storage_class, mock_get_author):
         """Test train status command."""
+        # Mock author profile
+        mock_profile = Mock()
+        mock_profile.name = "Test Author"
+        mock_get_author.return_value = mock_profile
+        
         # Mock storage and metadata
         mock_storage = Mock()
         mock_storage.exists.return_value = True

@@ -302,13 +302,13 @@ class TestModuleFunctions:
 
             # Create some authors
             storage1 = AuthorStorage("author1")
-            profile1 = sample_author_profile.copy()
+            profile1 = sample_author_profile.model_copy()
             profile1.author_id = "author1"
             profile1.name = "Author 1"
             storage1.save_profile(profile1)
 
             storage2 = AuthorStorage("author2")
-            profile2 = sample_author_profile.copy()
+            profile2 = sample_author_profile.model_copy()
             profile2.author_id = "author2"
             profile2.name = "Author 2"
             storage2.save_profile(profile2)
@@ -345,7 +345,7 @@ class TestModuleFunctions:
         with patch("core.storage.settings", mock_settings):
             # Valid author
             storage_valid = AuthorStorage("valid_author")
-            profile_valid = sample_author_profile.copy()
+            profile_valid = sample_author_profile.model_copy()
             profile_valid.author_id = "valid_author"
             profile_valid.name = "Valid Author"
             storage_valid.save_profile(profile_valid)

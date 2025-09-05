@@ -34,7 +34,7 @@ class OpenAIAdapter:
             mode="w", suffix=".jsonl", delete=False
         ) as tmp_file:
             for example in dataset.examples:
-                json.dump(example.dict(), tmp_file)
+                json.dump(example.model_dump(), tmp_file)
                 tmp_file.write("\n")
 
             tmp_file_path = tmp_file.name
