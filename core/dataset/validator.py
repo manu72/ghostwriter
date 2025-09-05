@@ -10,9 +10,9 @@ console = Console()
 
 
 class DatasetValidator:
-    def __init__(self, dataset: Dataset):
+    def __init__(self, dataset: Dataset) -> None:
         self.dataset = dataset
-        self.validation_results = {}
+        self.validation_results: dict[str, Any] = {}
 
     def validate(self) -> Dict[str, Any]:
         console.print("\n[bold blue]Validating Dataset[/bold blue]")
@@ -113,8 +113,8 @@ class DatasetValidator:
             return {"status": "error", "message": "No examples to analyze"}
 
         stats = {
-            "avg_prompt_length": 0,
-            "avg_response_length": 0,
+            "avg_prompt_length": 0.0,
+            "avg_response_length": 0.0,
             "too_short_responses": 0,
             "too_long_responses": 0,
             "empty_responses": 0,
@@ -312,7 +312,7 @@ class DatasetValidator:
                 "flagged": flagged_examples[:10],
             }
 
-    def _display_results(self, results: Dict[str, Any]):
+    def _display_results(self, results: Dict[str, Any]) -> None:
         console.print("\n[bold]Validation Results[/bold]")
 
         # Create summary table

@@ -22,7 +22,7 @@ app.add_typer(train_app, name="train", help="🚀 Fine-tune and manage models")
 
 
 @app.command()
-def init():
+def init() -> None:
     """🚀 Initialize Ghostwriter and create your first author profile."""
     console.print(
         Panel.fit(
@@ -40,7 +40,7 @@ def init():
 
 
 @app.command()
-def status():
+def status() -> None:
     """📊 Show overview of all authors and their status."""
     from core.storage import AuthorStorage, get_author_profile, list_authors
 
@@ -110,7 +110,7 @@ def status():
 
 
 @app.command()
-def version():
+def version() -> None:
     """📋 Show version information."""
     console.print("[bold blue]Ghostwriter[/bold blue] v0.1.0 (Stage 1 POC)")
     console.print("Personal AI Writing Assistant")

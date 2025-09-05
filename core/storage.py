@@ -9,12 +9,12 @@ from core.models import AuthorProfile, Dataset, ModelMetadata, TrainingExample
 
 
 class AuthorStorage:
-    def __init__(self, author_id: str):
+    def __init__(self, author_id: str) -> None:
         self.author_id = author_id
         self.author_dir = settings.authors_dir / author_id
         self.author_dir.mkdir(exist_ok=True)
 
-    def save_profile(self, profile: AuthorProfile):
+    def save_profile(self, profile: AuthorProfile) -> None:
         profile_path = self.author_dir / "profile.json"
         with open(profile_path, "w") as f:
             json.dump(profile.dict(), f, indent=2, default=str)
@@ -32,7 +32,7 @@ class AuthorStorage:
             data = json.load(f)
         return AuthorProfile(**data)
 
-    def save_dataset(self, dataset: Dataset):
+    def save_dataset(self, dataset: Dataset) -> None:
         dataset_path = self.author_dir / "train.jsonl"
         with jsonlines.open(dataset_path, "w") as writer:
             for example in dataset.examples:
@@ -50,7 +50,7 @@ class AuthorStorage:
 
         return Dataset(author_id=self.author_id, examples=examples)
 
-    def save_model_metadata(self, metadata: ModelMetadata):
+    def save_model_metadata(self, metadata: ModelMetadata) -> None:
         models_path = self.author_dir / "models.json"
         with open(models_path, "w") as f:
             json.dump(metadata.dict(), f, indent=2, default=str)

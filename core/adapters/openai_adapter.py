@@ -2,7 +2,7 @@ import json
 import tempfile
 import time
 from pathlib import Path
-from typing import Any, Dict, Optional
+from typing import Any, Dict, List, Optional
 
 import openai
 from rich.console import Console
@@ -16,7 +16,7 @@ console = Console()
 
 
 class OpenAIAdapter:
-    def __init__(self):
+    def __init__(self) -> None:
         if not settings.has_openai_key():
             raise ValueError(
                 "OpenAI API key not found. Please set OPENAI_API_KEY in your .env file."
@@ -61,16 +61,16 @@ class OpenAIAdapter:
         console.print(f"🚀 Starting fine-tuning job for {base_model}...")
 
         # Default hyperparameters
-        default_hyperparams = {"n_epochs": "auto", "learning_rate_multiplier": "auto"}
+        hyperparams_dict = {"n_epochs": "auto", "learning_rate_multiplier": "auto"}
 
         if hyperparameters:
-            default_hyperparams.update(hyperparameters)
+            hyperparams_dict.update(hyperparameters)
 
         try:
             response = self.client.fine_tuning.jobs.create(
                 training_file=training_file_id,
                 model=base_model,
-                hyperparameters=default_hyperparams,
+                hyperparameters=hyperparams_dict,  # type: ignore
             )
 
             job = FineTuneJob(
@@ -80,7 +80,7 @@ class OpenAIAdapter:
                 base_model=base_model,
                 status=JobStatus.PENDING,
                 training_file_id=training_file_id,
-                hyperparameters=default_hyperparams,
+                hyperparameters=hyperparams_dict,
             )
 
             console.print(f"✅ Fine-tuning job created: {response.id}")
@@ -180,7 +180,7 @@ class OpenAIAdapter:
             raise
 
     def test_fine_tuned_model(
-        self, model_id: str, test_prompts: list = None
+        self, model_id: str, test_prompts: Optional[List[str]] = None
     ) -> Dict[str, str]:
         if not test_prompts:
             test_prompts = [
@@ -205,7 +205,7 @@ class OpenAIAdapter:
 
         return results
 
-    def list_fine_tuned_models(self) -> list:
+    def list_fine_tuned_models(self) -> List[Any]:
         try:
             response = self.client.models.list()
 

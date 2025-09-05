@@ -18,12 +18,12 @@ console = Console()
 
 
 class DatasetBuilder:
-    def __init__(self, author_id: str):
+    def __init__(self, author_id: str) -> None:
         self.author_id = author_id
         self.storage = AuthorStorage(author_id)
         self.dataset = self.storage.load_dataset() or Dataset(author_id=author_id)
 
-    def interactive_build(self):
+    def interactive_build(self) -> None:
         console.print("\n[bold blue]Dataset Builder[/bold blue]")
         console.print("Let's build a training dataset for your writing style!")
 
@@ -59,12 +59,12 @@ class DatasetBuilder:
                 self._save_and_exit()
                 break
 
-    def _add_from_writing_samples(self):
+    def _add_from_writing_samples(self) -> None:
         console.print(
             Panel(DATASET_BUILDING_PROMPTS["writing_sample"], title="Writing Sample")
         )
 
-        sample = Prompt.ask("", multiline=True)
+        sample = Prompt.ask(prompt="", multiline=True)  # type: ignore
         if not sample.strip():
             console.print("[red]No sample provided[/red]")
             return
@@ -93,7 +93,7 @@ class DatasetBuilder:
             f"[green]Added example! Dataset now has {self.dataset.size} examples[/green]"
         )
 
-    def _generate_examples(self):
+    def _generate_examples(self) -> None:
         console.print("\n[bold]Generate Training Examples[/bold]")
         console.print("Choose a prompt type:")
 
@@ -117,7 +117,7 @@ class DatasetBuilder:
         console.print(f"\n[yellow]Prompt: {user_prompt}[/yellow]")
         console.print("[blue]Now write your response in your style:[/blue]")
 
-        response = Prompt.ask("", multiline=True)
+        response = Prompt.ask(prompt="", multiline=True)  # type: ignore
         if not response.strip():
             console.print("[red]No response provided[/red]")
             return
@@ -135,7 +135,7 @@ class DatasetBuilder:
             f"[green]Added example! Dataset now has {self.dataset.size} examples[/green]"
         )
 
-    def _import_from_file(self):
+    def _import_from_file(self) -> None:
         file_path = Prompt.ask("Enter the path to your text file")
         path = Path(file_path)
 
@@ -190,7 +190,7 @@ class DatasetBuilder:
         sections = re.split(r"\n\s*\n", content)
         return [section.strip() for section in sections if section.strip()]
 
-    def _review_dataset(self):
+    def _review_dataset(self) -> None:
         if self.dataset.size == 0:
             console.print("[yellow]Dataset is empty[/yellow]")
             return
@@ -228,7 +228,7 @@ class DatasetBuilder:
         if self.dataset.size > 10:
             console.print(f"[dim]... and {self.dataset.size - 10} more examples[/dim]")
 
-    def _save_and_exit(self):
+    def _save_and_exit(self) -> None:
         if self.dataset.size == 0:
             console.print("[yellow]No examples to save[/yellow]")
             return

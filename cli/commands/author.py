@@ -23,7 +23,7 @@ def create_author(
     interactive: bool = typer.Option(
         True, "--interactive/--no-interactive", "-i/-ni", help="Interactive setup"
     ),
-):
+) -> None:
     """📝 Create a new author profile."""
 
     if interactive:
@@ -33,7 +33,7 @@ def create_author(
 
 
 @author_app.command("list")
-def list_authors_cmd():
+def list_authors_cmd() -> None:
     """📋 List all author profiles."""
 
     authors = list_authors()
@@ -81,7 +81,7 @@ def list_authors_cmd():
 
 
 @author_app.command("show")
-def show_author(author_id: str = typer.Argument(..., help="Author ID to display")):
+def show_author(author_id: str = typer.Argument(..., help="Author ID to display")) -> None:
     """👤 Show detailed information about an author."""
 
     profile = get_author_profile(author_id)
@@ -138,7 +138,7 @@ def show_author(author_id: str = typer.Argument(..., help="Author ID to display"
 
 
 @author_app.command("edit")
-def edit_author(author_id: str = typer.Argument(..., help="Author ID to edit")):
+def edit_author(author_id: str = typer.Argument(..., help="Author ID to edit")) -> None:
     """✏️  Edit an existing author profile."""
 
     profile = get_author_profile(author_id)
@@ -214,7 +214,7 @@ def edit_author(author_id: str = typer.Argument(..., help="Author ID to edit")):
 
 def create_author_interactive(
     author_id: str = None, name: str = None, description: str = None
-):
+) -> None:
     """Interactive author creation flow."""
 
     console.print(
@@ -336,7 +336,7 @@ def create_author_interactive(
     )
 
 
-def create_author_simple(author_id: str, name: str = None, description: str = ""):
+def create_author_simple(author_id: str, name: str = None, description: str = "") -> None:
     """Simple non-interactive author creation."""
 
     if get_author_profile(author_id):

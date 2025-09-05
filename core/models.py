@@ -25,7 +25,7 @@ class TrainingExample(BaseModel):
     )
 
     @validator("messages")
-    def validate_messages(cls, v):
+    def validate_messages(cls, v: List[Dict[str, str]]) -> List[Dict[str, str]]:
         if not v or len(v) < 2:
             raise ValueError("Training example must have at least 2 messages")
 
@@ -103,7 +103,7 @@ class Dataset(BaseModel):
     def size(self) -> int:
         return len(self.examples)
 
-    def add_example(self, example: TrainingExample):
+    def add_example(self, example: TrainingExample) -> None:
         self.examples.append(example)
         self.updated_at = datetime.now()
 
@@ -117,16 +117,16 @@ class FineTuneJob(BaseModel):
     created_at: datetime = Field(default_factory=datetime.now)
     updated_at: datetime = Field(default_factory=datetime.now)
     training_file_id: Optional[str] = Field(
-        None, description="Provider's training file ID"
+        default=None, description="Provider's training file ID"
     )
     fine_tuned_model: Optional[str] = Field(
-        None, description="ID of the fine-tuned model"
+        default=None, description="ID of the fine-tuned model"
     )
     hyperparameters: Dict[str, Any] = Field(default_factory=dict)
     result_files: List[str] = Field(default_factory=list)
     error_message: Optional[str] = None
 
-    def update_status(self, status: JobStatus, **kwargs):
+    def update_status(self, status: JobStatus, **kwargs: Any) -> None:
         self.status = status
         self.updated_at = datetime.now()
 
@@ -138,10 +138,10 @@ class FineTuneJob(BaseModel):
 class ModelMetadata(BaseModel):
     fine_tune_jobs: List[FineTuneJob] = Field(default_factory=list)
     active_model: Optional[str] = Field(
-        None, description="Currently active fine-tuned model"
+        default=None, description="Currently active fine-tuned model"
     )
 
-    def add_job(self, job: FineTuneJob):
+    def add_job(self, job: FineTuneJob) -> None:
         self.fine_tune_jobs.append(job)
 
     def get_job(self, job_id: str) -> Optional[FineTuneJob]:
