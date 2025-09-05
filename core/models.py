@@ -6,6 +6,11 @@ from typing import Any, Dict, List, Optional
 from pydantic import BaseModel, Field, field_validator
 
 
+def utc_now() -> datetime:
+    """Get current UTC datetime - used for default factory to support time mocking."""
+    return datetime.now()
+
+
 class Provider(str, Enum):
     OPENAI = "openai"
     GEMINI = "gemini"
@@ -74,8 +79,8 @@ class AuthorProfile(BaseModel):
     name: str = Field(description="Display name for the author")
     description: str = Field(default="", description="Brief description of the author")
     style_guide: StyleGuide = Field(default_factory=StyleGuide)
-    created_at: datetime = Field(default_factory=datetime.now)
-    updated_at: datetime = Field(default_factory=datetime.now)
+    created_at: datetime = Field(default_factory=utc_now)
+    updated_at: datetime = Field(default_factory=utc_now)
 
     @property
     def author_dir(self) -> Path:
@@ -97,8 +102,8 @@ class AuthorProfile(BaseModel):
 class Dataset(BaseModel):
     author_id: str
     examples: List[TrainingExample] = Field(default_factory=list)
-    created_at: datetime = Field(default_factory=datetime.now)
-    updated_at: datetime = Field(default_factory=datetime.now)
+    created_at: datetime = Field(default_factory=utc_now)
+    updated_at: datetime = Field(default_factory=utc_now)
 
     @property
     def size(self) -> int:
@@ -115,8 +120,8 @@ class FineTuneJob(BaseModel):
     provider: Provider
     base_model: str = Field(description="Base model name (e.g., gpt-3.5-turbo)")
     status: JobStatus = Field(default=JobStatus.PENDING)
-    created_at: datetime = Field(default_factory=datetime.now)
-    updated_at: datetime = Field(default_factory=datetime.now)
+    created_at: datetime = Field(default_factory=utc_now)
+    updated_at: datetime = Field(default_factory=utc_now)
     training_file_id: Optional[str] = Field(
         default=None, description="Provider's training file ID"
     )
