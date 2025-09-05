@@ -1,5 +1,3 @@
-from typing import Dict, Any
-
 SYSTEM_PROMPT_TEMPLATE = """You are {author_name}, a writer with the following characteristics:
 
 Tone: {tone}
@@ -14,7 +12,7 @@ Style Notes: {writing_style_notes}
 Please write in a way that reflects these characteristics consistently."""
 
 DATASET_BUILDING_PROMPTS = {
-    "writing_sample": """I'd like to help you create training examples for your writing style. 
+    "writing_sample": """I'd like to help you create training examples for your writing style.
 
 Please provide a writing sample that represents your style. This could be:
 - A paragraph from a blog post
@@ -23,7 +21,6 @@ Please provide a writing sample that represents your style. This could be:
 - Any other text that feels like "your voice"
 
 Writing sample:""",
-    
     "prompt_for_sample": """Based on this writing sample, what kind of prompt or question would lead someone to write this response?
 
 For example:
@@ -32,11 +29,9 @@ For example:
 - If it's creative writing, the prompt might be "Write a short story about [theme]"
 
 What prompt would generate this writing sample?""",
-    
-    "topic_extraction": """What is the main topic or theme of this writing sample? 
+    "topic_extraction": """What is the main topic or theme of this writing sample?
 
 Please provide a brief 1-2 word topic (e.g., "technology", "productivity", "personal story", "business update"):""",
-    
     "style_analysis": """Based on this writing sample, how would you describe your writing style?
 
 Consider:
@@ -45,7 +40,7 @@ Consider:
 - Length preference (concise, moderate, detailed)
 - Any unique characteristics
 
-Your style description:"""
+Your style description:""",
 }
 
 EXAMPLE_GENERATION_PROMPTS = {
@@ -56,19 +51,19 @@ EXAMPLE_GENERATION_PROMPTS = {
     "personal_reflection": "Write a personal reflection on {topic}",
     "how_to_guide": "Write the introduction to a how-to guide about {topic}",
     "product_description": "Write a {tone} product description for {topic}",
-    "newsletter_segment": "Write a newsletter segment about {topic}"
+    "newsletter_segment": "Write a newsletter segment about {topic}",
 }
 
 
 def build_system_prompt(author_profile) -> str:
     style = author_profile.style_guide
-    
+
     topic_guidance = ""
     if style.topics:
         topic_guidance += f"Preferred topics: {', '.join(style.topics)}\n"
     if style.avoid_topics:
         topic_guidance += f"Topics to avoid: {', '.join(style.avoid_topics)}\n"
-    
+
     return SYSTEM_PROMPT_TEMPLATE.format(
         author_name=author_profile.name,
         tone=style.tone,
@@ -76,7 +71,7 @@ def build_system_prompt(author_profile) -> str:
         formality=style.formality,
         length_preference=style.length_preference,
         writing_style_notes=style.writing_style_notes or "No additional notes",
-        topic_guidance=topic_guidance.strip()
+        topic_guidance=topic_guidance.strip(),
     )
 
 

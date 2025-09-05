@@ -1,69 +1,69 @@
 import json
-import yaml
-import jsonlines
-from pathlib import Path
 from typing import List, Optional
 
-from core.models import AuthorProfile, Dataset, ModelMetadata, TrainingExample
+import jsonlines
+import yaml
+
 from core.config import settings
+from core.models import AuthorProfile, Dataset, ModelMetadata, TrainingExample
 
 
 class AuthorStorage:
-    def __init__(self, author_id: str):
+    def __init__(self, author_id: str) -> None:
         self.author_id = author_id
         self.author_dir = settings.authors_dir / author_id
         self.author_dir.mkdir(exist_ok=True)
-    
-    def save_profile(self, profile: AuthorProfile):
+
+    def save_profile(self, profile: AuthorProfile) -> None:
         profile_path = self.author_dir / "profile.json"
-        with open(profile_path, 'w') as f:
+        with open(profile_path, "w") as f:
             json.dump(profile.dict(), f, indent=2, default=str)
-        
+
         style_guide_path = self.author_dir / "style_guide.yml"
-        with open(style_guide_path, 'w') as f:
+        with open(style_guide_path, "w") as f:
             yaml.dump(profile.style_guide.dict(), f, default_flow_style=False)
-    
+
     def load_profile(self) -> Optional[AuthorProfile]:
         profile_path = self.author_dir / "profile.json"
         if not profile_path.exists():
             return None
-        
-        with open(profile_path, 'r') as f:
+
+        with open(profile_path, "r") as f:
             data = json.load(f)
         return AuthorProfile(**data)
-    
-    def save_dataset(self, dataset: Dataset):
+
+    def save_dataset(self, dataset: Dataset) -> None:
         dataset_path = self.author_dir / "train.jsonl"
-        with jsonlines.open(dataset_path, 'w') as writer:
+        with jsonlines.open(dataset_path, "w") as writer:
             for example in dataset.examples:
                 writer.write(example.dict())
-    
+
     def load_dataset(self) -> Optional[Dataset]:
         dataset_path = self.author_dir / "train.jsonl"
         if not dataset_path.exists():
             return Dataset(author_id=self.author_id)
-        
+
         examples = []
-        with jsonlines.open(dataset_path, 'r') as reader:
+        with jsonlines.open(dataset_path, "r") as reader:
             for obj in reader:
                 examples.append(TrainingExample(**obj))
-        
+
         return Dataset(author_id=self.author_id, examples=examples)
-    
-    def save_model_metadata(self, metadata: ModelMetadata):
+
+    def save_model_metadata(self, metadata: ModelMetadata) -> None:
         models_path = self.author_dir / "models.json"
-        with open(models_path, 'w') as f:
+        with open(models_path, "w") as f:
             json.dump(metadata.dict(), f, indent=2, default=str)
-    
+
     def load_model_metadata(self) -> ModelMetadata:
         models_path = self.author_dir / "models.json"
         if not models_path.exists():
             return ModelMetadata()
-        
-        with open(models_path, 'r') as f:
+
+        with open(models_path, "r") as f:
             data = json.load(f)
         return ModelMetadata(**data)
-    
+
     def exists(self) -> bool:
         return self.author_dir.exists() and (self.author_dir / "profile.json").exists()
 
@@ -71,12 +71,12 @@ class AuthorStorage:
 def list_authors() -> List[str]:
     if not settings.authors_dir.exists():
         return []
-    
+
     authors = []
     for author_dir in settings.authors_dir.iterdir():
         if author_dir.is_dir() and (author_dir / "profile.json").exists():
             authors.append(author_dir.name)
-    
+
     return sorted(authors)
 
 

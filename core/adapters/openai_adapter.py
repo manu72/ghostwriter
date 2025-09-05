@@ -1,81 +1,78 @@
-import time
-from typing import Optional, Dict, Any
-from pathlib import Path
-import tempfile
 import json
+import tempfile
+import time
+from pathlib import Path
+from typing import Any, Dict, List, Optional
 
 import openai
 from rich.console import Console
-from rich.progress import Progress, SpinnerColumn, TextColumn
 from rich.panel import Panel
+from rich.progress import Progress, SpinnerColumn, TextColumn
 
-from core.models import FineTuneJob, JobStatus, Provider, Dataset
 from core.config import settings
+from core.models import Dataset, FineTuneJob, JobStatus, Provider
 
 console = Console()
 
 
 class OpenAIAdapter:
-    def __init__(self):
+    def __init__(self) -> None:
         if not settings.has_openai_key():
-            raise ValueError("OpenAI API key not found. Please set OPENAI_API_KEY in your .env file.")
-        
+            raise ValueError(
+                "OpenAI API key not found. Please set OPENAI_API_KEY in your .env file."
+            )
+
         self.client = openai.OpenAI(
-            api_key=settings.openai_api_key,
-            organization=settings.openai_org_id
+            api_key=settings.openai_api_key, organization=settings.openai_org_id
         )
-    
+
     def upload_training_file(self, dataset: Dataset) -> str:
         console.print("📤 Uploading training data to OpenAI...")
-        
+
         # Convert dataset to OpenAI JSONL format
-        with tempfile.NamedTemporaryFile(mode='w', suffix='.jsonl', delete=False) as tmp_file:
+        with tempfile.NamedTemporaryFile(
+            mode="w", suffix=".jsonl", delete=False
+        ) as tmp_file:
             for example in dataset.examples:
                 json.dump(example.dict(), tmp_file)
-                tmp_file.write('\n')
-            
+                tmp_file.write("\n")
+
             tmp_file_path = tmp_file.name
-        
+
         try:
             # Upload file
-            with open(tmp_file_path, 'rb') as f:
-                response = self.client.files.create(
-                    file=f,
-                    purpose='fine-tune'
-                )
-            
+            with open(tmp_file_path, "rb") as f:
+                response = self.client.files.create(file=f, purpose="fine-tune")
+
             console.print(f"✅ Training file uploaded: {response.id}")
             return response.id
-            
+
         finally:
             # Clean up temporary file
             Path(tmp_file_path).unlink(missing_ok=True)
-    
+
     def create_fine_tune_job(
-        self, 
+        self,
         author_id: str,
-        training_file_id: str, 
+        training_file_id: str,
         base_model: str = "gpt-3.5-turbo",
-        hyperparameters: Optional[Dict[str, Any]] = None
+        hyperparameters: Optional[Dict[str, Any]] = None,
     ) -> FineTuneJob:
         console.print(f"🚀 Starting fine-tuning job for {base_model}...")
-        
+
         # Default hyperparameters
-        default_hyperparams = {
-            "n_epochs": "auto",
-            "learning_rate_multiplier": "auto"
-        }
-        
+        hyperparams_dict = {"n_epochs": "auto", "learning_rate_multiplier": "auto"}
+
         if hyperparameters:
-            default_hyperparams.update(hyperparameters)
-        
+            hyperparams_dict.update(hyperparameters)
+
         try:
             response = self.client.fine_tuning.jobs.create(
                 training_file=training_file_id,
                 model=base_model,
-                hyperparameters=default_hyperparams
+                hyperparameters=hyperparams_dict,  # type: ignore
             )
-            
+
             job = FineTuneJob(
                 job_id=response.id,
                 author_id=author_id,
@@ -83,22 +80,22 @@ class OpenAIAdapter:
                 base_model=base_model,
                 status=JobStatus.PENDING,
                 training_file_id=training_file_id,
-                hyperparameters=default_hyperparams
+                hyperparameters=hyperparams_dict,
             )
-            
+
             console.print(f"✅ Fine-tuning job created: {response.id}")
             console.print(f"📊 Status: {response.status}")
-            
+
             return job
-            
+
         except Exception as e:
             console.print(f"❌ Error creating fine-tuning job: {str(e)}")
             raise
-    
+
     def get_job_status(self, job_id: str) -> Dict[str, Any]:
         try:
             response = self.client.fine_tuning.jobs.retrieve(job_id)
-            
+
             # Map OpenAI status to our JobStatus
             status_mapping = {
                 "validating_files": JobStatus.PENDING,
@@ -106,54 +103,55 @@ class OpenAIAdapter:
                 "running": JobStatus.RUNNING,
                 "succeeded": JobStatus.SUCCEEDED,
                 "failed": JobStatus.FAILED,
-                "cancelled": JobStatus.CANCELLED
+                "cancelled": JobStatus.CANCELLED,
             }
-            
+
             our_status = status_mapping.get(response.status, JobStatus.PENDING)
-            
+
             return {
                 "status": our_status,
                 "openai_status": response.status,
                 "fine_tuned_model": response.fine_tuned_model,
-                "error": getattr(response, 'error', None),
-                "estimated_finish": getattr(response, 'estimated_finish', None),
-                "result_files": getattr(response, 'result_files', [])
+                "error": getattr(response, "error", None),
+                "estimated_finish": getattr(response, "estimated_finish", None),
+                "result_files": getattr(response, "result_files", []),
             }
-            
+
         except Exception as e:
             console.print(f"❌ Error checking job status: {str(e)}")
-            return {
-                "status": JobStatus.FAILED,
-                "error": str(e)
-            }
-    
+            return {"status": JobStatus.FAILED, "error": str(e)}
+
     def update_job_status(self, job: FineTuneJob) -> FineTuneJob:
         status_info = self.get_job_status(job.job_id)
-        
+
         job.update_status(
             status=status_info["status"],
             fine_tuned_model=status_info.get("fine_tuned_model"),
             error_message=status_info.get("error"),
-            result_files=status_info.get("result_files", [])
+            result_files=status_info.get("result_files", []),
         )
-        
+
         return job
-    
-    def wait_for_completion(self, job: FineTuneJob, check_interval: int = 60) -> FineTuneJob:
+
+    def wait_for_completion(
+        self, job: FineTuneJob, check_interval: int = 60
+    ) -> FineTuneJob:
         console.print("⏳ Waiting for fine-tuning to complete...")
         console.print("This may take 20+ minutes depending on dataset size.")
-        
+
         with Progress(
             SpinnerColumn(),
             TextColumn("[progress.description]{task.description}"),
-            console=console
+            console=console,
         ) as progress:
-            task = progress.add_task(description="Fine-tuning in progress...", total=None)
-            
+            task = progress.add_task(
+                description="Fine-tuning in progress...", total=None
+            )
+
             while job.status in [JobStatus.PENDING, JobStatus.RUNNING]:
                 time.sleep(check_interval)
                 job = self.update_job_status(job)
-                
+
                 if job.status == JobStatus.SUCCEEDED:
                     progress.update(task, description="Fine-tuning completed! ✅")
                     break
@@ -163,38 +161,40 @@ class OpenAIAdapter:
                 elif job.status == JobStatus.CANCELLED:
                     progress.update(task, description="Fine-tuning cancelled")
                     break
-        
+
         return job
-    
+
     def generate_text(self, model_id: str, prompt: str, max_tokens: int = 500) -> str:
         try:
             response = self.client.chat.completions.create(
                 model=model_id,
                 messages=[{"role": "user", "content": prompt}],
                 max_tokens=max_tokens,
-                temperature=0.7
+                temperature=0.7,
             )
-            
+
             return response.choices[0].message.content
-            
+
         except Exception as e:
             console.print(f"❌ Error generating text: {str(e)}")
             raise
-    
-    def test_fine_tuned_model(self, model_id: str, test_prompts: list = None) -> Dict[str, str]:
+
+    def test_fine_tuned_model(
+        self, model_id: str, test_prompts: Optional[List[str]] = None
+    ) -> Dict[str, str]:
         if not test_prompts:
             test_prompts = [
                 "Write a brief introduction about yourself.",
                 "What's your writing style?",
-                "Tell me about your expertise."
+                "Tell me about your expertise.",
             ]
-        
+
         console.print(Panel("🧪 Testing Fine-tuned Model", style="blue"))
-        
+
         results = {}
         for prompt in test_prompts:
             console.print(f"\n[yellow]Prompt:[/yellow] {prompt}")
-            
+
             try:
                 response = self.generate_text(model_id, prompt)
                 results[prompt] = response
@@ -202,25 +202,26 @@ class OpenAIAdapter:
             except Exception as e:
                 results[prompt] = f"Error: {str(e)}"
                 console.print(f"[red]Error:[/red] {str(e)}")
-        
+
         return results
-    
-    def list_fine_tuned_models(self) -> list:
+
+    def list_fine_tuned_models(self) -> List[Any]:
         try:
             response = self.client.models.list()
-            
+
             # Filter for fine-tuned models (they contain "ft-" in the ID)
             fine_tuned = [
-                model for model in response.data 
+                model
+                for model in response.data
                 if "ft-" in model.id and model.owned_by != "system"
             ]
-            
+
             return fine_tuned
-            
+
         except Exception as e:
             console.print(f"❌ Error listing models: {str(e)}")
             return []
-    
+
     def delete_fine_tuned_model(self, model_id: str) -> bool:
         try:
             self.client.models.delete(model_id)
