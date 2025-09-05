@@ -3,7 +3,7 @@ from enum import Enum
 from pathlib import Path
 from typing import Any, Dict, List, Optional
 
-from pydantic import BaseModel, Field, validator
+from pydantic import BaseModel, Field, field_validator
 
 
 class Provider(str, Enum):
@@ -24,7 +24,8 @@ class TrainingExample(BaseModel):
         description="OpenAI chat format training example"
     )
 
-    @validator("messages")
+    @field_validator("messages")
+    @classmethod
     def validate_messages(cls, v: List[Dict[str, str]]) -> List[Dict[str, str]]:
         if not v or len(v) < 2:
             raise ValueError("Training example must have at least 2 messages")

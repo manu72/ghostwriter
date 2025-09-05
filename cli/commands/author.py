@@ -81,7 +81,9 @@ def list_authors_cmd() -> None:
 
 
 @author_app.command("show")
-def show_author(author_id: str = typer.Argument(..., help="Author ID to display")) -> None:
+def show_author(
+    author_id: str = typer.Argument(..., help="Author ID to display")
+) -> None:
     """👤 Show detailed information about an author."""
 
     profile = get_author_profile(author_id)
@@ -336,7 +338,9 @@ def create_author_interactive(
     )
 
 
-def create_author_simple(author_id: str, name: str = None, description: str = "") -> None:
+def create_author_simple(
+    author_id: str, name: str = None, description: str = ""
+) -> None:
     """Simple non-interactive author creation."""
 
     if get_author_profile(author_id):

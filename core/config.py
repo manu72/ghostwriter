@@ -3,18 +3,18 @@ from typing import Any, Optional
 
 from dotenv import load_dotenv
 from pydantic import Field
-from pydantic_settings import BaseSettings
+from pydantic_settings import BaseSettings, SettingsConfigDict
 
 load_dotenv()
 
 
 class Settings(BaseSettings):
-    openai_api_key: Optional[str] = Field(None, env="OPENAI_API_KEY")  # type: ignore
-    openai_org_id: Optional[str] = Field(None, env="OPENAI_ORG_ID")  # type: ignore
-    gemini_api_key: Optional[str] = Field(None, env="GEMINI_API_KEY")  # type: ignore
+    openai_api_key: Optional[str] = Field(None, validation_alias="OPENAI_API_KEY")
+    openai_org_id: Optional[str] = Field(None, validation_alias="OPENAI_ORG_ID")
+    gemini_api_key: Optional[str] = Field(None, validation_alias="GEMINI_API_KEY")
 
-    debug: bool = Field(False, env="DEBUG")  # type: ignore
-    log_level: str = Field("info", env="LOG_LEVEL")  # type: ignore
+    debug: bool = Field(False, validation_alias="DEBUG")
+    log_level: str = Field("info", validation_alias="LOG_LEVEL")
 
     data_dir: Path = Field(
         Path("data"), description="Base directory for all data storage"
@@ -23,9 +23,11 @@ class Settings(BaseSettings):
         Path("data/authors"), description="Directory for author profiles"
     )
 
-    class Config:
-        env_file = ".env"
-        case_sensitive = False
+    model_config = SettingsConfigDict(
+        env_file=".env",
+        case_sensitive=False,
+        extra="allow",  # Allow extra fields like _skip_directory_creation
+    )
 
     def __init__(self, **kwargs: Any) -> None:
         super().__init__(**kwargs)
