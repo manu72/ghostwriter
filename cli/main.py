@@ -11,25 +11,25 @@ console = Console()
 
 app = typer.Typer(
     name="ghostwriter",
-    help="🖋️  Personal AI Writing Assistant - Fine-tune LLMs with your writing style",
+    help="Personal AI Writing Assistant - Fine-tune LLMs with your writing style",
     rich_markup_mode="rich",
 )
 
 # Add subcommands
-app.add_typer(author_app, name="author", help="📝 Manage author profiles")
-app.add_typer(dataset_app, name="dataset", help="📊 Build and manage training datasets")
-app.add_typer(train_app, name="train", help="🚀 Fine-tune and manage models")
+app.add_typer(author_app, name="author", help="Manage author profiles")
+app.add_typer(dataset_app, name="dataset", help="Build and manage training datasets")
+app.add_typer(train_app, name="train", help="Fine-tune and manage models")
 
 
 @app.command()
 def init() -> None:
-    """🚀 Initialize Ghostwriter and create your first author profile."""
+    """Initialize Ghostwriter and create your first author profile."""
     console.print(
         Panel.fit(
             "[bold blue]Welcome to Ghostwriter![/bold blue]\n\n"
             "Ghostwriter helps you create a personal AI that writes in your style.\n"
             "Let's get started by creating your first author profile.",
-            title="🖋️  Ghostwriter Setup",
+            title="Ghostwriter Setup",
         )
     )
 
@@ -41,7 +41,7 @@ def init() -> None:
 
 @app.command()
 def status() -> None:
-    """📊 Show overview of all authors and their status."""
+    """Show overview of all authors and their status."""
     from core.storage import AuthorStorage, get_author_profile, list_authors
 
     authors = list_authors()
@@ -111,7 +111,7 @@ def status() -> None:
 
 @app.command()
 def version() -> None:
-    """📋 Show version information."""
+    """Show version information."""
     console.print("[bold blue]Ghostwriter[/bold blue] v0.1.0 (Stage 1 POC)")
     console.print("Personal AI Writing Assistant")
 
