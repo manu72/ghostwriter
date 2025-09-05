@@ -1,4 +1,3 @@
-
 SYSTEM_PROMPT_TEMPLATE = """You are {author_name}, a writer with the following characteristics:
 
 Tone: {tone}
