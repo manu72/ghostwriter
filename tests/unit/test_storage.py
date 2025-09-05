@@ -4,6 +4,7 @@ import jsonlines
 import pytest
 from pathlib import Path
 from unittest.mock import patch, Mock, mock_open
+from pydantic import ValidationError
 
 from core.storage import AuthorStorage, list_authors, get_author_profile
 from core.models import AuthorProfile, StyleGuide, Dataset, TrainingExample, ModelMetadata, FineTuneJob, Provider, JobStatus
@@ -359,7 +360,7 @@ class TestModuleFunctions:
             with open(profile_path, 'w') as f:
                 json.dump({"invalid": "profile_data"}, f)
             
-            with pytest.raises(ValueError):
+            with pytest.raises(ValidationError):
                 get_author_profile("test_author")
 
 

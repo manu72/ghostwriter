@@ -3,7 +3,7 @@ import tempfile
 import pytest
 from datetime import datetime
 from pathlib import Path
-from unittest.mock import Mock, MagicMock
+from unittest.mock import Mock, MagicMock, patch
 from typing import Dict, Any
 
 import responses
@@ -31,9 +31,11 @@ def temp_data_dir(tmp_path):
 def mock_settings(temp_data_dir):
     """Mock settings with temporary directory."""
     settings = Settings(
+        data_dir=temp_data_dir,
         authors_dir=temp_data_dir / "authors",
         openai_api_key="test-api-key",
-        openai_org_id="test-org-id"
+        openai_org_id="test-org-id",
+        _skip_directory_creation=True
     )
     return settings
 
@@ -120,9 +122,10 @@ def sample_model_metadata(sample_fine_tune_job):
 
 
 @pytest.fixture
-def author_storage(temp_data_dir):
+def author_storage(mock_settings):
     """Author storage instance with temporary directory."""
-    return AuthorStorage("test_author")
+    with patch('core.storage.settings', mock_settings):
+        return AuthorStorage("test_author")
 
 
 @pytest.fixture
@@ -221,13 +224,24 @@ def openai_responses():
         yield rsps
 
 
-# Test configuration
+# Test configuration  
 @pytest.fixture(autouse=True)
 def setup_test_environment(monkeypatch, temp_data_dir):
     """Setup test environment for each test."""
-    # Set up temporary data directory
-    monkeypatch.setattr("core.config.settings.authors_dir", temp_data_dir / "authors")
-    monkeypatch.setattr("core.config.settings.openai_api_key", "test-api-key")
+    # Create a test settings instance
+    test_settings = Settings(
+        data_dir=temp_data_dir,
+        authors_dir=temp_data_dir / "authors",
+        openai_api_key="test-api-key",
+        openai_org_id="test-org-id",
+        _skip_directory_creation=True
+    )
+    
+    # Replace the global settings with test settings
+    monkeypatch.setattr("core.config.settings", test_settings)
+    monkeypatch.setattr("core.storage.settings", test_settings)
+    if hasattr(monkeypatch, "core.dataset.builder.settings"):
+        monkeypatch.setattr("core.dataset.builder.settings", test_settings)
     
 
 @pytest.fixture

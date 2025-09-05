@@ -26,7 +26,9 @@ class Settings(BaseSettings):
     
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
-        self.ensure_directories()
+        # Only create directories if not in test mode
+        if not kwargs.get('_skip_directory_creation', False):
+            self.ensure_directories()
     
     def ensure_directories(self):
         self.data_dir.mkdir(exist_ok=True)
