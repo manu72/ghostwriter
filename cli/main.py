@@ -12,7 +12,7 @@ console = Console()
 app = typer.Typer(
     name="ghostwriter",
     help="🖋️  Personal AI Writing Assistant - Fine-tune LLMs with your writing style",
-    rich_markup_mode="rich"
+    rich_markup_mode="rich",
 )
 
 # Add subcommands
@@ -24,50 +24,57 @@ app.add_typer(train_app, name="train", help="🚀 Fine-tune and manage models")
 @app.command()
 def init():
     """🚀 Initialize Ghostwriter and create your first author profile."""
-    console.print(Panel.fit(
-        "[bold blue]Welcome to Ghostwriter![/bold blue]\n\n"
-        "Ghostwriter helps you create a personal AI that writes in your style.\n"
-        "Let's get started by creating your first author profile.",
-        title="🖋️  Ghostwriter Setup"
-    ))
-    
+    console.print(
+        Panel.fit(
+            "[bold blue]Welcome to Ghostwriter![/bold blue]\n\n"
+            "Ghostwriter helps you create a personal AI that writes in your style.\n"
+            "Let's get started by creating your first author profile.",
+            title="🖋️  Ghostwriter Setup",
+        )
+    )
+
     # Import here to avoid circular imports
     from cli.commands.author import create_author_interactive
+
     create_author_interactive()
 
 
 @app.command()
 def status():
     """📊 Show overview of all authors and their status."""
-    from core.storage import list_authors, get_author_profile, AuthorStorage
-    
+    from core.storage import AuthorStorage, get_author_profile, list_authors
+
     authors = list_authors()
-    
+
     if not authors:
-        console.print("[yellow]No authors found. Run 'ghostwriter init' to create your first author.[/yellow]")
+        console.print(
+            "[yellow]No authors found. Run 'ghostwriter init' to create your first author.[/yellow]"
+        )
         return
-    
-    console.print(f"\n[bold blue]Ghostwriter Status[/bold blue] - {len(authors)} author(s)")
-    
+
+    console.print(
+        f"\n[bold blue]Ghostwriter Status[/bold blue] - {len(authors)} author(s)"
+    )
+
     table = Table(show_header=True, header_style="bold magenta")
     table.add_column("Author", style="cyan")
     table.add_column("Description", max_width=40)
     table.add_column("Dataset Size", justify="right")
     table.add_column("Models", justify="right")
     table.add_column("Status", style="green")
-    
+
     for author_id in authors:
         profile = get_author_profile(author_id)
         if not profile:
             continue
-        
+
         storage = AuthorStorage(author_id)
         dataset = storage.load_dataset()
         metadata = storage.load_model_metadata()
-        
+
         dataset_size = dataset.size if dataset else 0
         model_count = len(metadata.fine_tune_jobs) if metadata else 0
-        
+
         # Determine status
         if model_count > 0:
             latest_job = metadata.get_latest_successful_job()
@@ -79,20 +86,26 @@ def status():
             status = "📊 Dataset Ready"
         else:
             status = "📝 Setup Needed"
-        
+
         table.add_row(
             profile.name,
-            profile.description[:37] + "..." if len(profile.description) > 40 else profile.description,
+            (
+                profile.description[:37] + "..."
+                if len(profile.description) > 40
+                else profile.description
+            ),
             str(dataset_size),
             str(model_count),
-            status
+            status,
         )
-    
+
     console.print(table)
-    
+
     console.print("\n[dim]Commands:[/dim]")
     console.print("• [cyan]ghostwriter author list[/cyan] - Manage authors")
-    console.print("• [cyan]ghostwriter dataset build <author>[/cyan] - Build training dataset")  
+    console.print(
+        "• [cyan]ghostwriter dataset build <author>[/cyan] - Build training dataset"
+    )
     console.print("• [cyan]ghostwriter train start <author>[/cyan] - Start fine-tuning")
 
 

@@ -1,20 +1,23 @@
 import json
-import tempfile
-import pytest
 from datetime import datetime
-from pathlib import Path
-from unittest.mock import Mock, MagicMock, patch
-from typing import Dict, Any
+from unittest.mock import Mock, patch
 
+import pytest
 import responses
 from freezegun import freeze_time
 
+from core.config import Settings
 from core.models import (
-    AuthorProfile, StyleGuide, Dataset, TrainingExample, 
-    FineTuneJob, ModelMetadata, Provider, JobStatus
+    AuthorProfile,
+    Dataset,
+    FineTuneJob,
+    JobStatus,
+    ModelMetadata,
+    Provider,
+    StyleGuide,
+    TrainingExample,
 )
 from core.storage import AuthorStorage
-from core.config import Settings
 
 
 @pytest.fixture
@@ -35,7 +38,7 @@ def mock_settings(temp_data_dir):
         authors_dir=temp_data_dir / "authors",
         openai_api_key="test-api-key",
         openai_org_id="test-org-id",
-        _skip_directory_creation=True
+        _skip_directory_creation=True,
     )
     return settings
 
@@ -50,7 +53,7 @@ def sample_style_guide():
         length_preference="medium",
         topics=["technology", "writing", "productivity"],
         avoid_topics=["politics", "controversial topics"],
-        writing_style_notes="Direct and engaging, with occasional humor"
+        writing_style_notes="Direct and engaging, with occasional humor",
     )
 
 
@@ -63,7 +66,7 @@ def sample_author_profile(sample_style_guide):
         description="A test author profile for unit testing",
         style_guide=sample_style_guide,
         created_at=datetime(2023, 1, 1, 12, 0, 0),
-        updated_at=datetime(2023, 1, 1, 12, 0, 0)
+        updated_at=datetime(2023, 1, 1, 12, 0, 0),
     )
 
 
@@ -71,21 +74,42 @@ def sample_author_profile(sample_style_guide):
 def sample_training_examples():
     """Sample training examples for testing."""
     return [
-        TrainingExample(messages=[
-            {"role": "system", "content": "You are a helpful writing assistant."},
-            {"role": "user", "content": "Write a brief introduction about yourself."},
-            {"role": "assistant", "content": "Hello! I'm an AI writing assistant focused on helping you create engaging content in your unique style."}
-        ]),
-        TrainingExample(messages=[
-            {"role": "system", "content": "You are a helpful writing assistant."},
-            {"role": "user", "content": "Explain the importance of documentation in software development."},
-            {"role": "assistant", "content": "Documentation is crucial in software development because it serves as a roadmap for future developers and your future self. Good docs save time, reduce bugs, and make collaboration smoother."}
-        ]),
-        TrainingExample(messages=[
-            {"role": "system", "content": "You are a helpful writing assistant."},
-            {"role": "user", "content": "Write tips for productive remote work."},
-            {"role": "assistant", "content": "Here are my top remote work tips: 1) Create a dedicated workspace, 2) Establish clear boundaries between work and personal time, 3) Use video calls to maintain human connection, 4) Take regular breaks to avoid burnout."}
-        ])
+        TrainingExample(
+            messages=[
+                {"role": "system", "content": "You are a helpful writing assistant."},
+                {
+                    "role": "user",
+                    "content": "Write a brief introduction about yourself.",
+                },
+                {
+                    "role": "assistant",
+                    "content": "Hello! I'm an AI writing assistant focused on helping you create engaging content in your unique style.",
+                },
+            ]
+        ),
+        TrainingExample(
+            messages=[
+                {"role": "system", "content": "You are a helpful writing assistant."},
+                {
+                    "role": "user",
+                    "content": "Explain the importance of documentation in software development.",
+                },
+                {
+                    "role": "assistant",
+                    "content": "Documentation is crucial in software development because it serves as a roadmap for future developers and your future self. Good docs save time, reduce bugs, and make collaboration smoother.",
+                },
+            ]
+        ),
+        TrainingExample(
+            messages=[
+                {"role": "system", "content": "You are a helpful writing assistant."},
+                {"role": "user", "content": "Write tips for productive remote work."},
+                {
+                    "role": "assistant",
+                    "content": "Here are my top remote work tips: 1) Create a dedicated workspace, 2) Establish clear boundaries between work and personal time, 3) Use video calls to maintain human connection, 4) Take regular breaks to avoid burnout.",
+                },
+            ]
+        ),
     ]
 
 
@@ -109,7 +133,7 @@ def sample_fine_tune_job():
         status=JobStatus.PENDING,
         created_at=datetime(2023, 1, 1, 12, 0, 0),
         training_file_id="file-abc123",
-        hyperparameters={"n_epochs": 3, "learning_rate_multiplier": 0.1}
+        hyperparameters={"n_epochs": 3, "learning_rate_multiplier": 0.1},
     )
 
 
@@ -124,7 +148,7 @@ def sample_model_metadata(sample_fine_tune_job):
 @pytest.fixture
 def author_storage(mock_settings):
     """Author storage instance with temporary directory."""
-    with patch('core.storage.settings', mock_settings):
+    with patch("core.storage.settings", mock_settings):
         return AuthorStorage("test_author")
 
 
@@ -132,18 +156,18 @@ def author_storage(mock_settings):
 def mock_openai_client():
     """Mock OpenAI client for testing."""
     client = Mock()
-    
+
     # Mock file creation
     file_response = Mock()
     file_response.id = "file-test123"
     client.files.create.return_value = file_response
-    
+
     # Mock fine-tuning job creation
     job_response = Mock()
     job_response.id = "ft-job-test123"
     job_response.status = "validating_files"
     client.fine_tuning.jobs.create.return_value = job_response
-    
+
     # Mock job status retrieval
     status_response = Mock()
     status_response.id = "ft-job-test123"
@@ -153,20 +177,22 @@ def mock_openai_client():
     status_response.estimated_finish = None
     status_response.result_files = []
     client.fine_tuning.jobs.retrieve.return_value = status_response
-    
+
     # Mock chat completions
     completion_response = Mock()
     completion_response.choices = [Mock()]
-    completion_response.choices[0].message.content = "Test response from fine-tuned model"
+    completion_response.choices[0].message.content = (
+        "Test response from fine-tuned model"
+    )
     client.chat.completions.create.return_value = completion_response
-    
+
     # Mock model listing
     models_response = Mock()
     models_response.data = [
         Mock(id="ft:gpt-3.5-turbo:test:test-model:123", owned_by="user")
     ]
     client.models.list.return_value = models_response
-    
+
     return client
 
 
@@ -191,9 +217,9 @@ def openai_responses():
             responses.POST,
             "https://api.openai.com/v1/files",
             json={"id": "file-test123", "purpose": "fine-tune"},
-            status=200
+            status=200,
         )
-        
+
         # Mock fine-tuning job creation
         rsps.add(
             responses.POST,
@@ -202,11 +228,11 @@ def openai_responses():
                 "id": "ft-job-test123",
                 "status": "validating_files",
                 "model": "gpt-3.5-turbo",
-                "training_file": "file-test123"
+                "training_file": "file-test123",
             },
-            status=200
+            status=200,
         )
-        
+
         # Mock job status retrieval
         rsps.add(
             responses.GET,
@@ -216,15 +242,15 @@ def openai_responses():
                 "status": "succeeded",
                 "model": "gpt-3.5-turbo",
                 "fine_tuned_model": "ft:gpt-3.5-turbo:test:test-model:123",
-                "training_file": "file-test123"
+                "training_file": "file-test123",
             },
-            status=200
+            status=200,
         )
-        
+
         yield rsps
 
 
-# Test configuration  
+# Test configuration
 @pytest.fixture(autouse=True)
 def setup_test_environment(monkeypatch, temp_data_dir):
     """Setup test environment for each test."""
@@ -234,15 +260,15 @@ def setup_test_environment(monkeypatch, temp_data_dir):
         authors_dir=temp_data_dir / "authors",
         openai_api_key="test-api-key",
         openai_org_id="test-org-id",
-        _skip_directory_creation=True
+        _skip_directory_creation=True,
     )
-    
+
     # Replace the global settings with test settings
     monkeypatch.setattr("core.config.settings", test_settings)
     monkeypatch.setattr("core.storage.settings", test_settings)
     if hasattr(monkeypatch, "core.dataset.builder.settings"):
         monkeypatch.setattr("core.dataset.builder.settings", test_settings)
-    
+
 
 @pytest.fixture
 def freeze_datetime():
@@ -280,12 +306,6 @@ def sample_jsonl_content(sample_training_examples):
 # Pytest configuration
 def pytest_configure(config):
     """Configure pytest with custom markers."""
-    config.addinivalue_line(
-        "markers", "integration: mark test as integration test"
-    )
-    config.addinivalue_line(
-        "markers", "slow: mark test as slow running"
-    )
-    config.addinivalue_line(
-        "markers", "openai: mark test as requiring OpenAI API"
-    )
+    config.addinivalue_line("markers", "integration: mark test as integration test")
+    config.addinivalue_line("markers", "slow: mark test as slow running")
+    config.addinivalue_line("markers", "openai: mark test as requiring OpenAI API")
