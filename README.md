@@ -124,9 +124,232 @@ Currently in Stage 1 (terminal-based proof of concept). Expect rapid iteration.
 
 ---
 
+## Testing
+
+Ghostwriter includes a comprehensive test suite with 90%+ coverage. The testing framework uses pytest with extensive mocking for external APIs and file operations.
+
+### Quick Start
+
+```bash
+# Install all dependencies (including test tools)
+pip install -r requirements.txt
+
+# Run all tests
+make test
+# or
+python -m pytest
+
+# Run with coverage report
+make test-coverage
+# or  
+python -m pytest --cov-report=html --cov-report=term
+```
+
+### Test Commands
+
+#### Using Make (Recommended)
+```bash
+make test           # Run all tests with coverage
+make test-unit      # Run only unit tests  
+make test-integration  # Run only integration tests
+make test-fast      # Skip slow tests
+make test-coverage  # Generate detailed coverage report
+make clean          # Clean up generated files
+
+# Code quality
+make lint           # Run linting checks
+make format         # Auto-format code with black/isort
+make format-check   # Check formatting without changes
+make type-check     # Run mypy type checking
+make security       # Run bandit security scan
+make check          # Run all quality checks
+
+# Development setup
+make dev-install    # Install with pre-commit hooks
+```
+
+#### Using pytest directly
+```bash
+# Basic test runs
+python -m pytest                    # All tests
+python -m pytest tests/unit         # Unit tests only
+python -m pytest tests/integration  # Integration tests only
+python -m pytest -m "not slow"      # Fast tests only
+
+# With coverage
+python -m pytest --cov=core --cov=cli --cov-report=html
+
+# Specific tests
+python -m pytest tests/unit/test_models.py                    # Single file
+python -m pytest tests/unit/test_models.py::TestAuthorProfile # Single class
+python -m pytest -k "test_author"                            # Pattern matching
+
+# Debugging
+python -m pytest -v               # Verbose output
+python -m pytest -s               # Don't capture output
+python -m pytest --pdb            # Drop into debugger on failure
+python -m pytest -x               # Stop on first failure
+```
+
+#### Using the test runner script
+```bash
+python run_tests.py deps          # Check dependencies
+python run_tests.py unit          # Unit tests
+python run_tests.py integration   # Integration tests  
+python run_tests.py all           # All tests with coverage
+python run_tests.py fast          # Fast tests only
+python run_tests.py coverage      # Detailed coverage report
+python run_tests.py specific --test-path tests/unit/test_models.py
+```
+
+### Test Structure
+
+```
+tests/
+├── conftest.py                    # Shared fixtures and configuration
+├── unit/                          # Unit tests (90%+ coverage target)
+│   ├── test_models.py            # Pydantic model validation
+│   ├── test_storage.py           # File I/O and data persistence
+│   ├── test_config.py            # Settings and environment
+│   └── core/
+│       ├── test_dataset_builder.py    # Dataset processing logic
+│       └── adapters/
+│           └── test_openai_adapter.py # API integration (mocked)
+├── integration/                   # End-to-end workflow tests
+│   └── test_cli_workflows.py     # Complete CLI command testing
+└── fixtures/                     # Sample data and API responses
+    ├── sample_datasets/
+    ├── author_profiles/
+    └── api_responses/
+```
+
+### Test Coverage
+
+- **Minimum Required**: 80% (enforced by CI/CD)
+- **Target**: 90%+ for core business logic
+- **Current Coverage**: View with `make test-coverage` and open `htmlcov/index.html`
+
+#### Coverage by Module
+- **Core Models**: Pydantic validation, properties, business logic
+- **Storage System**: File I/O, JSON/YAML/JSONL handling, error cases
+- **Dataset Builder**: Content processing, imports, user interactions  
+- **OpenAI Adapter**: Full API mocking, job management, error scenarios
+- **CLI Commands**: End-to-end command testing with Typer
+
+### Writing Tests
+
+#### Guidelines
+1. **Follow AAA Pattern**: Arrange, Act, Assert
+2. **Use Descriptive Names**: `test_author_profile_creation_with_custom_style_guide`
+3. **Test Edge Cases**: Include error conditions and boundary cases
+4. **Mock External Dependencies**: Don't hit real APIs or file systems
+5. **Keep Tests Independent**: Each test should be isolated
+
+#### Example Test
+```python
+def test_author_profile_creation(sample_style_guide):
+    """Test AuthorProfile creation with custom StyleGuide."""
+    # Arrange
+    profile_data = {
+        "author_id": "test_author",
+        "name": "Test Author", 
+        "style_guide": sample_style_guide
+    }
+    
+    # Act
+    profile = AuthorProfile(**profile_data)
+    
+    # Assert
+    assert profile.author_id == "test_author"
+    assert profile.name == "Test Author"
+    assert profile.style_guide == sample_style_guide
+```
+
+### Continuous Integration
+
+Tests run automatically on:
+- **Push/PR to main/develop branches** 
+- **Multiple Python versions**: 3.8, 3.9, 3.10, 3.11
+- **Code quality checks**: linting, formatting, type checking, security
+
+#### GitHub Actions Jobs
+- **test**: Run unit and integration tests across Python versions
+- **lint**: Code formatting (black, isort), linting (flake8), typing (mypy)  
+- **security**: Security scanning with bandit
+
+### Troubleshooting Tests
+
+#### Common Issues
+```bash
+# Import errors - ensure PYTHONPATH is set
+export PYTHONPATH=$PWD
+python -m pytest
+
+# Permission errors - use temp directories in tests
+pytest --basetemp=/tmp/pytest
+
+# Slow tests - run fast subset only
+python -m pytest -m "not slow"
+
+# Debug specific test
+python -m pytest tests/unit/test_models.py::test_author_profile_creation -v -s --pdb
+```
+
+#### Test Markers
+```bash
+# Available markers
+python -m pytest --markers
+
+# Run by marker
+python -m pytest -m unit           # Unit tests only
+python -m pytest -m integration    # Integration tests only  
+python -m pytest -m "not slow"     # Exclude slow tests
+python -m pytest -m openai         # OpenAI-related tests only
+```
+
+### Performance Testing
+
+For performance-sensitive tests:
+```bash
+# Time test execution
+python -m pytest --durations=10    # Show 10 slowest tests
+python -m pytest --benchmark-only  # Run benchmark tests only
+```
+
+### Test Documentation
+
+- **Comprehensive Guide**: See [TESTING.md](TESTING.md) for detailed documentation
+- **API Documentation**: Tests serve as examples of API usage
+- **Coverage Reports**: Generated in `htmlcov/` directory
+
+---
+
 ## Contributing
 
 This project is in early development. Contributions, feedback, and suggestions are welcome!
+
+### Development Setup
+```bash
+# Clone and setup
+git clone https://github.com/manu72/ghostwriter.git
+cd ghostwriter
+python3 -m venv .venv
+source .venv/bin/activate
+pip install -r requirements.txt
+
+# Setup development tools
+make dev-install  # Installs pre-commit hooks
+
+# Before submitting PR
+make check        # Run all quality checks
+make test         # Ensure tests pass
+```
+
+### Code Quality Standards
+- **Test Coverage**: Maintain 80%+ coverage for new code
+- **Type Hints**: Use type annotations for all new functions
+- **Documentation**: Update relevant docs for new features
+- **Security**: No hardcoded secrets or unsafe patterns
 
 ## License
 
