@@ -15,14 +15,14 @@ class TestSettings:
         monkeypatch.delenv("GEMINI_API_KEY", raising=False)
         monkeypatch.delenv("DEBUG", raising=False)
         monkeypatch.delenv("LOG_LEVEL", raising=False)
-        
+
         with patch("core.config.Path") as mock_path:
             # Mock Path to use tmp_path
             mock_path.return_value = tmp_path
             settings = Settings(
-                data_dir=tmp_path / "data", 
+                data_dir=tmp_path / "data",
                 authors_dir=tmp_path / "data" / "authors",
-                _env_file=None  # Disable .env file loading
+                _env_file=None,  # Disable .env file loading
             )
 
             assert settings.openai_api_key is None
@@ -100,12 +100,12 @@ class TestSettings:
         monkeypatch.delenv("OPENAI_API_KEY", raising=False)
         monkeypatch.delenv("OPENAI_ORG_ID", raising=False)
         monkeypatch.delenv("GEMINI_API_KEY", raising=False)
-        
+
         # Without API key
         settings = Settings(
-            data_dir=tmp_path / "data", 
+            data_dir=tmp_path / "data",
             authors_dir=tmp_path / "data" / "authors",
-            _env_file=None
+            _env_file=None,
         )
         assert settings.has_openai_key() is False
 
@@ -114,7 +114,7 @@ class TestSettings:
             openai_api_key="test-key",
             data_dir=tmp_path / "data",
             authors_dir=tmp_path / "data" / "authors",
-            _env_file=None
+            _env_file=None,
         )
         assert settings_with_key.has_openai_key() is True
 
@@ -123,7 +123,7 @@ class TestSettings:
             openai_api_key="",
             data_dir=tmp_path / "data",
             authors_dir=tmp_path / "data" / "authors",
-            _env_file=None
+            _env_file=None,
         )
         assert settings_empty.has_openai_key() is False
 
@@ -133,11 +133,12 @@ class TestSettings:
         monkeypatch.delenv("OPENAI_API_KEY", raising=False)
         monkeypatch.delenv("OPENAI_ORG_ID", raising=False)
         monkeypatch.delenv("GEMINI_API_KEY", raising=False)
-        
+
         # Without API key
         settings = Settings(
-            data_dir=tmp_path / "data", authors_dir=tmp_path / "data" / "authors",
-            _env_file=None
+            data_dir=tmp_path / "data",
+            authors_dir=tmp_path / "data" / "authors",
+            _env_file=None,
         )
         assert settings.has_gemini_key() is False
 
@@ -146,7 +147,7 @@ class TestSettings:
             gemini_api_key="test-key",
             data_dir=tmp_path / "data",
             authors_dir=tmp_path / "data" / "authors",
-            _env_file=None
+            _env_file=None,
         )
         assert settings_with_key.has_gemini_key() is True
 
@@ -155,7 +156,7 @@ class TestSettings:
             gemini_api_key="",
             data_dir=tmp_path / "data",
             authors_dir=tmp_path / "data" / "authors",
-            _env_file=None
+            _env_file=None,
         )
         assert settings_empty.has_gemini_key() is False
 
@@ -165,13 +166,13 @@ class TestSettings:
         monkeypatch.delenv("OPENAI_API_KEY", raising=False)
         monkeypatch.delenv("OPENAI_ORG_ID", raising=False)
         monkeypatch.delenv("GEMINI_API_KEY", raising=False)
-        
+
         settings = Settings(
             openai_api_key="openai-key",
             gemini_api_key="gemini-key",
             data_dir=tmp_path / "data",
             authors_dir=tmp_path / "data" / "authors",
-            _env_file=None
+            _env_file=None,
         )
 
         # Valid providers with keys
@@ -183,8 +184,9 @@ class TestSettings:
 
         # Valid providers without keys
         settings_no_keys = Settings(
-            data_dir=tmp_path / "data", authors_dir=tmp_path / "data" / "authors",
-            _env_file=None
+            data_dir=tmp_path / "data",
+            authors_dir=tmp_path / "data" / "authors",
+            _env_file=None,
         )
         assert settings_no_keys.validate_provider_access("openai") is False
         assert settings_no_keys.validate_provider_access("gemini") is False
@@ -195,13 +197,13 @@ class TestSettings:
         monkeypatch.delenv("OPENAI_API_KEY", raising=False)
         monkeypatch.delenv("OPENAI_ORG_ID", raising=False)
         monkeypatch.delenv("GEMINI_API_KEY", raising=False)
-        
+
         settings = Settings(
             openai_api_key="openai-key",
             # No gemini key
             data_dir=tmp_path / "data",
             authors_dir=tmp_path / "data" / "authors",
-            _env_file=None
+            _env_file=None,
         )
 
         assert settings.validate_provider_access("openai") is True
@@ -212,16 +214,18 @@ class TestSettings:
         # Since load_dotenv() is called at module level,
         # we just verify it exists and doesn't error
         import core.config
-        assert hasattr(core.config, 'load_dotenv')
+
+        assert hasattr(core.config, "load_dotenv")
 
     def test_config_class_settings(self, tmp_path):
         """Test model configuration settings."""
         settings = Settings(
-            data_dir=tmp_path / "data", authors_dir=tmp_path / "data" / "authors",
-            _env_file=None
+            data_dir=tmp_path / "data",
+            authors_dir=tmp_path / "data" / "authors",
+            _env_file=None,
         )
 
-        # Test that config is properly set  
+        # Test that config is properly set
         config = settings.model_config
         assert config.get("env_file") == ".env"
         assert config.get("case_sensitive") is False
@@ -230,11 +234,12 @@ class TestSettings:
     def test_field_descriptions(self, tmp_path):
         """Test field descriptions are properly set."""
         settings = Settings(
-            data_dir=tmp_path / "data", authors_dir=tmp_path / "data" / "authors",
-            _env_file=None
+            data_dir=tmp_path / "data",
+            authors_dir=tmp_path / "data" / "authors",
+            _env_file=None,
         )
 
-        # Check that fields have proper descriptions  
+        # Check that fields have proper descriptions
         fields = Settings.model_fields
         assert "Base directory for all data storage" in str(fields["data_dir"])
         assert "Directory for author profiles" in str(fields["authors_dir"])

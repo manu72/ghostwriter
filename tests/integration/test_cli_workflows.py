@@ -168,13 +168,15 @@ class TestDatasetCommands:
     @patch("cli.commands.dataset.get_author_profile")
     @patch("cli.commands.dataset.AuthorStorage")
     @patch("cli.commands.dataset.DatasetBuilder")
-    def test_dataset_build_command(self, mock_builder_class, mock_storage_class, mock_get_author):
+    def test_dataset_build_command(
+        self, mock_builder_class, mock_storage_class, mock_get_author
+    ):
         """Test dataset build command."""
         # Mock author profile
         mock_profile = Mock()
         mock_profile.name = "Test Author"
         mock_get_author.return_value = mock_profile
-        
+
         # Mock storage exists check
         mock_storage = Mock()
         mock_storage.exists.return_value = True
@@ -198,7 +200,7 @@ class TestDatasetCommands:
         """Test dataset build with non-existent author."""
         # Mock get_author_profile to return None (author doesn't exist)
         mock_get_author.return_value = None
-        
+
         mock_storage = Mock()
         mock_storage.exists.return_value = False
         mock_storage_class.return_value = mock_storage
@@ -217,7 +219,7 @@ class TestDatasetCommands:
         mock_profile = Mock()
         mock_profile.name = "Test Author"
         mock_get_author.return_value = mock_profile
-        
+
         # Mock storage and dataset
         mock_storage = Mock()
         mock_storage.exists.return_value = True
@@ -246,13 +248,19 @@ class TestTrainCommands:
     @patch("cli.commands.train.AuthorStorage")
     @patch("cli.commands.train.OpenAIAdapter")
     @patch("cli.commands.train.DatasetValidator")
-    def test_train_start_command(self, mock_validator_class, mock_adapter_class, mock_storage_class, mock_get_author):
+    def test_train_start_command(
+        self,
+        mock_validator_class,
+        mock_adapter_class,
+        mock_storage_class,
+        mock_get_author,
+    ):
         """Test train start command."""
         # Mock author profile
         mock_profile = Mock()
         mock_profile.name = "Test Author"
         mock_get_author.return_value = mock_profile
-        
+
         # Mock storage
         mock_storage = Mock()
         mock_storage.exists.return_value = True
@@ -293,7 +301,7 @@ class TestTrainCommands:
         mock_profile = Mock()
         mock_profile.name = "Test Author"
         mock_get_author.return_value = mock_profile
-        
+
         mock_storage = Mock()
         mock_storage.exists.return_value = True
         mock_dataset = Mock()
@@ -315,7 +323,7 @@ class TestTrainCommands:
         mock_profile = Mock()
         mock_profile.name = "Test Author"
         mock_get_author.return_value = mock_profile
-        
+
         # Mock storage and metadata
         mock_storage = Mock()
         mock_storage.exists.return_value = True
