@@ -148,7 +148,7 @@ def clear_dataset(
 
     if Confirm.ask("Are you sure you want to continue?"):
         # Create empty dataset
-        from ...core.models import Dataset
+        from core.models import Dataset
 
         empty_dataset = Dataset(author_id=author_id)
         storage.save_dataset(empty_dataset)

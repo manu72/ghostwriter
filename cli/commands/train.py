@@ -67,7 +67,6 @@ def start_training(
         adapter = OpenAIAdapter()
     except ValueError as e:
         console.print(f"[red]Configuration error: {e}[/red]")
-        console.print("Please set your OpenAI API key in the .env file.")
         raise typer.Exit(1)
 
     try:
