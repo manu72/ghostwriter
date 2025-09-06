@@ -6,9 +6,9 @@ This script provides convenient commands for running different types of tests
 and generating coverage reports.
 """
 
-import sys
-import subprocess
 import argparse
+import subprocess
+import sys
 from pathlib import Path
 
 
@@ -16,7 +16,7 @@ def run_command(cmd, description):
     """Run a command and handle errors."""
     print(f"🚀 {description}")
     print(f"Running: {' '.join(cmd)}")
-    
+
     try:
         result = subprocess.run(cmd, check=True, capture_output=True, text=True)
         print(f"✅ {description} completed successfully")
@@ -61,14 +61,14 @@ def run_coverage_report():
     """Generate detailed coverage report."""
     cmd = ["python", "-m", "pytest", "--cov-report=html", "--cov-report=term"]
     success = run_command(cmd, "Generating coverage report")
-    
+
     if success:
         html_report = Path("htmlcov/index.html")
         if html_report.exists():
             print(f"📊 HTML coverage report generated: {html_report.absolute()}")
         else:
             print("⚠️  HTML coverage report not found")
-    
+
     return success
 
 
@@ -82,21 +82,21 @@ def check_dependencies():
     """Check if all required test dependencies are installed."""
     required_packages = [
         "pytest",
-        "pytest-cov", 
+        "pytest-cov",
         "pytest-mock",
         "pytest-typer",
         "responses",
-        "freezegun"
+        "freezegun",
     ]
-    
+
     missing_packages = []
-    
+
     for package in required_packages:
         try:
             __import__(package.replace("-", "_"))
         except ImportError:
             missing_packages.append(package)
-    
+
     if missing_packages:
         print("❌ Missing required test dependencies:")
         for package in missing_packages:
@@ -115,21 +115,20 @@ def main():
     parser.add_argument(
         "command",
         choices=["unit", "integration", "all", "fast", "coverage", "deps", "specific"],
-        help="Test command to run"
+        help="Test command to run",
     )
     parser.add_argument(
-        "--test-path",
-        help="Specific test path (for 'specific' command)"
+        "--test-path", help="Specific test path (for 'specific' command)"
     )
-    
+
     args = parser.parse_args()
-    
+
     # Check dependencies first
     if not check_dependencies():
         sys.exit(1)
-    
+
     success = True
-    
+
     if args.command == "unit":
         success = run_unit_tests()
     elif args.command == "integration":
@@ -147,10 +146,10 @@ def main():
             print("❌ --test-path is required for 'specific' command")
             sys.exit(1)
         success = run_specific_test(args.test_path)
-    
+
     if not success:
         sys.exit(1)
-    
+
     print("\n🎉 Test execution completed successfully!")
 
 
