@@ -346,10 +346,30 @@ make test         # Ensure tests pass
 ```
 
 ### Code Quality Standards
+- **Formatting**: Use `black` and `isort` for consistent code formatting
+- **Linting**: Pass `flake8` and `mypy` checks without errors
 - **Test Coverage**: Maintain 80%+ coverage for new code
 - **Type Hints**: Use type annotations for all new functions
 - **Documentation**: Update relevant docs for new features
 - **Security**: No hardcoded secrets or unsafe patterns
+
+### Pre-commit Checklist
+Before submitting a PR:
+```bash
+# Format code
+black .
+isort .
+
+# Run quality checks
+flake8
+mypy .
+
+# Run tests
+python -m pytest
+
+# Or use the comprehensive check
+make check  # if Makefile available
+```
 
 ## License
 
