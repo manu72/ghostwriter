@@ -39,34 +39,34 @@ This document defines the **vision, principles, architecture, feature scope, and
 
 ## 5. Scope and Features
 
-### Stage 1 – Terminal Proof of Concept
+### Stage 1 Terminal Proof of Concept
 
-- CLI to create an author profile.
-- Guided dataset builder (100–500 examples).
+- Simple CLI commands to create an author profile.
+- Guided dataset builder to create 100 - 500 correctly formatted json examples. JSON examples to be stored locally and separately for each author.
 - Fine-tune orchestration for one provider (OpenAI or Gemini).
-- Draft generation via the tuned author.
+- Draft content generation via the tuned author.
 - Feedback collection (ratings + edits).
 - Dataset regeneration and retraining from feedback.
 
-### Stage 2 – Browser UI
+### Stage 2 Browser UI
 
 - Basic web interface with inline editing.
 - Upload writing samples.
 - Dashboard showing fine-tune progress and draft history.
 
-### Stage 3 – Multi-Model
+### Stage 3 Multi-Model
 
 - Support for OpenAI, Gemini, and local LLMs (Ollama).
 - LoRA/PEFT fine-tuning for small local models.
 - Prompt-tuned mode for models without fine-tuning.
 
-### Stage 4 – Multi-User Accounts
+### Stage 4 Multi-User Accounts
 
 - Authentication (passwordless, GitHub, or email).
 - Per-user isolated storage of authors and datasets.
 - Bring-your-own-key support.
 
-### Stage 5 – Production UI/UX
+### Stage 5 Production UI/UX
 
 - Polished dashboard with versioning, rollback, and analytics.
 - Job queueing and cost controls.
