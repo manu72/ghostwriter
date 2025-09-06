@@ -12,7 +12,7 @@ class AuthorStorage:
     def __init__(self, author_id: str) -> None:
         self.author_id = author_id
         self.author_dir = settings.authors_dir / author_id
-        self.author_dir.mkdir(exist_ok=True)
+        self.author_dir.mkdir(parents=True, exist_ok=True)
 
     def save_profile(self, profile: AuthorProfile) -> None:
         profile_path = self.author_dir / "profile.json"

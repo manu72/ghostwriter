@@ -44,8 +44,8 @@ class Settings(BaseSettings):
             self.ensure_directories()
 
     def ensure_directories(self) -> None:
-        self.data_dir.mkdir(exist_ok=True)
-        self.authors_dir.mkdir(exist_ok=True)
+        self.data_dir.mkdir(parents=True, exist_ok=True)
+        self.authors_dir.mkdir(parents=True, exist_ok=True)
 
     def has_openai_key(self) -> bool:
         return bool(self.openai_api_key)

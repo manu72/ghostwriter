@@ -19,7 +19,8 @@ class OpenAIAdapter:
     def __init__(self) -> None:
         if not settings.has_openai_key():
             raise ValueError(
-                "OpenAI API key not found. Please set OPENAI_API_KEY in your .env file."
+                "OpenAI API key not found. Please set OPENAI_API_KEY in your .env file.\n"
+                "Copy .env.example to .env and add your API key."
             )
 
         self.client = openai.OpenAI(

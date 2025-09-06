@@ -5,6 +5,7 @@ from rich.table import Table
 
 from cli.commands.author import author_app
 from cli.commands.dataset import dataset_app
+from cli.commands.generate import generate_app
 from cli.commands.train import train_app
 
 console = Console()
@@ -19,6 +20,9 @@ app = typer.Typer(
 app.add_typer(author_app, name="author", help="Manage author profiles")
 app.add_typer(dataset_app, name="dataset", help="Build and manage training datasets")
 app.add_typer(train_app, name="train", help="Fine-tune and manage models")
+app.add_typer(
+    generate_app, name="generate", help="Generate content with fine-tuned models"
+)
 
 
 @app.command()
@@ -107,6 +111,9 @@ def status() -> None:
         "• [cyan]ghostwriter dataset build <author>[/cyan] - Build training dataset"
     )
     console.print("• [cyan]ghostwriter train start <author>[/cyan] - Start fine-tuning")
+    console.print(
+        "• [cyan]ghostwriter generate text <author>[/cyan] - Generate content"
+    )
 
 
 @app.command()
