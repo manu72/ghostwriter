@@ -239,7 +239,7 @@ Another valid paragraph.
     @patch(
         "builtins.open",
         new_callable=mock_open,
-        read_data="First paragraph.\n\nSecond paragraph.",
+        read_data="This is the first paragraph with enough content to pass the minimum length requirement for testing purposes.\n\nThis is the second paragraph which also has sufficient content to meet the length requirements for the dataset builder test.",
     )
     @patch("core.dataset.builder.Path")
     def test_import_from_file(
