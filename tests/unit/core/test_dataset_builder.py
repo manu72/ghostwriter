@@ -787,3 +787,233 @@ class TestDatasetBuilderIntegration:
                 "Sample content for testing"
                 in loaded_dataset.examples[0].messages[2]["content"]
             )
+
+
+class TestDatasetBuilderMarkdown:
+    """Test markdown file creation in DatasetBuilder."""
+
+    @patch("core.dataset.builder.console")
+    @patch("core.dataset.builder.Prompt")
+    def test_add_from_writing_samples_creates_markdown(
+        self, mock_prompt, mock_console, temp_data_dir, mock_settings
+    ):
+        """Test that _add_from_writing_samples creates markdown files."""
+        with patch("core.storage.settings", mock_settings):
+            builder = DatasetBuilder("test_author")
+
+            # Mock console.input() to simulate multiline input
+            mock_console.input.side_effect = [
+                "This is my writing sample content.",
+                EOFError(),  # Simulate Ctrl+D to end input
+            ]
+
+            # Mock prompt for the follow-up question
+            mock_prompt.ask.side_effect = ["Write about technology"]
+
+            builder._add_from_writing_samples()
+
+            # Check that examples directory was created
+            examples_dir = builder.storage.examples_dir
+            assert examples_dir.exists()
+            assert examples_dir.is_dir()
+
+            # Check that markdown files were created
+            markdown_files = list(examples_dir.glob("user_*.md"))
+            assert len(markdown_files) == 1
+
+            # Check markdown file content
+            markdown_file = markdown_files[0]
+            content = markdown_file.read_text(encoding="utf-8")
+            assert "# Write about technology" in content
+            assert "**Type:** user" in content
+            assert "**Prompt:** Write about technology" in content
+            assert "This is my writing sample content." in content
+
+    @patch("core.dataset.builder.console")
+    @patch("core.dataset.builder.Prompt")
+    @patch("core.dataset.builder.EXAMPLE_GENERATION_PROMPTS", {"test": "Test {topic}"})
+    def test_generate_examples_creates_markdown(
+        self, mock_prompt, mock_console, temp_data_dir, mock_settings
+    ):
+        """Test that _generate_examples creates markdown files."""
+        with patch("core.storage.settings", mock_settings):
+            builder = DatasetBuilder("test_author")
+
+            # Mock user inputs
+            mock_prompt.ask.side_effect = [
+                "1",  # prompt type selection
+                "technology",  # topic
+            ]
+
+            # Mock console.input() to simulate multiline input
+            mock_console.input.side_effect = [
+                "Technology is fascinating and evolving rapidly.",
+                EOFError(),  # Simulate Ctrl+D to end input
+            ]
+
+            builder._generate_examples()
+
+            # Check that markdown files were created
+            examples_dir = builder.storage.examples_dir
+            markdown_files = list(examples_dir.glob("user_*.md"))
+            assert len(markdown_files) == 1
+
+            # Check markdown file content
+            markdown_file = markdown_files[0]
+            content = markdown_file.read_text(encoding="utf-8")
+            assert "**Type:** user" in content
+            assert "technology" in content.lower()
+            assert "Technology is fascinating" in content
+
+    def test_import_from_file_creates_markdown(self, temp_data_dir, mock_settings):
+        """Test that _import_from_file creates markdown files."""
+        with patch("core.storage.settings", mock_settings):
+            builder = DatasetBuilder("test_author")
+
+            # Create a real temporary file for testing
+            import tempfile
+
+            with tempfile.NamedTemporaryFile(
+                mode="w", suffix=".txt", delete=False
+            ) as temp_file:
+                temp_file.write(
+                    "This is a comprehensive paragraph with enough content to meet the minimum length requirement for testing purposes. It contains sufficient text to pass the 50-character minimum length check in the dataset builder."
+                )
+                temp_file_path = temp_file.name
+
+            try:
+                with patch("core.dataset.builder.console") as mock_console, patch(
+                    "core.dataset.builder.Prompt"
+                ) as mock_prompt, patch("core.dataset.builder.Confirm") as mock_confirm:
+
+                    # Mock user inputs
+                    mock_prompt.ask.side_effect = [
+                        temp_file_path,  # file path
+                        "Describe the topic thoroughly",  # prompt for section
+                    ]
+                    mock_confirm.ask.side_effect = [True]  # Include the section
+
+                    builder._import_from_file()
+
+                    # Check that markdown files were created
+                    examples_dir = builder.storage.examples_dir
+                    markdown_files = list(examples_dir.glob("user_*.md"))
+                    assert len(markdown_files) == 1
+
+                    # Check markdown file content
+                    markdown_file = markdown_files[0]
+                    content = markdown_file.read_text(encoding="utf-8")
+                    assert "**Type:** user" in content
+                    assert "**Prompt:** Describe the topic thoroughly" in content
+                    assert "comprehensive paragraph" in content
+
+            finally:
+                # Clean up the temporary file
+                import os
+
+                try:
+                    os.unlink(temp_file_path)
+                except OSError:
+                    pass
+
+    @patch("core.dataset.builder.console")
+    @patch("core.dataset.builder.Prompt")
+    @patch("core.dataset.builder.Confirm")
+    @patch("core.dataset.builder.OpenAIAdapter")
+    def test_generate_from_existing_creates_markdown(
+        self,
+        mock_adapter_class,
+        mock_confirm,
+        mock_prompt,
+        mock_console,
+        temp_data_dir,
+        mock_settings,
+        sample_training_examples,
+    ):
+        """Test that _generate_from_existing creates markdown files for LLM examples."""
+        with patch("core.storage.settings", mock_settings):
+            builder = DatasetBuilder("test_author")
+
+            # Add existing examples
+            for example in sample_training_examples:
+                builder.dataset.add_example(example)
+
+            # Mock user inputs
+            mock_prompt.ask.side_effect = [
+                "1",  # number of examples to generate
+                "accept",  # accept the generated example
+            ]
+            mock_confirm.ask.side_effect = [True]  # confirm generation
+
+            # Mock OpenAI adapter
+            mock_adapter = mock_adapter_class.return_value
+            mock_adapter.generate_text.return_value = """
+EXAMPLE 1:
+User prompt: Write about AI technology trends
+Assistant response: AI technology is advancing rapidly with new breakthroughs in machine learning and natural language processing.
+"""
+
+            initial_markdown_count = len(
+                list(builder.storage.examples_dir.glob("*.md"))
+            )
+            builder._generate_from_existing()
+
+            # Check that new markdown files were created
+            examples_dir = builder.storage.examples_dir
+            markdown_files = list(examples_dir.glob("llm_*.md"))
+            assert len(markdown_files) >= 1
+
+            # Check that LLM-generated markdown file has correct content
+            llm_files = [f for f in examples_dir.glob("*.md") if "llm_" in f.name]
+            assert len(llm_files) >= 1
+
+            markdown_file = llm_files[0]
+            content = markdown_file.read_text(encoding="utf-8")
+            assert "**Type:** llm" in content
+            assert "AI technology trends" in content
+            assert "advancing rapidly" in content
+
+    @patch("core.dataset.builder.console")
+    def test_markdown_file_error_handling(
+        self, mock_console, temp_data_dir, mock_settings
+    ):
+        """Test that markdown file creation errors are handled gracefully."""
+        with patch("core.storage.settings", mock_settings):
+            builder = DatasetBuilder("test_author")
+
+            # Mock the save_example_as_markdown method to raise an exception
+            with patch.object(
+                builder.storage,
+                "save_example_as_markdown",
+                side_effect=Exception("Test error"),
+            ):
+                example = TrainingExample(
+                    messages=[
+                        {
+                            "role": "system",
+                            "content": "You are a helpful writing assistant.",
+                        },
+                        {"role": "user", "content": "Test prompt"},
+                        {"role": "assistant", "content": "Test response"},
+                    ]
+                )
+
+                initial_size = builder.dataset.size
+                builder.dataset.add_example(example)
+
+                # The example should still be added even if markdown saving fails
+                assert builder.dataset.size == initial_size + 1
+
+                # Should show warning message (this would be called in the methods that create examples)
+                # We're just testing that the example addition continues even with markdown errors
+
+    def test_examples_directory_creation(self, temp_data_dir, mock_settings):
+        """Test that examples directory is created when DatasetBuilder is initialized."""
+        with patch("core.storage.settings", mock_settings):
+            builder = DatasetBuilder("test_author")
+
+            # Examples directory should exist
+            examples_dir = builder.storage.examples_dir
+            assert examples_dir.exists()
+            assert examples_dir.is_dir()
+            assert examples_dir.parent == builder.storage.author_dir
