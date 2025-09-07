@@ -475,7 +475,7 @@ class DatasetBuilder:
                 # Look for any text that might be a prompt and response
                 lines = response.split("\n")
                 current_prompt = None
-                current_response = []
+                current_response: list[str] = []
 
                 for line in lines:
                     line = line.strip()
