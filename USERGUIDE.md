@@ -32,8 +32,10 @@ cp .env.example .env
 ```
 
 Your `.env` file should look like:
+
 ```
 OPENAI_API_KEY=sk-your-actual-api-key-here
+GEMINI_API_KEY=your_gemini_api_key_here
 OPENAI_ORG_ID=your_openai_org_id_here_optional
 ```
 
@@ -48,12 +50,14 @@ python -m cli.main init
 ```
 
 This will walk you through creating an author profile with:
-- Author name and description  
+
+- Author name and description
 - Writing style preferences (tone, voice, formality)
 - Topics you write about
 - Style notes
 
 **Alternative**: Create an author directly:
+
 ```bash
 python -m cli.main author create my_author --name "My Author" --description "Test author"
 ```
@@ -67,6 +71,7 @@ python -m cli.main dataset build my_author
 ```
 
 This opens an interactive menu where you can:
+
 1. **Add examples from writing samples** - Paste your existing writing
 2. **Generate examples from prompts** - Create prompt/response pairs
 3. **Import from text file** - Upload a text file to extract examples
@@ -82,6 +87,7 @@ python -m cli.main dataset validate my_author
 ```
 
 This checks:
+
 - Dataset size (warns if < 10 examples)
 - Format correctness
 - Content quality
@@ -99,6 +105,7 @@ python -m cli.main train start my_author
 **Note**: This requires a valid OpenAI API key and will incur costs (~$8-12 for a small dataset).
 
 Options:
+
 - `--wait` - Wait for training to complete (20+ minutes)
 - `--model gpt-3.5-turbo` - Specify base model (default)
 
@@ -117,22 +124,27 @@ python -m cli.main generate interactive my_author
 ## Monitoring and Management
 
 ### Check Overall Status
+
 ```bash
 python -m cli.main status
 ```
+
 Shows all authors, dataset sizes, and training status.
 
 ### View Author Details
+
 ```bash
 python -m cli.main author show my_author
 ```
 
 ### Check Training Progress
+
 ```bash
 python -m cli.main train status my_author
 ```
 
 ### View Dataset Information
+
 ```bash
 python -m cli.main dataset show my_author
 ```
@@ -140,20 +152,23 @@ python -m cli.main dataset show my_author
 ## Testing Scenarios
 
 ### Scenario 1: Complete Happy Path
+
 1. Run `init` and create author with guided setup
 2. Build dataset with 15+ examples using different input methods
-3. Validate dataset (should show "READY" or "ACCEPTABLE")  
+3. Validate dataset (should show "READY" or "ACCEPTABLE")
 4. Start training and wait for completion
 5. Generate content with various prompts
 6. Verify generated content matches author's style
 
 ### Scenario 2: Error Handling
+
 1. Try commands without setting up API key (should show clear error)
 2. Try to train with insufficient dataset (< 10 examples)
 3. Try to generate content without a trained model
 4. Test with invalid author names
 
 ### Scenario 3: Dataset Management
+
 1. Create multiple authors with different styles
 2. Test dataset import from text files
 3. Clear and rebuild datasets
@@ -162,6 +177,7 @@ python -m cli.main dataset show my_author
 ## Expected Behavior
 
 ### ✅ Success Indicators
+
 - Author creation completes without errors
 - Dataset building saves examples correctly
 - Validation shows "READY FOR FINE-TUNING" or "ACCEPTABLE WITH CAUTION"
@@ -169,6 +185,7 @@ python -m cli.main dataset show my_author
 - Generated content reflects the author's style
 
 ### ⚠️ Known Limitations (Stage 1 POC)
+
 - Only supports OpenAI fine-tuning (gpt-3.5-turbo)
 - No feedback/improvement loop yet
 - Limited to local file storage
@@ -180,24 +197,29 @@ python -m cli.main dataset show my_author
 ### Common Issues
 
 **"OpenAI API key not found"**
+
 - Check that `.env` file exists and contains valid API key
 - Ensure `.env` is in the project root directory
 
 **"No fine-tuned model found"**
+
 - Complete training first with `train start`
 - Check training status with `train status`
 
 **"Dataset validation failed"**
+
 - Add more examples (minimum 10 recommended)
 - Check example format in dataset review
 
 **"Permission denied" or directory errors**
+
 - Ensure write permissions in project directory
 - Try running from project root
 
 ### Getting Help
 
 **View command help:**
+
 ```bash
 python -m cli.main --help
 python -m cli.main author --help
@@ -209,6 +231,7 @@ python -m cli.main dataset --help
 ## Cost Expectations
 
 Fine-tuning costs with OpenAI (as of 2024):
+
 - Small dataset (10-50 examples): ~$3-8
 - Medium dataset (50-100 examples): ~$8-15
 - Token costs for generation: ~$0.01-0.02 per 1000 tokens
@@ -219,7 +242,7 @@ The Stage 1 POC is working correctly if:
 
 1. ✅ You can create an author profile in under 5 minutes
 2. ✅ Dataset building is intuitive and supports multiple input methods
-3. ✅ Validation provides clear feedback on dataset quality  
+3. ✅ Validation provides clear feedback on dataset quality
 4. ✅ Fine-tuning completes without technical errors
 5. ✅ Generated content noticeably reflects the input writing style
 6. ✅ Error messages are helpful and actionable
