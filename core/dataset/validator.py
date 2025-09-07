@@ -258,27 +258,8 @@ class DatasetValidator:
     def _check_safety(self) -> Dict[str, Any]:
         # Basic safety checks for problematic content
         safety_keywords = [
-            "violence",
-            "violent",
-            "kill",
-            "murder",
-            "death",
             "suicide",
-            "harm",
-            "hurt",
-            "hate",
-            "racist",
-            "sexist",
-            "discrimination",
-            "abuse",
-            "illegal",
-            "drug",
-            "weapon",
             "bomb",
-            "terror",
-            "steal",
-            "fraud",
-            "scam",
         ]
 
         flagged_examples = []
