@@ -17,7 +17,7 @@ def generate_text(
         None, "--prompt", "-p", help="Prompt for text generation"
     ),
     max_completion_tokens: int = typer.Option(
-        500, "--max-tokens", help="Maximum tokens to generate"
+        500, "--max-completion-tokens", help="Maximum tokens to generate"
     ),
 ):
     """✍️  Generate text using a fine-tuned model."""

@@ -302,7 +302,7 @@ def generate_text(
         None, "--model", "-m", help="Specific model ID (default: latest successful)"
     ),
     max_completion_tokens: int = typer.Option(
-        500, "--max-tokens", help="Maximum tokens to generate"
+        500, "--max-completion-tokens", help="Maximum tokens to generate"
     ),
 ):
     """✍️  Generate text using a fine-tuned model."""
