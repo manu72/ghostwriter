@@ -16,8 +16,8 @@ def generate_text(
     prompt: str = typer.Option(
         None, "--prompt", "-p", help="Prompt for text generation"
     ),
-    max_tokens: int = typer.Option(
-        500, "--max-tokens", help="Maximum tokens to generate"
+    max_completion_tokens: int = typer.Option(
+        500, "--max-completion-tokens", help="Maximum tokens to generate"
     ),
 ):
     """✍️  Generate text using a fine-tuned model."""
@@ -48,7 +48,7 @@ def generate_text(
 
     try:
         adapter = OpenAIAdapter()
-        response = adapter.generate_text(model_id, prompt, max_tokens)
+        response = adapter.generate_text(model_id, prompt, max_completion_tokens)
 
         console.print(
             Panel(
@@ -113,7 +113,9 @@ def interactive_generation(
                 continue
 
             try:
-                response = adapter.generate_text(model_id, prompt, 500)
+                response = adapter.generate_text(
+                    model_id, prompt, max_completion_tokens=500
+                )
                 console.print(
                     Panel(
                         response,

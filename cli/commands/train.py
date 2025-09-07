@@ -301,8 +301,8 @@ def generate_text(
     model_id: str = typer.Option(
         None, "--model", "-m", help="Specific model ID (default: latest successful)"
     ),
-    max_tokens: int = typer.Option(
-        500, "--max-tokens", help="Maximum tokens to generate"
+    max_completion_tokens: int = typer.Option(
+        500, "--max-completion-tokens", help="Maximum tokens to generate"
     ),
 ):
     """✍️  Generate text using a fine-tuned model."""
@@ -344,7 +344,7 @@ def generate_text(
 
     try:
         adapter = OpenAIAdapter()
-        response = adapter.generate_text(model_id, prompt, max_tokens)
+        response = adapter.generate_text(model_id, prompt, max_completion_tokens)
 
         console.print(
             Panel(

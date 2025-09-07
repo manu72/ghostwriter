@@ -115,9 +115,14 @@ Another valid paragraph.
         with patch("core.storage.settings", mock_settings):
             builder = DatasetBuilder("test_author")
 
-            # Mock user inputs
+            # Mock console.input() to simulate multiline input
+            mock_console.input.side_effect = [
+                "Sample writing content here.",  # First line of input
+                EOFError(),  # Simulate Ctrl+D to end input
+            ]
+
+            # Mock prompt for the follow-up question
             mock_prompt.ask.side_effect = [
-                "Sample writing content here.",  # writing sample
                 "Write about the topic",  # prompt
             ]
 
@@ -145,8 +150,11 @@ Another valid paragraph.
         with patch("core.storage.settings", mock_settings):
             builder = DatasetBuilder("test_author")
 
-            # Mock empty sample
-            mock_prompt.ask.side_effect = ["", "Some prompt"]
+            # Mock empty input (EOF immediately)
+            mock_console.input.side_effect = [EOFError()]
+
+            # Mock prompt for the follow-up question
+            mock_prompt.ask.side_effect = ["Some prompt"]
 
             initial_size = builder.dataset.size
             builder._add_from_writing_samples()
@@ -164,8 +172,14 @@ Another valid paragraph.
         with patch("core.storage.settings", mock_settings):
             builder = DatasetBuilder("test_author")
 
+            # Mock console.input() to simulate multiline input
+            mock_console.input.side_effect = [
+                "Sample content",  # First line of input
+                EOFError(),  # Simulate Ctrl+D to end input
+            ]
+
             # Mock empty prompt
-            mock_prompt.ask.side_effect = ["Sample content", ""]
+            mock_prompt.ask.side_effect = [""]
 
             initial_size = builder.dataset.size
             builder._add_from_writing_samples()
@@ -752,8 +766,11 @@ class TestDatasetBuilderIntegration:
             builder = DatasetBuilder("integration_author")
 
             # Simulate adding from writing sample
+            mock_console.input.side_effect = [
+                "Sample content for testing",  # First line of input
+                EOFError(),  # Simulate Ctrl+D to end input
+            ]
             mock_prompt.ask.side_effect = [
-                "Sample content for testing",  # writing sample
                 "Generate sample content",  # prompt
             ]
 

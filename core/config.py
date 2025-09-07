@@ -24,10 +24,10 @@ class Settings(BaseSettings):
         "OPENAI", validation_alias=AliasChoices("llm_provider", "LLM_PROVIDER")
     )
     openai_model: str = Field(
-        "gpt-3.5-turbo", validation_alias=AliasChoices("openai_model", "OPENAI_MODEL")
+        "gpt-4o-mini", validation_alias=AliasChoices("openai_model", "OPENAI_MODEL")
     )
     gemini_model: str = Field(
-        "gemini-1.5-flash",
+        "gemini-2.5-flash",
         validation_alias=AliasChoices("gemini_model", "GEMINI_MODEL"),
     )
 
