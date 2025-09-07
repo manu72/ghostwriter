@@ -38,6 +38,9 @@ def mock_settings(temp_data_dir):
         authors_dir=temp_data_dir / "authors",
         openai_api_key="test-api-key",
         openai_org_id="test-org-id",
+        llm_provider="OPENAI",
+        openai_model="gpt-3.5-turbo",
+        gemini_model="gemini-1.5-flash",
         _skip_directory_creation=True,
     )
     return settings
@@ -260,6 +263,9 @@ def setup_test_environment(monkeypatch, temp_data_dir):
         authors_dir=temp_data_dir / "authors",
         openai_api_key="test-api-key",
         openai_org_id="test-org-id",
+        llm_provider="OPENAI",
+        openai_model="gpt-3.5-turbo",
+        gemini_model="gemini-1.5-flash",
         _skip_directory_creation=True,
     )
 

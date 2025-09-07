@@ -54,6 +54,30 @@ EXAMPLE_GENERATION_PROMPTS = {
     "newsletter_segment": "Write a newsletter segment about {topic}",
 }
 
+EXAMPLE_GENERATION_FROM_EXISTING_TEMPLATE = """Based on the following examples from a user's writing style, generate new training examples that match the same tone, voice, and format.
+
+EXISTING EXAMPLES:
+{existing_examples}
+
+Requirements for new examples:
+1. Match the writing style, tone, and voice shown above
+2. Use different topics/prompts but maintain similar response patterns  
+3. Keep similar length and complexity as existing examples
+4. Show variety in content while preserving the author's unique style
+5. Make responses natural and authentic to the established voice
+
+Generate {count} new training example(s) with this exact format:
+
+EXAMPLE 1:
+User prompt: [Create a new prompt similar to those shown above]
+Assistant response: [Write response in the established style]
+
+EXAMPLE 2:
+User prompt: [Different prompt, same style]  
+Assistant response: [Response matching the author's voice]
+
+[Continue for {count} examples...]"""
+
 
 def build_system_prompt(author_profile) -> str:
     style = author_profile.style_guide

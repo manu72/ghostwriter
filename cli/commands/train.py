@@ -5,6 +5,7 @@ from rich.prompt import Confirm, Prompt
 from rich.table import Table
 
 from core.adapters.openai_adapter import OpenAIAdapter
+from core.config import settings
 from core.dataset.validator import DatasetValidator
 from core.models import JobStatus
 from core.storage import AuthorStorage, get_author_profile
@@ -17,7 +18,7 @@ train_app = typer.Typer()
 def start_training(
     author_id: str = typer.Argument(..., help="Author ID to train model for"),
     base_model: str = typer.Option(
-        "gpt-3.5-turbo", "--model", "-m", help="Base model to fine-tune"
+        None, "--model", "-m", help="Base model to fine-tune"
     ),
     wait: bool = typer.Option(
         False, "--wait", "-w", help="Wait for training to complete"
@@ -29,6 +30,10 @@ def start_training(
     if not profile:
         console.print(f"[red]Author '{author_id}' not found.[/red]")
         raise typer.Exit(1)
+
+    # Use default model if none specified
+    if base_model is None:
+        base_model = settings.get_default_model("openai")
 
     storage = AuthorStorage(author_id)
     dataset = storage.load_dataset()
