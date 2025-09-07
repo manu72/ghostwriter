@@ -172,6 +172,7 @@ class TestOpenAIAdapterFineTuning:
 
         with patch("core.adapters.openai_adapter.settings") as mock_settings:
             mock_settings.has_openai_key.return_value = True
+            mock_settings.get_default_model.return_value = "gpt-3.5-turbo"
 
             with patch("openai.OpenAI", return_value=mock_openai_client):
                 adapter = OpenAIAdapter()

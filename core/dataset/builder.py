@@ -8,6 +8,7 @@ from rich.prompt import Confirm, Prompt
 from rich.table import Table
 
 from core.adapters.openai_adapter import OpenAIAdapter
+from core.config import settings
 from core.models import Dataset, TrainingExample
 from core.prompts.templates import (
     DATASET_BUILDING_PROMPTS,
@@ -239,7 +240,9 @@ class DatasetBuilder:
 
                 # Generate new example using OpenAI
                 response = adapter.generate_text(
-                    model_id="gpt-3.5-turbo", prompt=generation_prompt, max_tokens=800
+                    model_id=settings.get_default_model("openai"),
+                    prompt=generation_prompt,
+                    max_tokens=800,
                 )
 
                 # Parse the generated response

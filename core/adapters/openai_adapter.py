@@ -56,9 +56,13 @@ class OpenAIAdapter:
         self,
         author_id: str,
         training_file_id: str,
-        base_model: str = "gpt-3.5-turbo",
+        base_model: Optional[str] = None,
         hyperparameters: Optional[Dict[str, Any]] = None,
     ) -> FineTuneJob:
+        # Use default model if none specified
+        if base_model is None:
+            base_model = settings.get_default_model("openai")
+
         console.print(f"🚀 Starting fine-tuning job for {base_model}...")
 
         # Default hyperparameters

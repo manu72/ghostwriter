@@ -19,6 +19,18 @@ class Settings(BaseSettings):
         None, validation_alias=AliasChoices("gemini_api_key", "GEMINI_API_KEY")
     )
 
+    # Model configuration
+    llm_provider: str = Field(
+        "OPENAI", validation_alias=AliasChoices("llm_provider", "LLM_PROVIDER")
+    )
+    openai_model: str = Field(
+        "gpt-3.5-turbo", validation_alias=AliasChoices("openai_model", "OPENAI_MODEL")
+    )
+    gemini_model: str = Field(
+        "gemini-1.5-flash",
+        validation_alias=AliasChoices("gemini_model", "GEMINI_MODEL"),
+    )
+
     debug: bool = Field(False, validation_alias=AliasChoices("debug", "DEBUG"))
     log_level: str = Field(
         "info", validation_alias=AliasChoices("log_level", "LOG_LEVEL")
@@ -59,6 +71,18 @@ class Settings(BaseSettings):
         elif provider == "gemini":
             return self.has_gemini_key()
         return False
+
+    def get_default_model(self, provider: Optional[str] = None) -> str:
+        """Get the default model for the specified provider or current LLM_PROVIDER."""
+        target_provider = provider or self.llm_provider
+
+        if target_provider.upper() == "OPENAI":
+            return self.openai_model
+        elif target_provider.upper() == "GEMINI":
+            return self.gemini_model
+        else:
+            # Fallback to OpenAI model if provider is unknown
+            return self.openai_model
 
 
 settings = Settings()
