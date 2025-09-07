@@ -195,12 +195,12 @@ Another valid paragraph.
                 "1",  # prompt type selection
                 "artificial intelligence",  # topic
             ]
-            
+
             # Mock console.input() to simulate multiline input followed by EOF
             mock_console.input.side_effect = [
                 "AI is fascinating and complex...",
                 "It has many applications in modern technology.",
-                EOFError()  # Simulate Ctrl+D to end input
+                EOFError(),  # Simulate Ctrl+D to end input
             ]
 
             initial_size = builder.dataset.size
@@ -226,7 +226,7 @@ Another valid paragraph.
 
             # Mock inputs with empty response
             mock_prompt.ask.side_effect = ["1", "test topic"]
-            
+
             # Mock console.input() to simulate empty input (just EOF)
             mock_console.input.side_effect = [EOFError()]
 
@@ -513,7 +513,7 @@ Another long paragraph that should not be filtered out because it has enough con
 
             # Mock user inputs
             mock_prompt.ask.side_effect = ["1", "test topic"]
-            
+
             # Mock console.input() to simulate hitting max line limit
             lines = [f"Line {i}" for i in range(101)]  # More than max_lines (100)
             mock_console.input.side_effect = lines
@@ -528,7 +528,7 @@ Another long paragraph that should not be filtered out because it has enough con
 
                 # Should still add the example despite hitting limit
                 assert builder.dataset.size == initial_size + 1
-                
+
                 # Should warn about truncation
                 mock_console.print.assert_any_call(
                     "[yellow]Input limited to 100 lines. Content may be truncated.[/yellow]"
@@ -545,7 +545,7 @@ Another long paragraph that should not be filtered out because it has enough con
 
             # Mock user inputs
             mock_prompt.ask.side_effect = ["1", "test topic"]
-            
+
             # Mock console.input() to simulate KeyboardInterrupt
             mock_console.input.side_effect = KeyboardInterrupt()
 
@@ -559,9 +559,11 @@ Another long paragraph that should not be filtered out because it has enough con
 
                 # Should not add any examples
                 assert builder.dataset.size == initial_size
-                
+
                 # Should show cancellation message
-                mock_console.print.assert_called_with("[yellow]Input cancelled.[/yellow]")
+                mock_console.print.assert_called_with(
+                    "[yellow]Input cancelled.[/yellow]"
+                )
 
 
 class TestDatasetBuilderIntegration:

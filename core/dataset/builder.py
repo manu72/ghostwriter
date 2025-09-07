@@ -122,7 +122,7 @@ class DatasetBuilder:
         response_lines = []
         max_lines = 100  # Safety limit to prevent infinite loops
         line_count = 0
-        
+
         try:
             while line_count < max_lines:
                 line = console.input()
@@ -140,10 +140,12 @@ class DatasetBuilder:
         if not response.strip():
             console.print("[red]No response provided[/red]")
             return
-            
+
         # Warn if max lines reached
         if line_count >= max_lines:
-            console.print(f"[yellow]Input limited to {max_lines} lines. Content may be truncated.[/yellow]")
+            console.print(
+                f"[yellow]Input limited to {max_lines} lines. Content may be truncated.[/yellow]"
+            )
 
         example = TrainingExample(
             messages=[
