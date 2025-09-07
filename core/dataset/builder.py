@@ -120,18 +120,30 @@ class DatasetBuilder:
 
         # Collect multiline input using console.input() in a loop
         response_lines = []
+        max_lines = 100  # Safety limit to prevent infinite loops
+        line_count = 0
+        
         try:
-            while True:
+            while line_count < max_lines:
                 line = console.input()
                 response_lines.append(line)
+                line_count += 1
         except EOFError:
             # User pressed Ctrl+D (or Ctrl+Z on Windows) to finish input
             pass
+        except KeyboardInterrupt:
+            # User pressed Ctrl+C to cancel
+            console.print("[yellow]Input cancelled.[/yellow]")
+            return
 
         response = "\n".join(response_lines)
         if not response.strip():
             console.print("[red]No response provided[/red]")
             return
+            
+        # Warn if max lines reached
+        if line_count >= max_lines:
+            console.print(f"[yellow]Input limited to {max_lines} lines. Content may be truncated.[/yellow]")
 
         example = TrainingExample(
             messages=[

@@ -194,7 +194,13 @@ Another valid paragraph.
             mock_prompt.ask.side_effect = [
                 "1",  # prompt type selection
                 "artificial intelligence",  # topic
-                "AI is fascinating and complex...",  # response
+            ]
+            
+            # Mock console.input() to simulate multiline input followed by EOF
+            mock_console.input.side_effect = [
+                "AI is fascinating and complex...",
+                "It has many applications in modern technology.",
+                EOFError()  # Simulate Ctrl+D to end input
             ]
 
             initial_size = builder.dataset.size
@@ -206,7 +212,8 @@ Another valid paragraph.
             # Check the added example
             example = builder.dataset.examples[-1]
             assert "artificial intelligence" in example.messages[1]["content"]
-            assert example.messages[2]["content"] == "AI is fascinating and complex..."
+            assert "AI is fascinating and complex..." in example.messages[2]["content"]
+            assert "It has many applications" in example.messages[2]["content"]
 
     @patch("core.dataset.builder.console")
     @patch("core.dataset.builder.Prompt")
@@ -218,7 +225,10 @@ Another valid paragraph.
             builder = DatasetBuilder("test_author")
 
             # Mock inputs with empty response
-            mock_prompt.ask.side_effect = ["1", "test topic", ""]
+            mock_prompt.ask.side_effect = ["1", "test topic"]
+            
+            # Mock console.input() to simulate empty input (just EOF)
+            mock_console.input.side_effect = [EOFError()]
 
             initial_size = builder.dataset.size
 
@@ -491,6 +501,67 @@ Another long paragraph that should not be filtered out because it has enough con
                 # Simulate the filtering logic from _import_from_file
                 long_sections = [s for s in sections if len(s) >= 50]
                 assert len(long_sections) == 2  # Only the long paragraphs
+
+    @patch("core.dataset.builder.console")
+    @patch("core.dataset.builder.Prompt")
+    def test_generate_examples_max_lines_limit(
+        self, mock_prompt, mock_console, temp_data_dir, mock_settings
+    ):
+        """Test _generate_examples with max lines limit reached."""
+        with patch("core.storage.settings", mock_settings):
+            builder = DatasetBuilder("test_author")
+
+            # Mock user inputs
+            mock_prompt.ask.side_effect = ["1", "test topic"]
+            
+            # Mock console.input() to simulate hitting max line limit
+            lines = [f"Line {i}" for i in range(101)]  # More than max_lines (100)
+            mock_console.input.side_effect = lines
+
+            # Mock EXAMPLE_GENERATION_PROMPTS
+            with patch(
+                "core.dataset.builder.EXAMPLE_GENERATION_PROMPTS",
+                {"test": "Test prompt"},
+            ):
+                initial_size = builder.dataset.size
+                builder._generate_examples()
+
+                # Should still add the example despite hitting limit
+                assert builder.dataset.size == initial_size + 1
+                
+                # Should warn about truncation
+                mock_console.print.assert_any_call(
+                    "[yellow]Input limited to 100 lines. Content may be truncated.[/yellow]"
+                )
+
+    @patch("core.dataset.builder.console")
+    @patch("core.dataset.builder.Prompt")
+    def test_generate_examples_keyboard_interrupt(
+        self, mock_prompt, mock_console, temp_data_dir, mock_settings
+    ):
+        """Test _generate_examples with KeyboardInterrupt (Ctrl+C)."""
+        with patch("core.storage.settings", mock_settings):
+            builder = DatasetBuilder("test_author")
+
+            # Mock user inputs
+            mock_prompt.ask.side_effect = ["1", "test topic"]
+            
+            # Mock console.input() to simulate KeyboardInterrupt
+            mock_console.input.side_effect = KeyboardInterrupt()
+
+            # Mock EXAMPLE_GENERATION_PROMPTS
+            with patch(
+                "core.dataset.builder.EXAMPLE_GENERATION_PROMPTS",
+                {"test": "Test prompt"},
+            ):
+                initial_size = builder.dataset.size
+                builder._generate_examples()
+
+                # Should not add any examples
+                assert builder.dataset.size == initial_size
+                
+                # Should show cancellation message
+                mock_console.print.assert_called_with("[yellow]Input cancelled.[/yellow]")
 
 
 class TestDatasetBuilderIntegration:
