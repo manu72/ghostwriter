@@ -136,3 +136,123 @@ def save_example_as_markdown(
         f.write(content)
 
     return filepath
+
+
+def generate_content_filename(
+    author_id: str, prompt: str, timestamp: Optional[datetime] = None
+) -> str:
+    """Generate a filename for generated content files.
+
+    Format: {author_id}_{datetime}_{prompt_10chars}.md
+
+    Args:
+        author_id: The author's identifier
+        prompt: The user prompt text to derive subject from
+        timestamp: Optional timestamp, defaults to current time
+
+    Returns:
+        Generated filename string
+    """
+    if timestamp is None:
+        timestamp = datetime.now()
+
+    # Extract first 10 characters from prompt, sanitized
+    prompt_chars = sanitize_subject(prompt, max_length=10)
+
+    # Format timestamp
+    timestamp_str = timestamp.strftime("%Y%m%d_%H%M%S")
+
+    return f"{author_id}_{timestamp_str}_{prompt_chars}.md"
+
+
+def create_content_markdown(
+    prompt: str,
+    response: str,
+    author_name: str,
+    model_id: str,
+    timestamp: Optional[datetime] = None,
+) -> str:
+    """Create markdown content for generated text.
+
+    Args:
+        prompt: The user prompt
+        response: The generated response
+        author_name: The author's display name
+        model_id: The model used for generation
+        timestamp: Optional timestamp, defaults to current time
+
+    Returns:
+        Formatted markdown string
+    """
+    if timestamp is None:
+        timestamp = datetime.now()
+
+    # Format timestamp for display
+    formatted_time = timestamp.strftime("%Y-%m-%d %H:%M:%S")
+
+    return f"""# Generated Content
+
+**Author:** {author_name}  
+**Model:** {model_id}  
+**Created:** {formatted_time}  
+**Prompt:** {prompt}
+
+## Content
+
+{response}
+"""
+
+
+def ensure_content_directory(author_dir: Path) -> Path:
+    """Ensure the content directory exists for an author.
+
+    Args:
+        author_dir: Path to the author's directory
+
+    Returns:
+        Path to the content directory
+    """
+    content_dir = author_dir / "content"
+    content_dir.mkdir(exist_ok=True)
+    return content_dir
+
+
+def save_content_as_markdown(
+    author_dir: Path,
+    author_id: str,
+    author_name: str,
+    prompt: str,
+    response: str,
+    model_id: str,
+    timestamp: Optional[datetime] = None,
+) -> Path:
+    """Save generated content as a markdown file.
+
+    Args:
+        author_dir: Path to the author's directory
+        author_id: The author's identifier
+        author_name: The author's display name
+        prompt: The user prompt
+        response: The generated response
+        model_id: The model used for generation
+        timestamp: Optional timestamp, defaults to current time
+
+    Returns:
+        Path to the created markdown file
+    """
+    content_dir = ensure_content_directory(author_dir)
+
+    if timestamp is None:
+        timestamp = datetime.now()
+
+    filename = generate_content_filename(author_id, prompt, timestamp)
+    filepath = content_dir / filename
+
+    content = create_content_markdown(
+        prompt, response, author_name, model_id, timestamp
+    )
+
+    with open(filepath, "w", encoding="utf-8") as f:
+        f.write(content)
+
+    return filepath

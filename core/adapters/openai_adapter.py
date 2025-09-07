@@ -126,7 +126,7 @@ class OpenAIAdapter:
                 else:
                     try:
                         error_message = (
-                            error_obj.get("message") 
+                            error_obj.get("message")
                             if hasattr(error_obj, "get")
                             else None
                         )
@@ -136,7 +136,13 @@ class OpenAIAdapter:
                         error_message = str(error_obj)
 
             # Normalise result_files to a list of ids/strings
-            raw_files = getattr(response, "result_files", []) or []
+            raw_files_attr = getattr(response, "result_files", None)
+            raw_files: List[Any]
+            if isinstance(raw_files_attr, list):
+                raw_files = raw_files_attr
+            else:
+                raw_files = []
+
             normalised_files: List[str] = []
             for f in raw_files:
                 try:

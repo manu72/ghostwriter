@@ -19,6 +19,9 @@ def generate_text(
     max_completion_tokens: int = typer.Option(
         500, "--max-completion-tokens", help="Maximum tokens to generate"
     ),
+    save: bool = typer.Option(
+        True, "--save/--no-save", help="Save generated content to file"
+    ),
 ):
     """✍️  Generate text using a fine-tuned model."""
 
@@ -56,6 +59,21 @@ def generate_text(
             )
         )
 
+        # Save generated content if requested
+        if save:
+            try:
+                content_path = storage.save_generated_content(
+                    prompt=prompt,
+                    response=response,
+                    author_name=profile.name,
+                    model_id=model_id,
+                )
+                console.print(f"[dim]💾 Saved to: {content_path.name}[/dim]")
+            except Exception as save_error:
+                console.print(
+                    f"[yellow]⚠️  Could not save content: {save_error}[/yellow]"
+                )
+
     except ValueError as e:
         # Configuration error
         console.print(f"[red]Configuration error: {e}[/red]")
@@ -68,6 +86,9 @@ def generate_text(
 @generate_app.command("interactive")
 def interactive_generation(
     author_id: str = typer.Argument(..., help="Author ID for interactive generation"),
+    save: bool = typer.Option(
+        True, "--save/--no-save", help="Save generated content to files"
+    ),
 ):
     """🎯 Interactive text generation session."""
 
@@ -88,11 +109,13 @@ def interactive_generation(
 
     model_id = job.fine_tuned_model
 
+    save_status = "enabled" if save else "disabled"
     console.print(
         Panel(
             f"[bold blue]Interactive Generation Session[/bold blue]\n\n"
             f"Author: {profile.name}\n"
-            f"Model: {model_id}\n\n"
+            f"Model: {model_id}\n"
+            f"Content saving: {save_status}\n\n"
             f"Type 'quit' or 'exit' to end the session.",
             title="🎯 Generation Mode",
         )
@@ -123,6 +146,22 @@ def interactive_generation(
                         border_style="green",
                     )
                 )
+
+                # Save generated content if requested
+                if save:
+                    try:
+                        content_path = storage.save_generated_content(
+                            prompt=prompt,
+                            response=response,
+                            author_name=profile.name,
+                            model_id=model_id,
+                        )
+                        console.print(f"[dim]💾 Saved to: {content_path.name}[/dim]")
+                    except Exception as save_error:
+                        console.print(
+                            f"[yellow]⚠️  Could not save content: {save_error}[/yellow]"
+                        )
+
             except Exception as e:
                 console.print(f"[red]Error generating text: {str(e)}[/red]")
 
