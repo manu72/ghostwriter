@@ -82,18 +82,19 @@ This opens an interactive menu where you can:
 
 ### Step 2.5: Generate More Examples with AI (Optional)
 
-Once you have at least 2-3 examples, you can use AI to generate additional examples that match your writing style:
+Once you have at least 2 or 3 examples, you can use AI to generate additional examples that match your writing style:
 
 ```bash
 # Select option 5 in the dataset builder menu
 # This feature will:
-# - Analyze your existing examples 
+# - Analyse your first 3 existing examples
 # - Generate 1-20 new examples using OpenAI API
 # - Let you review, edit, or skip each generated example
 # - Add approved examples to your dataset
 ```
 
 **Benefits:**
+
 - Quickly expand your dataset from a few seed examples
 - Maintains consistency with your established writing style
 - Reduces manual work while ensuring quality
