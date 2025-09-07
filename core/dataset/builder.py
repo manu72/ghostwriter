@@ -116,8 +116,19 @@ class DatasetBuilder:
 
         console.print(f"\n[yellow]Prompt: {user_prompt}[/yellow]")
         console.print("[blue]Now write your response in your style:[/blue]")
+        console.print("[dim]Press Ctrl+D (or Ctrl+Z on Windows) when finished[/dim]")
 
-        response = Prompt.ask(prompt="", multiline=True)  # type: ignore
+        # Collect multiline input using console.input() in a loop
+        response_lines = []
+        try:
+            while True:
+                line = console.input()
+                response_lines.append(line)
+        except EOFError:
+            # User pressed Ctrl+D (or Ctrl+Z on Windows) to finish input
+            pass
+        
+        response = "\n".join(response_lines)
         if not response.strip():
             console.print("[red]No response provided[/red]")
             return
