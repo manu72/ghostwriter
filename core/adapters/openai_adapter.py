@@ -169,12 +169,14 @@ class OpenAIAdapter:
 
         return job
 
-    def generate_text(self, model_id: str, prompt: str, max_tokens: int = 500) -> str:
+    def generate_text(
+        self, model_id: str, prompt: str, max_completion_tokens: int = 500
+    ) -> str:
         try:
             response = self.client.chat.completions.create(
                 model=model_id,
                 messages=[{"role": "user", "content": prompt}],
-                max_tokens=max_tokens,
+                max_completion_tokens=max_completion_tokens,
                 temperature=0.7,
             )
 

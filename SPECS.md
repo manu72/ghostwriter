@@ -41,12 +41,12 @@ This document defines the **vision, principles, architecture, feature scope, and
 
 ### Stage 1 Terminal Proof of Concept
 
-- Simple CLI commands to create an author profile.
-- Guided dataset builder to create 100 - 500 correctly formatted json examples. JSON examples to be stored locally and separately for each author.
-- Fine-tune orchestration for one provider (OpenAI or Gemini).
-- Draft content generation via the tuned author.
-- Feedback collection (ratings + edits).
-- Dataset regeneration and retraining from feedback.
+1. Simple CLI commands to create an author profile.
+2. Guided dataset builder to create 100 - 500 correctly formatted json examples. JSON examples to be stored locally and separately for each author.
+3. Fine-tune orchestration for one provider (OpenAI or Gemini).
+4. Draft content generation via the tuned author.
+5. Feedback collection (ratings + edits).
+6. Dataset regeneration and retraining from feedback.
 
 ### Stage 2 Browser UI
 

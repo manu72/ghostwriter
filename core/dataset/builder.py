@@ -70,7 +70,32 @@ class DatasetBuilder:
             Panel(DATASET_BUILDING_PROMPTS["writing_sample"], title="Writing Sample")
         )
 
-        sample = Prompt.ask(prompt="", multiline=True)  # type: ignore
+        # Collect multiline input using console.input() in a loop
+        console.print("[dim]Press Ctrl+D (or Ctrl+Z on Windows) when finished[/dim]")
+        sample_lines = []
+        max_lines = 100  # Safety limit to prevent infinite loops
+        line_count = 0
+
+        try:
+            while line_count < max_lines:
+                line = console.input()
+                sample_lines.append(line)
+                line_count += 1
+        except EOFError:
+            # User pressed Ctrl+D (or Ctrl+Z on Windows) to finish input
+            pass
+        except KeyboardInterrupt:
+            # User pressed Ctrl+C to cancel
+            console.print("[yellow]Input cancelled.[/yellow]")
+            return
+
+        sample = "\n".join(sample_lines)
+
+        # Warn if max lines reached
+        if line_count >= max_lines:
+            console.print(
+                f"[yellow]Input limited to {max_lines} lines. Content may be truncated.[/yellow]"
+            )
         if not sample.strip():
             console.print("[red]No sample provided[/red]")
             return
@@ -238,12 +263,30 @@ class DatasetBuilder:
                     count=1,  # Generate one at a time for better control
                 )
 
-                # Generate new example using OpenAI
-                response = adapter.generate_text(
-                    model_id=settings.get_default_model("openai"),
-                    prompt=generation_prompt,
-                    max_tokens=800,
+                console.print(
+                    f"[dim]Generation prompt length: {len(generation_prompt)}[/dim]"
                 )
+                console.print(
+                    f"[dim]Sample examples length: {len(sample_examples)}[/dim]"
+                )
+
+                # Generate new example using OpenAI
+                try:
+                    response = adapter.generate_text(
+                        model_id=settings.get_default_model("openai"),
+                        prompt=generation_prompt,
+                        max_completion_tokens=800,
+                    )
+                    console.print(
+                        f"[dim]Generated response length: {len(response) if response else 0}[/dim]"
+                    )
+                except Exception as api_error:
+                    console.print(
+                        f"[red]❌ API Error generating example {i+1}: {str(api_error)}[/red]"
+                    )
+                    if not Confirm.ask("Continue with remaining examples?"):
+                        break
+                    continue
 
                 # Parse the generated response
                 parsed_examples = self._parse_generated_examples(response)
@@ -381,9 +424,29 @@ class DatasetBuilder:
         examples = []
 
         try:
+            # Debug: Print the raw response to understand the format
+            console.print(f"[dim]Raw AI response (length: {len(response)}):[/dim]")
+            console.print(f"[dim]{response}[/dim]")
+
             # Look for the pattern: User prompt: ... Assistant response: ...
-            pattern = r"User prompt:\s*(.*?)\s*(?:\n|^)Assistant response:\s*(.*?)(?=(?:\n(?:User prompt:|EXAMPLE|\Z))|$)"
-            matches = re.findall(pattern, response, re.DOTALL | re.IGNORECASE)
+            # Try multiple patterns to handle different AI response formats
+            patterns = [
+                # Original pattern
+                r"User prompt:\s*(.*?)\s*(?:\n|^)Assistant response:\s*(.*?)(?=(?:\n(?:User prompt:|EXAMPLE|\Z))|$)",
+                # More flexible pattern
+                r"User prompt:\s*(.*?)\s*Assistant response:\s*(.*?)(?=\n\n|\nUser prompt:|\nEXAMPLE|\Z)",
+                # Even more flexible - just look for the two sections
+                r"User prompt:\s*(.*?)\s*Assistant response:\s*(.*?)(?=\n|$)",
+            ]
+
+            matches = []
+            for pattern in patterns:
+                matches = re.findall(pattern, response, re.DOTALL | re.IGNORECASE)
+                if matches:
+                    console.print(f"[dim]Using pattern: {pattern[:50]}...[/dim]")
+                    break
+
+            console.print(f"[dim]Found {len(matches)} matches with regex[/dim]")
 
             for user_prompt, assistant_response in matches:
                 user_prompt = user_prompt.strip()
@@ -401,6 +464,67 @@ class DatasetBuilder:
                         ]
                     )
                     examples.append(example)
+                else:
+                    console.print("[dim]Skipping empty prompt or response[/dim]")
+
+            # If no matches found, try a fallback approach
+            if not matches and response.strip():
+                console.print(
+                    "[dim]No regex matches found, trying fallback parsing...[/dim]"
+                )
+                # Look for any text that might be a prompt and response
+                lines = response.split("\n")
+                current_prompt = None
+                current_response = []
+
+                for line in lines:
+                    line = line.strip()
+                    if line.startswith("User prompt:") or line.startswith("Prompt:"):
+                        if current_prompt and current_response:
+                            # Save previous example
+                            example = TrainingExample(
+                                messages=[
+                                    {
+                                        "role": "system",
+                                        "content": "You are a helpful writing assistant.",
+                                    },
+                                    {"role": "user", "content": current_prompt},
+                                    {
+                                        "role": "assistant",
+                                        "content": "\n".join(current_response),
+                                    },
+                                ]
+                            )
+                            examples.append(example)
+                        current_prompt = line.split(":", 1)[1].strip()
+                        current_response = []
+                    elif line.startswith("Assistant response:") or line.startswith(
+                        "Response:"
+                    ):
+                        current_response = [line.split(":", 1)[1].strip()]
+                    elif current_response is not None and line:
+                        current_response.append(line)
+
+                # Don't forget the last example
+                if current_prompt and current_response:
+                    example = TrainingExample(
+                        messages=[
+                            {
+                                "role": "system",
+                                "content": "You are a helpful writing assistant.",
+                            },
+                            {"role": "user", "content": current_prompt},
+                            {
+                                "role": "assistant",
+                                "content": "\n".join(current_response),
+                            },
+                        ]
+                    )
+                    examples.append(example)
+
+                console.print(
+                    f"[dim]Fallback parsing found {len(examples)} examples[/dim]"
+                )
 
         except Exception as e:
             console.print(f"[yellow]⚠️  Error parsing generated examples: {e}[/yellow]")

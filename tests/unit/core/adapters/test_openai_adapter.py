@@ -392,8 +392,8 @@ class TestOpenAIAdapterTextGeneration:
                 call_args = mock_openai_client.chat.completions.create.call_args
                 assert call_args[1]["model"] == "ft:gpt-3.5-turbo:model:123"
                 assert call_args[1]["messages"][0]["content"] == "Test prompt"
-                assert call_args[1]["max_tokens"] == 500
-                assert call_args[1]["temperature"] == 0.7
+                assert call_args[1]["max_completion_tokens"] == 500
+                # Temperature parameter was removed for ChatGPT 5 compatibility TESTING ONLY
 
     def test_generate_text_custom_params(self, mock_openai_client):
         """Test text generation with custom parameters."""
@@ -404,11 +404,13 @@ class TestOpenAIAdapterTextGeneration:
                 adapter = OpenAIAdapter()
 
                 adapter.generate_text(
-                    model_id="ft:model:123", prompt="Custom prompt", max_tokens=1000
+                    model_id="ft:model:123",
+                    prompt="Custom prompt",
+                    max_completion_tokens=1000,
                 )
 
                 call_args = mock_openai_client.chat.completions.create.call_args
-                assert call_args[1]["max_tokens"] == 1000
+                assert call_args[1]["max_completion_tokens"] == 1000
 
     def test_generate_text_api_error(self, mock_openai_client):
         """Test text generation with API error."""
