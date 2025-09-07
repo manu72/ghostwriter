@@ -127,7 +127,7 @@ class DatasetBuilder:
         except EOFError:
             # User pressed Ctrl+D (or Ctrl+Z on Windows) to finish input
             pass
-        
+
         response = "\n".join(response_lines)
         if not response.strip():
             console.print("[red]No response provided[/red]")
