@@ -113,13 +113,49 @@ class OpenAIAdapter:
 
             our_status = status_mapping.get(response.status, JobStatus.PENDING)
 
+            # Normalise error to a simple string (or None)
+            error_obj = getattr(response, "error", None)
+            error_message: Optional[str]
+            if error_obj is None:
+                error_message = None
+            else:
+                # Try common shapes: object with .message, dict-like with ['message'], else str()
+                message_attr = getattr(error_obj, "message", None)
+                if message_attr:
+                    error_message = str(message_attr)
+                else:
+                    try:
+                        # type: ignore[assignment]
+                        error_message = (
+                            error_obj.get("message")  # type: ignore[attr-defined]
+                            if hasattr(error_obj, "get")
+                            else None
+                        )
+                    except Exception:
+                        error_message = None
+                    if not error_message:
+                        error_message = str(error_obj)
+
+            # Normalise result_files to a list of ids/strings
+            raw_files = getattr(response, "result_files", []) or []
+            normalised_files: List[str] = []
+            for f in raw_files:
+                try:
+                    file_id = getattr(f, "id", None)
+                    if file_id:
+                        normalised_files.append(str(file_id))
+                    else:
+                        normalised_files.append(str(f))
+                except Exception:
+                    normalised_files.append(str(f))
+
             return {
                 "status": our_status,
                 "openai_status": response.status,
                 "fine_tuned_model": response.fine_tuned_model,
-                "error": getattr(response, "error", None),
+                "error": error_message,
                 "estimated_finish": getattr(response, "estimated_finish", None),
-                "result_files": getattr(response, "result_files", []),
+                "result_files": normalised_files,
             }
 
         except Exception as e:

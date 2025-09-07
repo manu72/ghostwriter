@@ -130,7 +130,7 @@ python -m cli.main train start my_author
 Options:
 
 - `--wait` - Wait for training to complete (20+ minutes)
-- `--model gpt-3.5-turbo` - Specify base model (default)
+- `--model gpt-4o-mini` - Specify base model (default)
 
 ### Step 5: Generate Content
 
