@@ -1,10 +1,13 @@
 import json
+from datetime import datetime
+from pathlib import Path
 from typing import List, Optional
 
 import jsonlines
 import yaml
 
 from core.config import settings
+from core.markdown_utils import save_example_as_markdown
 from core.models import AuthorProfile, Dataset, ModelMetadata, TrainingExample
 
 
@@ -13,6 +16,7 @@ class AuthorStorage:
         self.author_id = author_id
         self.author_dir = settings.authors_dir / author_id
         self.author_dir.mkdir(parents=True, exist_ok=True)
+        self._ensure_examples_directory()
 
     def save_profile(self, profile: AuthorProfile) -> None:
         profile_path = self.author_dir / "profile.json"
@@ -66,6 +70,39 @@ class AuthorStorage:
 
     def exists(self) -> bool:
         return self.author_dir.exists() and (self.author_dir / "profile.json").exists()
+
+    def _ensure_examples_directory(self) -> Path:
+        """Ensure the examples directory exists for this author."""
+        examples_dir = self.author_dir / "examples"
+        examples_dir.mkdir(exist_ok=True)
+        return examples_dir
+
+    def save_example_as_markdown(
+        self,
+        prompt: str,
+        response: str,
+        example_type: str,
+        timestamp: Optional[datetime] = None,
+    ) -> Path:
+        """Save a training example as a markdown file.
+
+        Args:
+            prompt: The user prompt
+            response: The assistant response
+            example_type: 'user' or 'llm'
+            timestamp: Optional timestamp, defaults to current time
+
+        Returns:
+            Path to the created markdown file
+        """
+        return save_example_as_markdown(
+            self.author_dir, prompt, response, example_type, timestamp
+        )
+
+    @property
+    def examples_dir(self) -> Path:
+        """Get the examples directory path."""
+        return self.author_dir / "examples"
 
 
 def list_authors() -> List[str]:

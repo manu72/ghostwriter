@@ -119,6 +119,17 @@ class DatasetBuilder:
             ]
         )
 
+        # Save as markdown file
+        try:
+            markdown_path = self.storage.save_example_as_markdown(
+                prompt=prompt, response=sample, example_type="user"
+            )
+            console.print(f"[dim]Saved markdown: {markdown_path.name}[/dim]")
+        except Exception as e:
+            console.print(
+                f"[yellow]Warning: Could not save markdown file: {e}[/yellow]"
+            )
+
         self.dataset.add_example(example)
         console.print(
             f"[green]Added example! Dataset now has {self.dataset.size} examples[/green]"
@@ -185,6 +196,17 @@ class DatasetBuilder:
                 {"role": "assistant", "content": response},
             ]
         )
+
+        # Save as markdown file
+        try:
+            markdown_path = self.storage.save_example_as_markdown(
+                prompt=user_prompt, response=response, example_type="user"
+            )
+            console.print(f"[dim]Saved markdown: {markdown_path.name}[/dim]")
+        except Exception as e:
+            console.print(
+                f"[yellow]Warning: Could not save markdown file: {e}[/yellow]"
+            )
 
         self.dataset.add_example(example)
         console.print(
@@ -381,6 +403,35 @@ class DatasetBuilder:
         # Add approved examples to dataset
         if approved_examples:
             for example in approved_examples:
+                # Extract prompt and response for markdown saving
+                user_msg = next(
+                    (
+                        msg["content"]
+                        for msg in example.messages
+                        if msg["role"] == "user"
+                    ),
+                    "No user message found",
+                )
+                assistant_msg = next(
+                    (
+                        msg["content"]
+                        for msg in example.messages
+                        if msg["role"] == "assistant"
+                    ),
+                    "No assistant message found",
+                )
+
+                # Save as markdown file
+                try:
+                    markdown_path = self.storage.save_example_as_markdown(
+                        prompt=user_msg, response=assistant_msg, example_type="llm"
+                    )
+                    console.print(f"[dim]Saved markdown: {markdown_path.name}[/dim]")
+                except Exception as e:
+                    console.print(
+                        f"[yellow]Warning: Could not save markdown file: {e}[/yellow]"
+                    )
+
                 self.dataset.add_example(example)
 
             console.print(
@@ -570,6 +621,19 @@ class DatasetBuilder:
                             {"role": "assistant", "content": section},
                         ]
                     )
+
+                    # Save as markdown file
+                    try:
+                        markdown_path = self.storage.save_example_as_markdown(
+                            prompt=prompt, response=section, example_type="user"
+                        )
+                        console.print(
+                            f"[dim]Saved markdown: {markdown_path.name}[/dim]"
+                        )
+                    except Exception as e:
+                        console.print(
+                            f"[yellow]Warning: Could not save markdown file: {e}[/yellow]"
+                        )
 
                     self.dataset.add_example(example)
                     console.print("[green]Added![/green]")
