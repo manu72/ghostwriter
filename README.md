@@ -22,6 +22,7 @@ The goal of Ghostwriter is to democratise finetuning. Anyone, not just developer
 - **Dataset Builder**: Guided prompts help you prepare a small training dataset in the correct format for the LLM.
 - **Fine-Tune Runner**: Simple CLI to start a finetuning job with a commercial LLM.
 - **Author Runtime**: Generate drafts from your tuned author with a single command.
+- **Content Persistence**: All generated content is automatically saved as markdown files with metadata.
 - **Feedback Loop**: Rate or edit drafts, turning feedback into new training examples.
 
 ---
@@ -77,6 +78,8 @@ ghostwriter/
 │   └── authors/<author_id>/
 │       ├── style_guide.yml
 │       ├── train.jsonl
+│       ├── examples/      # training examples as markdown
+│       ├── content/       # generated content as markdown
 │       ├── edits/
 │       └── models.json    # fine-tune job metadata
 ├── .env.example           # API keys and secrets
@@ -114,6 +117,52 @@ cp .env.example .env
 
 ```bash
 python -m cli.main init
+```
+
+---
+
+## CLI Commands
+
+### Author Management
+```bash
+# Initialize a new author profile
+python -m cli.main init
+
+# List all authors
+python -m cli.main list
+```
+
+### Dataset Building
+```bash
+# Build training dataset interactively
+python -m cli.main dataset build <author_id>
+
+# Import examples from files
+python -m cli.main dataset import <author_id> <file_path>
+```
+
+### Fine-tuning
+```bash
+# Start fine-tuning job
+python -m cli.main train start <author_id>
+
+# Check training status
+python -m cli.main train status <author_id>
+
+# Wait for completion
+python -m cli.main train wait <author_id>
+```
+
+### Content Generation
+```bash
+# Generate single piece of content
+python -m cli.main generate text <author_id> --prompt "Write about productivity"
+
+# Disable content saving
+python -m cli.main generate text <author_id> --prompt "Quick note" --no-save
+
+# Interactive generation session
+python -m cli.main generate interactive <author_id>
 ```
 
 ---
@@ -209,10 +258,11 @@ tests/
 ├── conftest.py                    # Shared fixtures and configuration
 ├── unit/                          # Unit tests (90%+ coverage target)
 │   ├── test_models.py            # Pydantic model validation
-│   ├── test_storage.py           # File I/O and data persistence
 │   ├── test_config.py            # Settings and environment
 │   └── core/
 │       ├── test_dataset_builder.py    # Dataset processing logic
+│       ├── test_markdown_utils.py     # Markdown content generation
+│       ├── test_storage.py           # File I/O and data persistence
 │       └── adapters/
 │           └── test_openai_adapter.py # API integration (mocked)
 ├── integration/                   # End-to-end workflow tests
@@ -231,7 +281,8 @@ tests/
 
 #### Coverage by Module
 - **Core Models**: Pydantic validation, properties, business logic
-- **Storage System**: File I/O, JSON/YAML/JSONL handling, error cases
+- **Storage System**: File I/O, JSON/YAML/JSONL handling, content persistence, error cases
+- **Markdown Utils**: Content generation, filename sanitization, metadata handling
 - **Dataset Builder**: Content processing, imports, user interactions  
 - **OpenAI Adapter**: Full API mocking, job management, error scenarios
 - **CLI Commands**: End-to-end command testing with Typer
