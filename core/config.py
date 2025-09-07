@@ -31,6 +31,12 @@ class Settings(BaseSettings):
         validation_alias=AliasChoices("gemini_model", "GEMINI_MODEL"),
     )
 
+    # Optional training-specific model for OpenAI fine-tuning
+    openai_training_model: Optional[str] = Field(
+        None,
+        validation_alias=AliasChoices("openai_training_model", "OPENAI_TRAINING_MODEL"),
+    )
+
     debug: bool = Field(False, validation_alias=AliasChoices("debug", "DEBUG"))
     log_level: str = Field(
         "info", validation_alias=AliasChoices("log_level", "LOG_LEVEL")
@@ -83,6 +89,21 @@ class Settings(BaseSettings):
         else:
             # Fallback to OpenAI model if provider is unknown
             return self.openai_model
+
+    def get_training_model(self, provider: Optional[str] = None) -> str:
+        """Get provider-specific model used for training/fine-tuning.
+
+        For OpenAI, prefer `openai_training_model` if set; otherwise fall back
+        to `openai_model`.
+        """
+        target_provider = provider or self.llm_provider
+
+        if target_provider.upper() == "OPENAI":
+            return self.openai_training_model or self.openai_model
+        elif target_provider.upper() == "GEMINI":
+            return self.gemini_model
+        else:
+            return self.openai_training_model or self.openai_model
 
 
 settings = Settings()

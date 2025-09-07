@@ -140,6 +140,47 @@ class FineTuneJob(BaseModel):
             if hasattr(self, key):
                 setattr(self, key, value)
 
+    # --- Normalisers for backward/robust loading of stored metadata ---
+    @field_validator("error_message", mode="before")
+    @classmethod
+    def _normalise_error_message(cls, value: Any) -> Optional[str]:
+        if value is None or isinstance(value, str):
+            return value
+        try:
+            # If dict-like with 'message', prefer that
+            if isinstance(value, dict):
+                msg = value.get("message")
+                if msg:
+                    return str(msg)
+            # If object with .message attribute
+            msg_attr = getattr(value, "message", None)
+            if msg_attr:
+                return str(msg_attr)
+        except Exception:
+            pass
+        # Fallback to string representation
+        return str(value)
+
+    @field_validator("result_files", mode="before")
+    @classmethod
+    def _normalise_result_files(cls, value: Any) -> List[str]:
+        if value is None:
+            return []
+        if isinstance(value, list):
+            normalised: List[str] = []
+            for item in value:
+                try:
+                    if isinstance(item, dict) and "id" in item:
+                        normalised.append(str(item["id"]))
+                    else:
+                        file_id = getattr(item, "id", None)
+                        normalised.append(str(file_id) if file_id else str(item))
+                except Exception:
+                    normalised.append(str(item))
+            return normalised
+        # If it isn't a list, coerce to one-string list
+        return [str(value)]
+
 
 class ModelMetadata(BaseModel):
     fine_tune_jobs: List[FineTuneJob] = Field(default_factory=list)

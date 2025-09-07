@@ -31,9 +31,9 @@ def start_training(
         console.print(f"[red]Author '{author_id}' not found.[/red]")
         raise typer.Exit(1)
 
-    # Use default model if none specified
+    # Choose model: explicit flag > training-specific default > general default
     if base_model is None:
-        base_model = settings.get_default_model("openai")
+        base_model = settings.get_training_model("openai")
 
     storage = AuthorStorage(author_id)
     dataset = storage.load_dataset()

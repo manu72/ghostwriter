@@ -7,7 +7,7 @@ import jsonlines
 import yaml
 
 from core.config import settings
-from core.markdown_utils import save_example_as_markdown
+from core.markdown_utils import save_content_as_markdown, save_example_as_markdown
 from core.models import AuthorProfile, Dataset, ModelMetadata, TrainingExample
 
 
@@ -17,6 +17,7 @@ class AuthorStorage:
         self.author_dir = settings.authors_dir / author_id
         self.author_dir.mkdir(parents=True, exist_ok=True)
         self._ensure_examples_directory()
+        self._ensure_content_directory()
 
     def save_profile(self, profile: AuthorProfile) -> None:
         profile_path = self.author_dir / "profile.json"
@@ -99,10 +100,51 @@ class AuthorStorage:
             self.author_dir, prompt, response, example_type, timestamp
         )
 
+    def _ensure_content_directory(self) -> Path:
+        """Ensure the content directory exists for this author."""
+        content_dir = self.author_dir / "content"
+        content_dir.mkdir(exist_ok=True)
+        return content_dir
+
+    def save_generated_content(
+        self,
+        prompt: str,
+        response: str,
+        author_name: str,
+        model_id: str,
+        timestamp: Optional[datetime] = None,
+    ) -> Path:
+        """Save generated content as a markdown file.
+
+        Args:
+            prompt: The user prompt
+            response: The generated response
+            author_name: The author's display name
+            model_id: The model used for generation
+            timestamp: Optional timestamp, defaults to current time
+
+        Returns:
+            Path to the created markdown file
+        """
+        return save_content_as_markdown(
+            self.author_dir,
+            self.author_id,
+            author_name,
+            prompt,
+            response,
+            model_id,
+            timestamp,
+        )
+
     @property
     def examples_dir(self) -> Path:
         """Get the examples directory path."""
         return self.author_dir / "examples"
+
+    @property
+    def content_dir(self) -> Path:
+        """Get the content directory path."""
+        return self.author_dir / "content"
 
 
 def list_authors() -> List[str]:
