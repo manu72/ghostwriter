@@ -565,6 +565,178 @@ Another long paragraph that should not be filtered out because it has enough con
                     "[yellow]Input cancelled.[/yellow]"
                 )
 
+    @patch("core.dataset.builder.console")
+    @patch("core.dataset.builder.Prompt")
+    @patch("core.dataset.builder.Confirm")
+    def test_generate_from_existing_insufficient_examples(
+        self, mock_confirm, mock_prompt, mock_console, temp_data_dir, mock_settings
+    ):
+        """Test _generate_from_existing with insufficient existing examples."""
+        with patch("core.storage.settings", mock_settings):
+            builder = DatasetBuilder("test_author")
+
+            # Add only 1 example (need at least 2)
+            example = TrainingExample(
+                messages=[
+                    {"role": "user", "content": "Test prompt"},
+                    {"role": "assistant", "content": "Test response"},
+                ]
+            )
+            builder.dataset.add_example(example)
+
+            builder._generate_from_existing()
+
+            # Should show error message
+            mock_console.print.assert_any_call(
+                "[red]❌ You need at least 2 existing examples to generate new ones.[/red]"
+            )
+
+    @patch("core.dataset.builder.console")
+    @patch("core.dataset.builder.Prompt")
+    @patch("core.dataset.builder.Confirm")
+    @patch("core.dataset.builder.OpenAIAdapter")
+    def test_generate_from_existing_successful_generation(
+        self,
+        mock_adapter_class,
+        mock_confirm,
+        mock_prompt,
+        mock_console,
+        temp_data_dir,
+        mock_settings,
+        sample_training_examples,
+    ):
+        """Test _generate_from_existing with successful generation."""
+        with patch("core.storage.settings", mock_settings):
+            builder = DatasetBuilder("test_author")
+
+            # Add existing examples
+            for example in sample_training_examples:
+                builder.dataset.add_example(example)
+
+            # Mock user inputs
+            mock_prompt.ask.side_effect = [
+                "3",  # number of examples to generate
+                "accept",  # first example decision
+                "accept",  # second example decision
+                "skip",  # third example decision
+            ]
+            mock_confirm.ask.side_effect = [True]  # confirm generation
+
+            # Mock OpenAI adapter
+            mock_adapter = mock_adapter_class.return_value
+            mock_adapter.generate_text.side_effect = [
+                """
+EXAMPLE 1:
+User prompt: Write about productivity tips
+Assistant response: Here are some great productivity tips that can help you get more done.
+""",
+                """
+EXAMPLE 1:
+User prompt: Explain time management
+Assistant response: Time management is about prioritizing tasks and using your hours effectively.
+""",
+                """
+EXAMPLE 1:
+User prompt: Describe effective workflows
+Assistant response: Effective workflows streamline your process and reduce wasted effort.
+""",
+            ]
+
+            initial_size = builder.dataset.size
+            builder._generate_from_existing()
+
+            # Should add 2 examples (2 accepted, 1 skipped)
+            assert builder.dataset.size == initial_size + 2
+
+    @patch("core.dataset.builder.console")
+    @patch("core.dataset.builder.Prompt")
+    @patch("core.dataset.builder.Confirm")
+    def test_generate_from_existing_cancelled_by_user(
+        self,
+        mock_confirm,
+        mock_prompt,
+        mock_console,
+        temp_data_dir,
+        mock_settings,
+        sample_training_examples,
+    ):
+        """Test _generate_from_existing when user cancels."""
+        with patch("core.storage.settings", mock_settings):
+            builder = DatasetBuilder("test_author")
+
+            # Add existing examples
+            for example in sample_training_examples:
+                builder.dataset.add_example(example)
+
+            # Mock user inputs
+            mock_prompt.ask.return_value = "5"  # number of examples
+            mock_confirm.ask.return_value = False  # don't confirm generation
+
+            initial_size = builder.dataset.size
+            builder._generate_from_existing()
+
+            # Should not add any examples
+            assert builder.dataset.size == initial_size
+            mock_console.print.assert_any_call("[yellow]Generation cancelled[/yellow]")
+
+    def test_prepare_examples_for_prompt(
+        self, temp_data_dir, mock_settings, sample_training_examples
+    ):
+        """Test _prepare_examples_for_prompt method."""
+        with patch("core.storage.settings", mock_settings):
+            builder = DatasetBuilder("test_author")
+
+            # Add examples
+            for example in sample_training_examples:
+                builder.dataset.add_example(example)
+
+            result = builder._prepare_examples_for_prompt()
+
+            # Should format examples properly
+            assert "EXAMPLE 1:" in result
+            assert "User prompt:" in result
+            assert "Assistant response:" in result
+            assert len(result.split("EXAMPLE")) == 4  # 3 examples + empty string
+
+    def test_parse_generated_examples_valid_response(
+        self, temp_data_dir, mock_settings
+    ):
+        """Test _parse_generated_examples with valid response."""
+        with patch("core.storage.settings", mock_settings):
+            builder = DatasetBuilder("test_author")
+
+            response = """
+EXAMPLE 1:
+User prompt: Write about coding best practices
+Assistant response: Good code should be readable, maintainable, and well-tested.
+
+EXAMPLE 2:
+User prompt: Explain debugging techniques  
+Assistant response: Debugging involves systematic problem-solving and testing hypotheses.
+"""
+
+            examples = builder._parse_generated_examples(response)
+
+            assert len(examples) == 2
+            assert (
+                examples[0].messages[1]["content"]
+                == "Write about coding best practices"
+            )
+            assert "readable, maintainable" in examples[0].messages[2]["content"]
+
+    def test_parse_generated_examples_malformed_response(
+        self, temp_data_dir, mock_settings
+    ):
+        """Test _parse_generated_examples with malformed response."""
+        with patch("core.storage.settings", mock_settings):
+            builder = DatasetBuilder("test_author")
+
+            response = "This is not a properly formatted response"
+
+            examples = builder._parse_generated_examples(response)
+
+            assert len(examples) == 0
+
 
 class TestDatasetBuilderIntegration:
     """Integration tests for DatasetBuilder."""

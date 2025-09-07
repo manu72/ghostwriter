@@ -75,8 +75,30 @@ This opens an interactive menu where you can:
 1. **Add examples from writing samples** - Paste your existing writing
 2. **Generate examples from prompts** - Create prompt/response pairs
 3. **Import from text file** - Upload a text file to extract examples
+4. **Review current dataset** - See what examples you have so far
+5. **Generate more examples from existing examples** - Use AI to create additional examples based on your existing ones (requires OpenAI API)
 
 **Minimum recommendation**: Add 10-20 examples for basic fine-tuning.
+
+### Step 2.5: Generate More Examples with AI (Optional)
+
+Once you have at least 2-3 examples, you can use AI to generate additional examples that match your writing style:
+
+```bash
+# Select option 5 in the dataset builder menu
+# This feature will:
+# - Analyze your existing examples 
+# - Generate 1-20 new examples using OpenAI API
+# - Let you review, edit, or skip each generated example
+# - Add approved examples to your dataset
+```
+
+**Benefits:**
+- Quickly expand your dataset from a few seed examples
+- Maintains consistency with your established writing style
+- Reduces manual work while ensuring quality
+
+**Cost:** Approximately $0.002-0.01 per generated example (OpenAI API charges apply)
 
 ### Step 3: Validate Your Dataset
 
@@ -154,11 +176,12 @@ python -m cli.main dataset show my_author
 ### Scenario 1: Complete Happy Path
 
 1. Run `init` and create author with guided setup
-2. Build dataset with 15+ examples using different input methods
-3. Validate dataset (should show "READY" or "ACCEPTABLE")
-4. Start training and wait for completion
-5. Generate content with various prompts
-6. Verify generated content matches author's style
+2. Build dataset with 5-10 examples using different input methods
+3. Use AI generation (option 5) to expand to 15+ examples
+4. Validate dataset (should show "READY" or "ACCEPTABLE")
+5. Start training and wait for completion
+6. Generate content with various prompts
+7. Verify generated content matches author's style
 
 ### Scenario 2: Error Handling
 
@@ -167,12 +190,21 @@ python -m cli.main dataset show my_author
 3. Try to generate content without a trained model
 4. Test with invalid author names
 
-### Scenario 3: Dataset Management
+### Scenario 3: AI Generation Feature
+
+1. Create author and add 3-5 examples manually
+2. Use AI generation (option 5) to create 5-10 additional examples
+3. Test review process: accept some, edit some, skip some
+4. Verify generated examples maintain style consistency
+5. Test with insufficient examples (< 2) to see error handling
+
+### Scenario 4: Dataset Management
 
 1. Create multiple authors with different styles
 2. Test dataset import from text files
 3. Clear and rebuild datasets
 4. Export datasets to JSONL format
+5. Test AI generation with different types of existing examples
 
 ## Expected Behavior
 
