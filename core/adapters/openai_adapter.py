@@ -125,9 +125,8 @@ class OpenAIAdapter:
                     error_message = str(message_attr)
                 else:
                     try:
-                        # type: ignore[assignment]
                         error_message = (
-                            error_obj.get("message")  # type: ignore[attr-defined]
+                            error_obj.get("message") 
                             if hasattr(error_obj, "get")
                             else None
                         )
