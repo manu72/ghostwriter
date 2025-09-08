@@ -72,13 +72,37 @@ python -m cli.main dataset build my_author
 
 This opens an interactive menu where you can:
 
-1. **Add examples from writing samples** - Paste your existing writing
+1. **Add examples from writing samples** - Paste your existing writing and get AI-suggested prompts
 2. **Generate examples from prompts** - Create prompt/response pairs
-3. **Import from text file** - Upload a text file to extract examples
+3. **Import from text file** - Upload a text file to extract examples with AI prompt assistance
 4. **Review current dataset** - See what examples you have so far
 5. **Generate more examples from existing examples** - Use AI to create additional examples based on your existing ones (requires OpenAI API)
 
 **Minimum recommendation**: Add 10-20 examples for basic fine-tuning.
+
+#### AI-Assisted Prompt Creation
+
+When adding examples from writing samples or importing from files, Ghostwriter offers two ways to create prompts:
+
+**Option 1: Write your own prompt (free)**
+- Manually create a prompt that would generate your writing sample
+- Full control over prompt wording and specificity
+
+**Option 2: Get AI-suggested prompt (~$0.001)**  
+- AI analyzes your writing sample and suggests an appropriate prompt
+- Shows cost estimate before making API calls
+- You can accept, edit, or reject the AI suggestion
+- Automatically falls back to manual entry if AI fails
+
+**Example workflow:**
+```
+You provide: "Working from home requires discipline. Set up a dedicated workspace, 
+establish boundaries, and use productivity tools to stay focused."
+
+AI suggests: "Write practical tips for maintaining productivity while working from home"
+
+You can: Accept, edit to "Write 3-5 practical tips for remote work productivity", or write manually
+```
 
 ### Step 2.5: Generate More Examples with AI (Optional)
 
@@ -100,6 +124,13 @@ Once you have at least 2 or 3 examples, you can use AI to generate additional ex
 - Reduces manual work while ensuring quality
 
 **Cost:** Approximately $0.002-0.01 per generated example (OpenAI API charges apply)
+
+**Benefits of AI-Assisted Prompts:**
+- Reduces cognitive load when creating training examples
+- Generates more effective prompts than manual writing
+- Speeds up dataset building, especially for bulk text imports
+- Provides educational value - learn from AI-suggested prompts
+- Optional feature - manual entry always available
 
 ### Step 3: Validate Your Dataset
 
@@ -191,7 +222,17 @@ python -m cli.main dataset show my_author
 3. Try to generate content without a trained model
 4. Test with invalid author names
 
-### Scenario 3: AI Generation Feature
+### Scenario 3: AI-Assisted Prompt Creation
+
+1. Create author and select "Add examples from writing samples" (option 1)
+2. Paste a writing sample and choose "Get AI-suggested prompt" (option 2)
+3. Test all three AI response options: accept, edit, reject
+4. Try with different writing styles (formal, casual, technical)
+5. Test API error handling by temporarily using invalid API key
+6. Import text file and test AI prompts for multiple sections
+7. Compare AI-suggested prompts vs manual prompts for quality
+
+### Scenario 4: AI Generation Feature
 
 1. Create author and add 3-5 examples manually
 2. Use AI generation (option 5) to create 5-10 additional examples
@@ -199,7 +240,7 @@ python -m cli.main dataset show my_author
 4. Verify generated examples maintain style consistency
 5. Test with insufficient examples (< 2) to see error handling
 
-### Scenario 4: Dataset Management
+### Scenario 5: Dataset Management
 
 1. Create multiple authors with different styles
 2. Test dataset import from text files
@@ -268,6 +309,11 @@ Fine-tuning costs with OpenAI (as of 2024):
 - Small dataset (10-50 examples): ~$3-8
 - Medium dataset (50-100 examples): ~$8-15
 - Token costs for generation: ~$0.01-0.02 per 1000 tokens
+
+**AI-assisted features:**
+- AI-suggested prompts: ~$0.001 per prompt suggestion
+- AI-generated examples: ~$0.002-0.01 per generated example
+- Both features show cost estimates before making API calls
 
 ## Success Criteria
 
