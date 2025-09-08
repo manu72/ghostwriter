@@ -230,7 +230,7 @@ class OpenAIAdapter:
     def generate_chat_response(
         self,
         model_id: str,
-        messages: List[Dict[str, str]],
+        messages: List[Dict[str, Any]],
         max_completion_tokens: int = 500,
     ) -> str:
         """Generate response for a chat conversation with full message history."""
@@ -255,8 +255,8 @@ class OpenAIAdapter:
             raise
 
     def _truncate_messages(
-        self, messages: List[Dict[str, str]], max_completion_tokens: int
-    ) -> List[Dict[str, str]]:
+        self, messages: List[Dict[str, Any]], max_completion_tokens: int
+    ) -> List[Dict[str, Any]]:
         """Truncate message history to stay within context window limits.
 
         Basic implementation - keeps most recent messages.
