@@ -40,7 +40,8 @@ The goal of Ghostwriter is to democratise finetuning. Anyone, not just developer
 
 - Minimal web interface to guide dataset creation and fine-tuning.
 - Inline editor for reviewing drafts and logging feedback.
-- Backend built on FastAPI or Flask, frontend with React or Svelte.
+- Backend built on FastAPI or Flask, frontend with React or Svelte or Streamlit.
+- users will provide their own API keys
 
 ### Stage 3: Multiple model support
 
@@ -124,6 +125,7 @@ python -m cli.main init
 ## CLI Commands
 
 ### Author Management
+
 ```bash
 # Initialize a new author profile
 python -m cli.main init
@@ -133,6 +135,7 @@ python -m cli.main list
 ```
 
 ### Dataset Building
+
 ```bash
 # Build training dataset interactively
 python -m cli.main dataset build <author_id>
@@ -142,6 +145,7 @@ python -m cli.main dataset import <author_id> <file_path>
 ```
 
 ### Fine-tuning
+
 ```bash
 # Start fine-tuning job
 python -m cli.main train start <author_id>
@@ -154,6 +158,7 @@ python -m cli.main train wait <author_id>
 ```
 
 ### Content Generation
+
 ```bash
 # Generate single piece of content
 python -m cli.main generate text <author_id> --prompt "Write about productivity"
@@ -190,16 +195,17 @@ python -m pytest
 
 # Run with coverage report
 make test-coverage
-# or  
+# or
 python -m pytest --cov-report=html --cov-report=term
 ```
 
 ### Test Commands
 
 #### Using Make (Recommended)
+
 ```bash
 make test           # Run all tests with coverage
-make test-unit      # Run only unit tests  
+make test-unit      # Run only unit tests
 make test-integration  # Run only integration tests
 make test-fast      # Skip slow tests
 make test-coverage  # Generate detailed coverage report
@@ -218,6 +224,7 @@ make dev-install    # Install with pre-commit hooks
 ```
 
 #### Using pytest directly
+
 ```bash
 # Basic test runs
 python -m pytest                    # All tests
@@ -241,10 +248,11 @@ python -m pytest -x               # Stop on first failure
 ```
 
 #### Using the test runner script
+
 ```bash
 python run_tests.py deps          # Check dependencies
 python run_tests.py unit          # Unit tests
-python run_tests.py integration   # Integration tests  
+python run_tests.py integration   # Integration tests
 python run_tests.py all           # All tests with coverage
 python run_tests.py fast          # Fast tests only
 python run_tests.py coverage      # Detailed coverage report
@@ -280,16 +288,18 @@ tests/
 - **Current Coverage**: View with `make test-coverage` and open `htmlcov/index.html`
 
 #### Coverage by Module
+
 - **Core Models**: Pydantic validation, properties, business logic
 - **Storage System**: File I/O, JSON/YAML/JSONL handling, content persistence, error cases
 - **Markdown Utils**: Content generation, filename sanitization, metadata handling
-- **Dataset Builder**: Content processing, imports, user interactions  
+- **Dataset Builder**: Content processing, imports, user interactions
 - **OpenAI Adapter**: Full API mocking, job management, error scenarios
 - **CLI Commands**: End-to-end command testing with Typer
 
 ### Writing Tests
 
 #### Guidelines
+
 1. **Follow AAA Pattern**: Arrange, Act, Assert
 2. **Use Descriptive Names**: `test_author_profile_creation_with_custom_style_guide`
 3. **Test Edge Cases**: Include error conditions and boundary cases
@@ -297,19 +307,20 @@ tests/
 5. **Keep Tests Independent**: Each test should be isolated
 
 #### Example Test
+
 ```python
 def test_author_profile_creation(sample_style_guide):
     """Test AuthorProfile creation with custom StyleGuide."""
     # Arrange
     profile_data = {
         "author_id": "test_author",
-        "name": "Test Author", 
+        "name": "Test Author",
         "style_guide": sample_style_guide
     }
-    
+
     # Act
     profile = AuthorProfile(**profile_data)
-    
+
     # Assert
     assert profile.author_id == "test_author"
     assert profile.name == "Test Author"
@@ -319,18 +330,21 @@ def test_author_profile_creation(sample_style_guide):
 ### Continuous Integration
 
 Tests run automatically on:
-- **Push/PR to main/develop branches** 
+
+- **Push/PR to main/develop branches**
 - **Multiple Python versions**: 3.8, 3.9, 3.10, 3.11
 - **Code quality checks**: linting, formatting, type checking, security
 
 #### GitHub Actions Jobs
+
 - **test**: Run unit and integration tests across Python versions
-- **lint**: Code formatting (black, isort), linting (flake8), typing (mypy)  
+- **lint**: Code formatting (black, isort), linting (flake8), typing (mypy)
 - **security**: Security scanning with bandit
 
 ### Troubleshooting Tests
 
 #### Common Issues
+
 ```bash
 # Import errors - ensure PYTHONPATH is set
 export PYTHONPATH=$PWD
@@ -347,13 +361,14 @@ python -m pytest tests/unit/test_models.py::test_author_profile_creation -v -s -
 ```
 
 #### Test Markers
+
 ```bash
 # Available markers
 python -m pytest --markers
 
 # Run by marker
 python -m pytest -m unit           # Unit tests only
-python -m pytest -m integration    # Integration tests only  
+python -m pytest -m integration    # Integration tests only
 python -m pytest -m "not slow"     # Exclude slow tests
 python -m pytest -m openai         # OpenAI-related tests only
 ```
@@ -361,6 +376,7 @@ python -m pytest -m openai         # OpenAI-related tests only
 ### Performance Testing
 
 For performance-sensitive tests:
+
 ```bash
 # Time test execution
 python -m pytest --durations=10    # Show 10 slowest tests
@@ -380,6 +396,7 @@ python -m pytest --benchmark-only  # Run benchmark tests only
 This project is in early development. Contributions, feedback, and suggestions are welcome!
 
 ### Development Setup
+
 ```bash
 # Clone and setup
 git clone https://github.com/manu72/ghostwriter.git
@@ -397,6 +414,7 @@ make test         # Ensure tests pass
 ```
 
 ### Code Quality Standards
+
 - **Formatting**: Use `black` and `isort` for consistent code formatting
 - **Linting**: Pass `flake8` and `mypy` checks without errors
 - **Test Coverage**: Maintain 80%+ coverage for new code
@@ -405,7 +423,9 @@ make test         # Ensure tests pass
 - **Security**: No hardcoded secrets or unsafe patterns
 
 ### Pre-commit Checklist
+
 Before submitting a PR:
+
 ```bash
 # Format code
 black .
