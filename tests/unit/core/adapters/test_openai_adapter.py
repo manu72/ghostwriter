@@ -609,3 +609,156 @@ class TestOpenAIAdapterIntegration:
             updated_job = adapter.update_job_status(job)
             assert updated_job.status == JobStatus.SUCCEEDED
             assert updated_job.fine_tuned_model == "ft:gpt-3.5-turbo:test:model:123"
+
+
+class TestOpenAIAdapterChat:
+    """Test chat-related functionality of OpenAI adapter."""
+
+    def test_generate_chat_response_success(self, mock_openai_client):
+        """Test successful chat response generation."""
+        with patch("core.adapters.openai_adapter.settings") as mock_settings:
+            mock_settings.has_openai_key.return_value = True
+
+            # Mock successful chat completion response
+            mock_response = Mock()
+            mock_response.choices = [Mock()]
+            mock_response.choices[0].message.content = (
+                "Hello! How can I help you today?"
+            )
+            mock_openai_client.chat.completions.create.return_value = mock_response
+
+            with patch("openai.OpenAI", return_value=mock_openai_client):
+                adapter = OpenAIAdapter()
+
+                messages = [
+                    {"role": "user", "content": "Hello there!"},
+                    {"role": "assistant", "content": "Hi! How can I help?"},
+                    {"role": "user", "content": "Tell me a joke"},
+                ]
+
+                response = adapter.generate_chat_response(
+                    "ft:gpt-3.5-turbo:model:123", messages
+                )
+
+                assert response == "Hello! How can I help you today?"
+                mock_openai_client.chat.completions.create.assert_called_once_with(
+                    model="ft:gpt-3.5-turbo:model:123",
+                    messages=messages,
+                    max_completion_tokens=500,
+                    temperature=0.7,
+                )
+
+    def test_generate_chat_response_with_custom_tokens(self, mock_openai_client):
+        """Test chat response generation with custom token limit."""
+        with patch("core.adapters.openai_adapter.settings") as mock_settings:
+            mock_settings.has_openai_key.return_value = True
+
+            mock_response = Mock()
+            mock_response.choices = [Mock()]
+            mock_response.choices[0].message.content = "Custom response"
+            mock_openai_client.chat.completions.create.return_value = mock_response
+
+            with patch("openai.OpenAI", return_value=mock_openai_client):
+                adapter = OpenAIAdapter()
+
+                messages = [{"role": "user", "content": "Test message"}]
+
+                response = adapter.generate_chat_response(
+                    "ft:gpt-3.5-turbo:model:123", messages, max_completion_tokens=1000
+                )
+
+                assert response == "Custom response"
+                mock_openai_client.chat.completions.create.assert_called_once_with(
+                    model="ft:gpt-3.5-turbo:model:123",
+                    messages=messages,
+                    max_completion_tokens=1000,
+                    temperature=0.7,
+                )
+
+    def test_generate_chat_response_error(self, mock_openai_client):
+        """Test chat response generation with API error."""
+        with patch("core.adapters.openai_adapter.settings") as mock_settings:
+            mock_settings.has_openai_key.return_value = True
+
+            mock_openai_client.chat.completions.create.side_effect = Exception(
+                "API Error"
+            )
+
+            with patch("openai.OpenAI", return_value=mock_openai_client):
+                adapter = OpenAIAdapter()
+
+                messages = [{"role": "user", "content": "Test message"}]
+
+                with pytest.raises(Exception) as exc_info:
+                    adapter.generate_chat_response(
+                        "ft:gpt-3.5-turbo:model:123", messages
+                    )
+
+                assert "API Error" in str(exc_info.value)
+
+    def test_truncate_messages_under_limit(self):
+        """Test message truncation when under character limit."""
+        with patch("core.adapters.openai_adapter.settings") as mock_settings:
+            mock_settings.has_openai_key.return_value = True
+
+            with patch("openai.OpenAI"):
+                adapter = OpenAIAdapter()
+
+                messages = [
+                    {"role": "user", "content": "Short message"},
+                    {"role": "assistant", "content": "Short response"},
+                ]
+
+                truncated = adapter._truncate_messages(messages, 500)
+                assert truncated == messages
+
+    def test_truncate_messages_over_limit(self):
+        """Test message truncation when over character limit."""
+        with patch("core.adapters.openai_adapter.settings") as mock_settings:
+            mock_settings.has_openai_key.return_value = True
+
+            with patch("openai.OpenAI"):
+                adapter = OpenAIAdapter()
+
+                # Create messages that exceed limits
+                long_content = "x" * 5000  # Very long message
+                messages = [
+                    {"role": "user", "content": "First message"},
+                    {"role": "assistant", "content": long_content},
+                    {"role": "user", "content": "Last message"},
+                ]
+
+                truncated = adapter._truncate_messages(messages, 500)
+
+                # Should keep most recent messages that fit
+                assert len(truncated) <= len(messages)
+                assert truncated[-1]["content"] == "Last message"  # Most recent kept
+
+    def test_truncate_messages_empty_list(self):
+        """Test message truncation with empty messages list."""
+        with patch("core.adapters.openai_adapter.settings") as mock_settings:
+            mock_settings.has_openai_key.return_value = True
+
+            with patch("openai.OpenAI"):
+                adapter = OpenAIAdapter()
+
+                truncated = adapter._truncate_messages([], 500)
+                assert truncated == []
+
+    def test_truncate_messages_keeps_at_least_last_message(self):
+        """Test that truncation keeps at least the last message."""
+        with patch("core.adapters.openai_adapter.settings") as mock_settings:
+            mock_settings.has_openai_key.return_value = True
+
+            with patch("openai.OpenAI"):
+                adapter = OpenAIAdapter()
+
+                # Create message that's too long but should still be kept
+                very_long_content = "x" * 50000
+                messages = [{"role": "user", "content": very_long_content}]
+
+                truncated = adapter._truncate_messages(messages, 500)
+
+                # Should keep at least one message
+                assert len(truncated) == 1
+                assert truncated[0]["content"] == very_long_content
