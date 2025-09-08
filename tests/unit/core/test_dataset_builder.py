@@ -1213,3 +1213,144 @@ class TestDatasetBuilderReverseEngineering:
             call_args = mock_adapter.generate_text.call_args
             prompt_content = call_args[1]["prompt"]
             assert "[Content truncated for analysis...]" in prompt_content
+
+    def test_clean_ai_prompt_response_basic_cleaning(
+        self, temp_data_dir, mock_settings
+    ):
+        """Test basic cleaning of AI prompt responses."""
+        with patch("core.storage.settings", mock_settings):
+            builder = DatasetBuilder("test_author")
+
+            # Test basic stripping
+            assert (
+                builder._clean_ai_prompt_response("  Write about productivity  ")
+                == "Write about productivity"
+            )
+
+            # Test empty/None handling
+            assert builder._clean_ai_prompt_response("") == ""
+            assert builder._clean_ai_prompt_response("   ") == ""
+
+    def test_clean_ai_prompt_response_prefix_removal(
+        self, temp_data_dir, mock_settings
+    ):
+        """Test removal of common AI prefixes."""
+        with patch("core.storage.settings", mock_settings):
+            builder = DatasetBuilder("test_author")
+
+            test_cases = [
+                ("PROMPT: Write about productivity", "Write about productivity"),
+                ("Prompt: Write about productivity", "Write about productivity"),
+                ("prompt: Write about productivity", "Write about productivity"),
+                ("USER PROMPT: Write about productivity", "Write about productivity"),
+                (
+                    "Here's the prompt: Write about productivity",
+                    "Write about productivity",
+                ),
+                (
+                    "The prompt would be: Write about productivity",
+                    "Write about productivity",
+                ),
+                (
+                    "SUGGESTED PROMPT: Write about productivity",
+                    "Write about productivity",
+                ),
+            ]
+
+            for input_text, expected in test_cases:
+                result = builder._clean_ai_prompt_response(input_text)
+                assert result == expected, f"Failed for input: {input_text}"
+
+    def test_clean_ai_prompt_response_quote_removal(self, temp_data_dir, mock_settings):
+        """Test removal of surrounding quotes."""
+        with patch("core.storage.settings", mock_settings):
+            builder = DatasetBuilder("test_author")
+
+            test_cases = [
+                ('"Write about productivity"', "Write about productivity"),
+                ("'Write about productivity'", "Write about productivity"),
+                ('Prompt: "Write about productivity"', "Write about productivity"),
+                (
+                    "The prompt is: 'Write about productivity'",
+                    "Write about productivity",
+                ),
+            ]
+
+            for input_text, expected in test_cases:
+                result = builder._clean_ai_prompt_response(input_text)
+                assert result == expected, f"Failed for input: {input_text}"
+
+    def test_clean_ai_prompt_response_punctuation_cleanup(
+        self, temp_data_dir, mock_settings
+    ):
+        """Test cleanup of leading/trailing punctuation."""
+        with patch("core.storage.settings", mock_settings):
+            builder = DatasetBuilder("test_author")
+
+            test_cases = [
+                (": Write about productivity", "Write about productivity"),
+                ("- Write about productivity", "Write about productivity"),
+                ("• Write about productivity", "Write about productivity"),
+                ("* Write about productivity", "Write about productivity"),
+                ("= Write about productivity", "Write about productivity"),
+                ("Write about productivity.", "Write about productivity"),
+                ("Write about productivity:", "Write about productivity"),
+                (
+                    "Write about productivity...",
+                    "Write about productivity...",
+                ),  # Keep ellipsis
+            ]
+
+            for input_text, expected in test_cases:
+                result = builder._clean_ai_prompt_response(input_text)
+                assert result == expected, f"Failed for input: {input_text}"
+
+    def test_clean_ai_prompt_response_multiline_handling(
+        self, temp_data_dir, mock_settings
+    ):
+        """Test handling of multiline responses."""
+        with patch("core.storage.settings", mock_settings):
+            builder = DatasetBuilder("test_author")
+
+            # Test taking first meaningful line
+            multiline_input = """Write about productivity techniques for remote workers
+            
+            Note: This prompt focuses on practical advice
+            Example: Include specific tools and methods"""
+
+            result = builder._clean_ai_prompt_response(multiline_input)
+            assert result == "Write about productivity techniques for remote workers"
+
+            # Test skipping short/irrelevant lines
+            multiline_input2 = """Here's the prompt:
+            
+            Write a comprehensive guide about time management
+            
+            Format: Blog post style"""
+
+            result2 = builder._clean_ai_prompt_response(multiline_input2)
+            assert result2 == "Write a comprehensive guide about time management"
+
+    def test_clean_ai_prompt_response_complex_cases(self, temp_data_dir, mock_settings):
+        """Test complex real-world AI response patterns."""
+        with patch("core.storage.settings", mock_settings):
+            builder = DatasetBuilder("test_author")
+
+            # Test combination of issues
+            complex_input = """PROMPT: "Write a detailed blog post about productivity tips for remote workers."
+            
+            Note: This should be engaging and practical."""
+
+            result = builder._clean_ai_prompt_response(complex_input)
+            assert (
+                result
+                == "Write a detailed blog post about productivity tips for remote workers"
+            )
+
+            # Test with various formatting
+            complex_input2 = "The prompt would be: - 'Create an engaging introduction about artificial intelligence'"
+            result2 = builder._clean_ai_prompt_response(complex_input2)
+            assert (
+                result2
+                == "Create an engaging introduction about artificial intelligence"
+            )

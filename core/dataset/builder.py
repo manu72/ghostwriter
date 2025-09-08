@@ -453,13 +453,73 @@ class DatasetBuilder:
                 max_completion_tokens=150,  # Prompts should be concise
             )
 
-            return response.strip() if response else None
+            return self._clean_ai_prompt_response(response) if response else None
 
         except Exception as e:
             console.print(
                 f"[yellow]⚠️  Could not generate prompt suggestion: {e}[/yellow]"
             )
             return None
+
+    def _clean_ai_prompt_response(self, response: str) -> str:
+        """Clean up AI-generated prompt response to extract just the prompt text."""
+        if not response:
+            return ""
+
+        # Start with basic cleaning
+        cleaned = response.strip()
+
+        # Remove common prefixes that AI might include
+        prefixes_to_remove = [
+            "PROMPT:",
+            "Prompt:",
+            "prompt:",
+            "USER PROMPT:",
+            "User prompt:",
+            "user prompt:",
+            "SUGGESTED PROMPT:",
+            "Suggested prompt:",
+            "suggested prompt:",
+            "Here's the prompt:",
+            "Here is the prompt:",
+            "The prompt is:",
+            "The prompt would be:",
+        ]
+
+        for prefix in prefixes_to_remove:
+            if cleaned.lower().startswith(prefix.lower()):
+                cleaned = cleaned[len(prefix) :].strip()
+                break
+
+        # Remove any remaining leading/trailing punctuation that doesn't belong
+        while cleaned.startswith((":", "-", "•", "*", "=")) and len(cleaned) > 1:
+            cleaned = cleaned[1:].strip()
+
+        # Handle cases where AI includes multiple lines - take first meaningful line FIRST
+        lines = [line.strip() for line in cleaned.split("\n") if line.strip()]
+        if lines:
+            # Take the first substantial line (>5 characters)
+            for line in lines:
+                if len(line) > 5 and not line.lower().startswith(
+                    ("note:", "example:", "format:")
+                ):
+                    cleaned = line
+                    break
+
+        # Remove surrounding quotes (single or double) - after getting the main line
+        if (cleaned.startswith('"') and cleaned.endswith('"')) or (
+            cleaned.startswith("'") and cleaned.endswith("'")
+        ):
+            cleaned = cleaned[1:-1].strip()
+
+        # Final cleanup
+        cleaned = cleaned.strip()
+
+        # Ensure it doesn't end with unnecessary punctuation
+        if cleaned.endswith((".", ":")) and not cleaned.endswith("..."):
+            cleaned = cleaned[:-1].strip()
+
+        return cleaned
 
     def _collect_prompt_for_content(self, content: str) -> Optional[str]:
         """Collect a prompt for given content, offering manual or AI-assisted options."""
