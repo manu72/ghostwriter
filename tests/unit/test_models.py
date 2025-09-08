@@ -6,6 +6,8 @@ from pydantic import ValidationError
 
 from core.models import (
     AuthorProfile,
+    ChatMessage,
+    ChatSession,
     Dataset,
     FineTuneJob,
     JobStatus,
@@ -430,3 +432,167 @@ class TestModelMetadata:
         """Test active_model property."""
         metadata = ModelMetadata(active_model="ft:gpt-3.5-turbo:model:123")
         assert metadata.active_model == "ft:gpt-3.5-turbo:model:123"
+
+
+class TestChatMessage:
+    """Test ChatMessage model."""
+
+    def test_chat_message_creation(self, freeze_datetime):
+        """Test ChatMessage creation."""
+        message = ChatMessage(role="user", content="Hello there!")
+        
+        assert message.role == "user"
+        assert message.content == "Hello there!"
+        assert message.timestamp == datetime(2023, 1, 1, 12, 0, 0)
+
+    def test_chat_message_with_timestamp(self):
+        """Test ChatMessage with custom timestamp."""
+        custom_time = datetime(2023, 6, 15, 10, 30, 0)
+        message = ChatMessage(role="assistant", content="Hi!", timestamp=custom_time)
+        
+        assert message.role == "assistant"
+        assert message.content == "Hi!"
+        assert message.timestamp == custom_time
+
+    def test_valid_roles(self):
+        """Test all valid roles are accepted."""
+        for role in ["user", "assistant", "system"]:
+            message = ChatMessage(role=role, content="Test content")
+            assert message.role == role
+
+    def test_invalid_role_validation(self):
+        """Test invalid role validation."""
+        with pytest.raises(ValidationError) as exc_info:
+            ChatMessage(role="invalid_role", content="Test content")
+        assert "Role must be one of" in str(exc_info.value)
+
+    def test_empty_content_allowed(self):
+        """Test that empty content is allowed."""
+        message = ChatMessage(role="user", content="")
+        assert message.content == ""
+
+
+class TestChatSession:
+    """Test ChatSession model."""
+
+    def test_chat_session_creation(self, freeze_datetime):
+        """Test ChatSession creation."""
+        session = ChatSession(author_id="test_author")
+        
+        assert session.author_id == "test_author"
+        assert len(session.session_id) == 36  # UUID length
+        assert session.messages == []
+        assert session.created_at == datetime(2023, 1, 1, 12, 0, 0)
+        assert session.updated_at == datetime(2023, 1, 1, 12, 0, 0)
+        assert session.message_count == 0
+        assert session.last_message_time is None
+
+    def test_custom_session_id(self):
+        """Test ChatSession with custom session_id."""
+        custom_id = "custom-session-123"
+        session = ChatSession(author_id="test_author", session_id=custom_id)
+        assert session.session_id == custom_id
+
+    def test_add_message(self, freeze_datetime):
+        """Test adding message to session."""
+        session = ChatSession(author_id="test_author")
+        initial_updated_at = session.updated_at
+        
+        # Simulate time passing
+        from freezegun import freeze_time
+        with freeze_time("2023-01-01 13:00:00"):
+            session.add_message("user", "Hello!")
+        
+        assert session.message_count == 1
+        assert session.messages[0].role == "user"
+        assert session.messages[0].content == "Hello!"
+        assert session.updated_at > initial_updated_at
+        assert session.last_message_time is not None
+
+    def test_add_multiple_messages(self):
+        """Test adding multiple messages."""
+        session = ChatSession(author_id="test_author")
+        
+        session.add_message("user", "Hello!")
+        session.add_message("assistant", "Hi there!")
+        session.add_message("user", "How are you?")
+        
+        assert session.message_count == 3
+        assert session.messages[0].role == "user"
+        assert session.messages[0].content == "Hello!"
+        assert session.messages[1].role == "assistant"
+        assert session.messages[1].content == "Hi there!"
+        assert session.messages[2].role == "user"
+        assert session.messages[2].content == "How are you?"
+
+    def test_get_openai_messages(self):
+        """Test converting messages to OpenAI format."""
+        session = ChatSession(author_id="test_author")
+        
+        session.add_message("user", "Hello!")
+        session.add_message("assistant", "Hi there!")
+        
+        openai_messages = session.get_openai_messages()
+        
+        expected = [
+            {"role": "user", "content": "Hello!"},
+            {"role": "assistant", "content": "Hi there!"}
+        ]
+        assert openai_messages == expected
+
+    def test_clear_messages(self, freeze_datetime):
+        """Test clearing all messages."""
+        session = ChatSession(author_id="test_author")
+        
+        # Add some messages
+        session.add_message("user", "Hello!")
+        session.add_message("assistant", "Hi!")
+        assert session.message_count == 2
+        
+        initial_updated_at = session.updated_at
+        
+        # Clear messages
+        from freezegun import freeze_time
+        with freeze_time("2023-01-01 14:00:00"):
+            session.clear_messages()
+        
+        assert session.message_count == 0
+        assert session.messages == []
+        assert session.updated_at > initial_updated_at
+        assert session.last_message_time is None
+
+    def test_message_count_property(self):
+        """Test message_count property."""
+        session = ChatSession(author_id="test_author")
+        assert session.message_count == 0
+        
+        for i in range(5):
+            session.add_message("user", f"Message {i}")
+            assert session.message_count == i + 1
+
+    def test_last_message_time_property(self):
+        """Test last_message_time property."""
+        session = ChatSession(author_id="test_author")
+        assert session.last_message_time is None
+        
+        session.add_message("user", "First message")
+        first_time = session.last_message_time
+        assert first_time is not None
+        
+        session.add_message("assistant", "Second message")
+        second_time = session.last_message_time
+        assert second_time is not None
+        assert second_time >= first_time  # Should be same or later
+
+    def test_session_with_initial_messages(self):
+        """Test ChatSession with initial messages."""
+        initial_messages = [
+            ChatMessage(role="user", content="Hello!"),
+            ChatMessage(role="assistant", content="Hi there!")
+        ]
+        
+        session = ChatSession(author_id="test_author", messages=initial_messages)
+        
+        assert session.message_count == 2
+        assert session.messages == initial_messages
+        assert session.last_message_time is not None
