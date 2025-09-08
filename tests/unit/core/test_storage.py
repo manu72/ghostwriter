@@ -118,13 +118,13 @@ class TestAuthorStorageChat:
         """Test saving a chat session."""
         with patch("core.storage.settings", mock_settings):
             storage = AuthorStorage("test_author")
-            
+
             session = ChatSession(author_id="test_author")
             session.add_message("user", "Hello!")
             session.add_message("assistant", "Hi there!")
-            
+
             saved_path = storage.save_chat_session(session)
-            
+
             # Check file was created
             assert saved_path.exists()
             assert saved_path.name == f"{session.session_id}.json"
@@ -134,16 +134,16 @@ class TestAuthorStorageChat:
         """Test loading a chat session."""
         with patch("core.storage.settings", mock_settings):
             storage = AuthorStorage("test_author")
-            
+
             # Create and save a session
             original_session = ChatSession(author_id="test_author")
             original_session.add_message("user", "Hello!")
             original_session.add_message("assistant", "Hi there!")
             storage.save_chat_session(original_session)
-            
+
             # Load the session
             loaded_session = storage.load_chat_session(original_session.session_id)
-            
+
             assert loaded_session is not None
             assert loaded_session.session_id == original_session.session_id
             assert loaded_session.author_id == original_session.author_id
@@ -155,7 +155,7 @@ class TestAuthorStorageChat:
         """Test loading a nonexistent chat session."""
         with patch("core.storage.settings", mock_settings):
             storage = AuthorStorage("test_author")
-            
+
             loaded_session = storage.load_chat_session("nonexistent-id")
             assert loaded_session is None
 
@@ -163,7 +163,7 @@ class TestAuthorStorageChat:
         """Test listing chat sessions when directory is empty."""
         with patch("core.storage.settings", mock_settings):
             storage = AuthorStorage("test_author")
-            
+
             sessions = storage.list_chat_sessions()
             assert sessions == []
 
@@ -171,18 +171,18 @@ class TestAuthorStorageChat:
         """Test listing chat sessions."""
         with patch("core.storage.settings", mock_settings):
             storage = AuthorStorage("test_author")
-            
+
             # Create and save multiple sessions
             session1 = ChatSession(author_id="test_author")
             session2 = ChatSession(author_id="test_author")
             session3 = ChatSession(author_id="test_author")
-            
+
             storage.save_chat_session(session1)
             storage.save_chat_session(session2)
             storage.save_chat_session(session3)
-            
+
             sessions = storage.list_chat_sessions()
-            
+
             # Should return all session IDs
             assert len(sessions) == 3
             assert session1.session_id in sessions
@@ -193,18 +193,18 @@ class TestAuthorStorageChat:
         """Test deleting a chat session."""
         with patch("core.storage.settings", mock_settings):
             storage = AuthorStorage("test_author")
-            
+
             # Create and save a session
             session = ChatSession(author_id="test_author")
             storage.save_chat_session(session)
-            
+
             # Verify it exists
             assert storage.load_chat_session(session.session_id) is not None
-            
+
             # Delete it
             result = storage.delete_chat_session(session.session_id)
             assert result is True
-            
+
             # Verify it's gone
             assert storage.load_chat_session(session.session_id) is None
 
@@ -212,7 +212,7 @@ class TestAuthorStorageChat:
         """Test deleting a nonexistent chat session."""
         with patch("core.storage.settings", mock_settings):
             storage = AuthorStorage("test_author")
-            
+
             result = storage.delete_chat_session("nonexistent-id")
             assert result is False
 
@@ -220,22 +220,27 @@ class TestAuthorStorageChat:
         """Test exporting a chat session as markdown."""
         with patch("core.storage.settings", mock_settings):
             storage = AuthorStorage("test_author")
-            
+
             # Create a session with messages
             session = ChatSession(author_id="test_author")
             session.add_message("user", "Hello there!")
             session.add_message("assistant", "Hi! How can I help you?")
             session.add_message("user", "Tell me a joke")
-            session.add_message("assistant", "Why don't scientists trust atoms? Because they make up everything!")
-            
+            session.add_message(
+                "assistant",
+                "Why don't scientists trust atoms? Because they make up everything!",
+            )
+
             # Export as markdown
-            export_path = storage.export_chat_session_as_markdown(session, "Test Author")
-            
+            export_path = storage.export_chat_session_as_markdown(
+                session, "Test Author"
+            )
+
             # Check file was created
             assert export_path.exists()
             assert export_path.suffix == ".md"
             assert export_path.parent == storage.chats_dir
-            
+
             # Check file content
             content = export_path.read_text(encoding="utf-8")
             assert "# Chat Session - Test Author" in content
@@ -251,16 +256,18 @@ class TestAuthorStorageChat:
         """Test exporting an empty chat session."""
         with patch("core.storage.settings", mock_settings):
             storage = AuthorStorage("test_author")
-            
+
             # Create empty session
             session = ChatSession(author_id="test_author")
-            
+
             # Export as markdown
-            export_path = storage.export_chat_session_as_markdown(session, "Test Author")
-            
+            export_path = storage.export_chat_session_as_markdown(
+                session, "Test Author"
+            )
+
             # Check file was created
             assert export_path.exists()
-            
+
             # Check file content
             content = export_path.read_text(encoding="utf-8")
             assert "# Chat Session - Test Author" in content

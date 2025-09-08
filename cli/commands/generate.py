@@ -190,7 +190,7 @@ def chat_session(
     ),
 ):
     """💬 Start a ChatGPT-style conversation with your fine-tuned model."""
-    
+
     profile = get_author_profile(author_id)
     if not profile:
         console.print(f"[red]Author '{author_id}' not found.[/red]")
@@ -223,31 +223,33 @@ def chat_session(
 
     # Display chat header
     _display_chat_header(profile.name, model_id, session, save)
-    
+
     # Show conversation history if resuming
     if session.messages:
         _display_conversation_history(session, profile.name)
 
     try:
         adapter = OpenAIAdapter()
-        
+
         while True:
             user_input = Prompt.ask("\n[cyan]💬[/cyan]")
-            
+
             # Handle chat commands
-            if user_input.startswith('/'):
+            if user_input.startswith("/"):
                 if _handle_chat_command(user_input, session, storage, profile.name):
                     continue
                 else:
                     break  # Exit command
-            
+
             if not user_input.strip():
-                console.print("[yellow]Please enter a message or use /help for commands.[/yellow]")
+                console.print(
+                    "[yellow]Please enter a message or use /help for commands.[/yellow]"
+                )
                 continue
 
             # Add user message to session
             session.add_message("user", user_input)
-            
+
             # Display user message
             _display_user_message(user_input)
 
@@ -257,13 +259,13 @@ def chat_session(
                 response = adapter.generate_chat_response(
                     model_id, messages, max_completion_tokens=500
                 )
-                
+
                 # Add assistant response to session
                 session.add_message("assistant", response)
-                
+
                 # Display assistant response
                 _display_assistant_message(response, profile.name)
-                
+
                 # Save session if enabled
                 if save:
                     storage.save_chat_session(session)
@@ -283,7 +285,9 @@ def chat_session(
         raise typer.Exit(1)
 
 
-def _display_chat_header(author_name: str, model_id: str, session: ChatSession, save_enabled: bool) -> None:
+def _display_chat_header(
+    author_name: str, model_id: str, session: ChatSession, save_enabled: bool
+) -> None:
     """Display the chat session header."""
     save_status = "enabled" if save_enabled else "disabled"
     console.print(
@@ -319,7 +323,9 @@ def _display_user_message(content: str, show_timestamp: bool = True) -> None:
     console.print(f"[white]{content}[/white]")
 
 
-def _display_assistant_message(content: str, author_name: str, show_timestamp: bool = True) -> None:
+def _display_assistant_message(
+    content: str, author_name: str, show_timestamp: bool = True
+) -> None:
     """Display an assistant message."""
     timestamp = f" [dim]({_format_timestamp()})[/dim]" if show_timestamp else ""
     console.print(f"\n[bold green]🤖 {author_name}:{timestamp}[/bold green]")
@@ -329,52 +335,55 @@ def _display_assistant_message(content: str, author_name: str, show_timestamp: b
 def _format_timestamp() -> str:
     """Format current timestamp for display."""
     from datetime import datetime
+
     return datetime.now().strftime("%H:%M:%S")
 
 
-def _handle_chat_command(command: str, session: ChatSession, storage: AuthorStorage, author_name: str) -> bool:
+def _handle_chat_command(
+    command: str, session: ChatSession, storage: AuthorStorage, author_name: str
+) -> bool:
     """Handle chat commands. Returns True to continue chat, False to exit."""
     cmd = command.lower().strip()
-    
-    if cmd in ['/quit', '/exit', '/q']:
+
+    if cmd in ["/quit", "/exit", "/q"]:
         console.print("[green]Chat session ended.[/green]")
         return False
-        
-    elif cmd == '/clear':
+
+    elif cmd == "/clear":
         session.clear_messages()
         storage.save_chat_session(session)
         console.print("[green]Conversation cleared.[/green]")
         return True
-        
-    elif cmd == '/history':
+
+    elif cmd == "/history":
         if session.messages:
             _display_conversation_history(session, author_name)
         else:
             console.print("[yellow]No conversation history yet.[/yellow]")
         return True
-        
-    elif cmd == '/save':
+
+    elif cmd == "/save":
         storage.save_chat_session(session)
         console.print(f"[green]Session saved: {session.session_id}[/green]")
         return True
-        
-    elif cmd in ['/export', '/export-md']:
+
+    elif cmd in ["/export", "/export-md"]:
         export_path = storage.export_chat_session_as_markdown(session, author_name)
         console.print(f"[green]Chat exported to: {export_path.name}[/green]")
         return True
-        
-    elif cmd == '/info':
+
+    elif cmd == "/info":
         _display_session_info(session)
         return True
-        
-    elif cmd == '/sessions':
+
+    elif cmd == "/sessions":
         _display_available_sessions(storage)
         return True
-        
-    elif cmd in ['/help', '/?']:
+
+    elif cmd in ["/help", "/?"]:
         _display_chat_help()
         return True
-        
+
     else:
         console.print(f"[yellow]Unknown command: {command}[/yellow]")
         console.print("Use /help to see available commands.")
@@ -386,41 +395,41 @@ def _display_session_info(session: ChatSession) -> None:
     table = Table(title="Session Information")
     table.add_column("Property", style="cyan")
     table.add_column("Value", style="white")
-    
+
     table.add_row("Session ID", session.session_id)
     table.add_row("Author ID", session.author_id)
     table.add_row("Created", str(session.created_at))
     table.add_row("Updated", str(session.updated_at))
     table.add_row("Messages", str(session.message_count))
-    
+
     if session.last_message_time:
         table.add_row("Last Message", str(session.last_message_time))
-    
+
     console.print(table)
 
 
 def _display_available_sessions(storage: AuthorStorage) -> None:
     """Display available chat sessions."""
     sessions = storage.list_chat_sessions()
-    
+
     if not sessions:
         console.print("[yellow]No saved chat sessions found.[/yellow]")
         return
-        
+
     table = Table(title="Available Chat Sessions")
     table.add_column("Session ID", style="cyan")
     table.add_column("Created", style="white")
     table.add_column("Messages", style="yellow")
-    
+
     for session_id in sessions[:10]:  # Show latest 10
         session = storage.load_chat_session(session_id)
         if session:
             table.add_row(
                 session_id[:16] + "..." if len(session_id) > 19 else session_id,
                 session.created_at.strftime("%Y-%m-%d %H:%M"),
-                str(session.message_count)
+                str(session.message_count),
             )
-    
+
     console.print(table)
     if len(sessions) > 10:
         console.print(f"[dim]... and {len(sessions) - 10} more sessions[/dim]")

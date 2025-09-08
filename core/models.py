@@ -135,17 +135,17 @@ class ChatSession(BaseModel):
     messages: List[ChatMessage] = Field(default_factory=list)
     created_at: datetime = Field(default_factory=utc_now)
     updated_at: datetime = Field(default_factory=utc_now)
-    
+
     def add_message(self, role: str, content: str) -> None:
         """Add a new message to the conversation."""
         message = ChatMessage(role=role, content=content)
         self.messages.append(message)
         self.updated_at = utc_now()
-    
+
     def get_openai_messages(self) -> List[Dict[str, str]]:
         """Convert messages to OpenAI API format."""
         return [{"role": msg.role, "content": msg.content} for msg in self.messages]
-    
+
     def clear_messages(self) -> None:
         """Clear all messages in the session."""
         self.messages = []
@@ -156,7 +156,7 @@ class ChatSession(BaseModel):
         """Get the total number of messages in the session."""
         return len(self.messages)
 
-    @property 
+    @property
     def last_message_time(self) -> Optional[datetime]:
         """Get the timestamp of the last message."""
         return self.messages[-1].timestamp if self.messages else None

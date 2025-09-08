@@ -622,7 +622,9 @@ class TestOpenAIAdapterChat:
             # Mock successful chat completion response
             mock_response = Mock()
             mock_response.choices = [Mock()]
-            mock_response.choices[0].message.content = "Hello! How can I help you today?"
+            mock_response.choices[0].message.content = (
+                "Hello! How can I help you today?"
+            )
             mock_openai_client.chat.completions.create.return_value = mock_response
 
             with patch("openai.OpenAI", return_value=mock_openai_client):
@@ -631,10 +633,12 @@ class TestOpenAIAdapterChat:
                 messages = [
                     {"role": "user", "content": "Hello there!"},
                     {"role": "assistant", "content": "Hi! How can I help?"},
-                    {"role": "user", "content": "Tell me a joke"}
+                    {"role": "user", "content": "Tell me a joke"},
                 ]
 
-                response = adapter.generate_chat_response("ft:gpt-3.5-turbo:model:123", messages)
+                response = adapter.generate_chat_response(
+                    "ft:gpt-3.5-turbo:model:123", messages
+                )
 
                 assert response == "Hello! How can I help you today?"
                 mock_openai_client.chat.completions.create.assert_called_once_with(
@@ -660,9 +664,7 @@ class TestOpenAIAdapterChat:
                 messages = [{"role": "user", "content": "Test message"}]
 
                 response = adapter.generate_chat_response(
-                    "ft:gpt-3.5-turbo:model:123", 
-                    messages, 
-                    max_completion_tokens=1000
+                    "ft:gpt-3.5-turbo:model:123", messages, max_completion_tokens=1000
                 )
 
                 assert response == "Custom response"
@@ -678,7 +680,9 @@ class TestOpenAIAdapterChat:
         with patch("core.adapters.openai_adapter.settings") as mock_settings:
             mock_settings.has_openai_key.return_value = True
 
-            mock_openai_client.chat.completions.create.side_effect = Exception("API Error")
+            mock_openai_client.chat.completions.create.side_effect = Exception(
+                "API Error"
+            )
 
             with patch("openai.OpenAI", return_value=mock_openai_client):
                 adapter = OpenAIAdapter()
@@ -686,7 +690,9 @@ class TestOpenAIAdapterChat:
                 messages = [{"role": "user", "content": "Test message"}]
 
                 with pytest.raises(Exception) as exc_info:
-                    adapter.generate_chat_response("ft:gpt-3.5-turbo:model:123", messages)
+                    adapter.generate_chat_response(
+                        "ft:gpt-3.5-turbo:model:123", messages
+                    )
 
                 assert "API Error" in str(exc_info.value)
 
@@ -700,7 +706,7 @@ class TestOpenAIAdapterChat:
 
                 messages = [
                     {"role": "user", "content": "Short message"},
-                    {"role": "assistant", "content": "Short response"}
+                    {"role": "assistant", "content": "Short response"},
                 ]
 
                 truncated = adapter._truncate_messages(messages, 500)
@@ -719,11 +725,11 @@ class TestOpenAIAdapterChat:
                 messages = [
                     {"role": "user", "content": "First message"},
                     {"role": "assistant", "content": long_content},
-                    {"role": "user", "content": "Last message"}
+                    {"role": "user", "content": "Last message"},
                 ]
 
                 truncated = adapter._truncate_messages(messages, 500)
-                
+
                 # Should keep most recent messages that fit
                 assert len(truncated) <= len(messages)
                 assert truncated[-1]["content"] == "Last message"  # Most recent kept
@@ -749,12 +755,10 @@ class TestOpenAIAdapterChat:
 
                 # Create message that's too long but should still be kept
                 very_long_content = "x" * 50000
-                messages = [
-                    {"role": "user", "content": very_long_content}
-                ]
+                messages = [{"role": "user", "content": very_long_content}]
 
                 truncated = adapter._truncate_messages(messages, 500)
-                
+
                 # Should keep at least one message
                 assert len(truncated) == 1
                 assert truncated[0]["content"] == very_long_content

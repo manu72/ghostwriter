@@ -228,17 +228,19 @@ class OpenAIAdapter:
             raise
 
     def generate_chat_response(
-        self, 
-        model_id: str, 
-        messages: List[Dict[str, str]], 
-        max_completion_tokens: int = 500
+        self,
+        model_id: str,
+        messages: List[Dict[str, str]],
+        max_completion_tokens: int = 500,
     ) -> str:
         """Generate response for a chat conversation with full message history."""
         try:
             # Ensure we don't exceed token limits - basic implementation
             # In future could implement smarter truncation/summarization
-            truncated_messages = self._truncate_messages(messages, max_completion_tokens)
-            
+            truncated_messages = self._truncate_messages(
+                messages, max_completion_tokens
+            )
+
             response = self.client.chat.completions.create(
                 model=model_id,
                 messages=truncated_messages,
@@ -253,12 +255,10 @@ class OpenAIAdapter:
             raise
 
     def _truncate_messages(
-        self, 
-        messages: List[Dict[str, str]], 
-        max_completion_tokens: int
+        self, messages: List[Dict[str, str]], max_completion_tokens: int
     ) -> List[Dict[str, str]]:
         """Truncate message history to stay within context window limits.
-        
+
         Basic implementation - keeps most recent messages.
         Could be enhanced with smarter strategies like summarization.
         """
@@ -266,18 +266,18 @@ class OpenAIAdapter:
         # Reserve tokens for completion, leave room for conversation
         max_context_tokens = 4096 - max_completion_tokens - 500  # Conservative buffer
         max_chars = max_context_tokens * 4
-        
+
         # Calculate total character count
         total_chars = sum(len(msg.get("content", "")) for msg in messages)
-        
+
         # If under limit, return all messages
         if total_chars <= max_chars:
             return messages
-            
+
         # Otherwise, keep most recent messages that fit
         truncated = []
         char_count = 0
-        
+
         # Process in reverse to keep most recent
         for msg in reversed(messages):
             msg_chars = len(msg.get("content", ""))
@@ -286,11 +286,11 @@ class OpenAIAdapter:
                 char_count += msg_chars
             else:
                 break
-                
+
         # Always keep at least the last user message if possible
         if not truncated and messages:
             truncated = [messages[-1]]
-            
+
         return truncated
 
     def test_fine_tuned_model(

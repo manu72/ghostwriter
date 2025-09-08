@@ -440,7 +440,7 @@ class TestChatMessage:
     def test_chat_message_creation(self, freeze_datetime):
         """Test ChatMessage creation."""
         message = ChatMessage(role="user", content="Hello there!")
-        
+
         assert message.role == "user"
         assert message.content == "Hello there!"
         assert message.timestamp == datetime(2023, 1, 1, 12, 0, 0)
@@ -449,7 +449,7 @@ class TestChatMessage:
         """Test ChatMessage with custom timestamp."""
         custom_time = datetime(2023, 6, 15, 10, 30, 0)
         message = ChatMessage(role="assistant", content="Hi!", timestamp=custom_time)
-        
+
         assert message.role == "assistant"
         assert message.content == "Hi!"
         assert message.timestamp == custom_time
@@ -478,7 +478,7 @@ class TestChatSession:
     def test_chat_session_creation(self, freeze_datetime):
         """Test ChatSession creation."""
         session = ChatSession(author_id="test_author")
-        
+
         assert session.author_id == "test_author"
         assert len(session.session_id) == 36  # UUID length
         assert session.messages == []
@@ -497,12 +497,13 @@ class TestChatSession:
         """Test adding message to session."""
         session = ChatSession(author_id="test_author")
         initial_updated_at = session.updated_at
-        
+
         # Simulate time passing
         from freezegun import freeze_time
+
         with freeze_time("2023-01-01 13:00:00"):
             session.add_message("user", "Hello!")
-        
+
         assert session.message_count == 1
         assert session.messages[0].role == "user"
         assert session.messages[0].content == "Hello!"
@@ -512,11 +513,11 @@ class TestChatSession:
     def test_add_multiple_messages(self):
         """Test adding multiple messages."""
         session = ChatSession(author_id="test_author")
-        
+
         session.add_message("user", "Hello!")
         session.add_message("assistant", "Hi there!")
         session.add_message("user", "How are you?")
-        
+
         assert session.message_count == 3
         assert session.messages[0].role == "user"
         assert session.messages[0].content == "Hello!"
@@ -528,34 +529,35 @@ class TestChatSession:
     def test_get_openai_messages(self):
         """Test converting messages to OpenAI format."""
         session = ChatSession(author_id="test_author")
-        
+
         session.add_message("user", "Hello!")
         session.add_message("assistant", "Hi there!")
-        
+
         openai_messages = session.get_openai_messages()
-        
+
         expected = [
             {"role": "user", "content": "Hello!"},
-            {"role": "assistant", "content": "Hi there!"}
+            {"role": "assistant", "content": "Hi there!"},
         ]
         assert openai_messages == expected
 
     def test_clear_messages(self, freeze_datetime):
         """Test clearing all messages."""
         session = ChatSession(author_id="test_author")
-        
+
         # Add some messages
         session.add_message("user", "Hello!")
         session.add_message("assistant", "Hi!")
         assert session.message_count == 2
-        
+
         initial_updated_at = session.updated_at
-        
+
         # Clear messages
         from freezegun import freeze_time
+
         with freeze_time("2023-01-01 14:00:00"):
             session.clear_messages()
-        
+
         assert session.message_count == 0
         assert session.messages == []
         assert session.updated_at > initial_updated_at
@@ -565,7 +567,7 @@ class TestChatSession:
         """Test message_count property."""
         session = ChatSession(author_id="test_author")
         assert session.message_count == 0
-        
+
         for i in range(5):
             session.add_message("user", f"Message {i}")
             assert session.message_count == i + 1
@@ -574,11 +576,11 @@ class TestChatSession:
         """Test last_message_time property."""
         session = ChatSession(author_id="test_author")
         assert session.last_message_time is None
-        
+
         session.add_message("user", "First message")
         first_time = session.last_message_time
         assert first_time is not None
-        
+
         session.add_message("assistant", "Second message")
         second_time = session.last_message_time
         assert second_time is not None
@@ -588,11 +590,11 @@ class TestChatSession:
         """Test ChatSession with initial messages."""
         initial_messages = [
             ChatMessage(role="user", content="Hello!"),
-            ChatMessage(role="assistant", content="Hi there!")
+            ChatMessage(role="assistant", content="Hi there!"),
         ]
-        
+
         session = ChatSession(author_id="test_author", messages=initial_messages)
-        
+
         assert session.message_count == 2
         assert session.messages == initial_messages
         assert session.last_message_time is not None
