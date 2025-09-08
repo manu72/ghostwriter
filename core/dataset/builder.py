@@ -1,6 +1,6 @@
 import re
 from pathlib import Path
-from typing import List
+from typing import List, Optional
 
 from rich.console import Console
 from rich.panel import Panel
@@ -14,6 +14,7 @@ from core.prompts.templates import (
     DATASET_BUILDING_PROMPTS,
     EXAMPLE_GENERATION_FROM_EXISTING_TEMPLATE,
     EXAMPLE_GENERATION_PROMPTS,
+    REVERSE_ENGINEER_PROMPT_TEMPLATE,
 )
 from core.storage import AuthorStorage
 
@@ -100,14 +101,8 @@ class DatasetBuilder:
             console.print("[red]No sample provided[/red]")
             return
 
-        console.print(
-            Panel(
-                DATASET_BUILDING_PROMPTS["prompt_for_sample"], title="Prompt Creation"
-            )
-        )
-
-        prompt = Prompt.ask("")
-        if not prompt.strip():
+        prompt = self._collect_prompt_for_content(sample)
+        if not prompt or not prompt.strip():
             console.print("[red]No prompt provided[/red]")
             return
 
@@ -441,6 +436,73 @@ class DatasetBuilder:
         else:
             console.print("[yellow]No examples were approved[/yellow]")
 
+    def _reverse_engineer_prompt(self, content: str) -> Optional[str]:
+        """Use AI to suggest a prompt that would generate the given content."""
+        try:
+            adapter = OpenAIAdapter()
+            # Limit content length to prevent excessive API costs
+            truncated_content = content[:2000]
+            if len(content) > 2000:
+                truncated_content += "\n\n[Content truncated for analysis...]"
+
+            prompt = REVERSE_ENGINEER_PROMPT_TEMPLATE.format(content=truncated_content)
+
+            response = adapter.generate_text(
+                model_id=settings.get_default_model("openai"),
+                prompt=prompt,
+                max_completion_tokens=150,  # Prompts should be concise
+            )
+
+            return response.strip() if response else None
+
+        except Exception as e:
+            console.print(
+                f"[yellow]⚠️  Could not generate prompt suggestion: {e}[/yellow]"
+            )
+            return None
+
+    def _collect_prompt_for_content(self, content: str) -> Optional[str]:
+        """Collect a prompt for given content, offering manual or AI-assisted options."""
+
+        console.print("\n[yellow]💡 Prompt Options:[/yellow]")
+        console.print("1. Write your own prompt (free)")
+        console.print("2. Get AI-suggested prompt (~$0.001)")
+
+        choice = Prompt.ask(
+            "How would you like to create the prompt?", choices=["1", "2"], default="1"
+        )
+
+        if choice == "2":
+            # AI-assisted prompt
+            console.print("[blue]🤖 Generating prompt suggestion...[/blue]")
+            suggested_prompt = self._reverse_engineer_prompt(content)
+
+            if suggested_prompt:
+                console.print(f"\n[green]💡 AI Suggested Prompt:[/green]")
+                console.print(f"[cyan]{suggested_prompt}[/cyan]")
+
+                action = Prompt.ask(
+                    "What would you like to do?",
+                    choices=["accept", "edit", "manual"],
+                    default="accept",
+                )
+
+                if action == "accept":
+                    return suggested_prompt
+                elif action == "edit":
+                    return Prompt.ask("Edit the prompt", default=suggested_prompt)
+                # else: fall through to manual
+            else:
+                console.print(
+                    "[red]Could not generate prompt suggestion. Using manual entry.[/red]"
+                )
+
+        # Manual prompt entry (fallback or chosen)
+        console.print(
+            Panel(DATASET_BUILDING_PROMPTS["prompt_for_sample"], title="Manual Prompt")
+        )
+        return Prompt.ask("Your prompt")
+
     def _prepare_examples_for_prompt(self) -> str:
         """Prepare a sample of existing examples for the generation prompt."""
         # Select up to 3 representative examples
@@ -609,7 +671,12 @@ class DatasetBuilder:
                 console.print(section[:200] + "..." if len(section) > 200 else section)
 
                 if Confirm.ask("Include this section?"):
-                    prompt = Prompt.ask("What prompt would generate this text?")
+                    prompt = self._collect_prompt_for_content(section)
+                    if not prompt or not prompt.strip():
+                        console.print(
+                            "[yellow]Skipping section - no prompt provided[/yellow]"
+                        )
+                        continue
 
                     example = TrainingExample(
                         messages=[

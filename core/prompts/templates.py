@@ -78,6 +78,22 @@ Assistant response: [Response matching the author's voice]
 
 [Continue for {count} examples...]"""
 
+REVERSE_ENGINEER_PROMPT_TEMPLATE = """Analyze the following content and determine what prompt would most likely generate this exact response.
+
+CONTENT TO ANALYZE:
+{content}
+
+Based on this content, create a specific, actionable prompt that would lead someone to write this response. Consider:
+- The main topic and purpose
+- The writing style and tone  
+- The format and structure
+- The intended audience
+- The specific angle or approach
+
+Provide only the prompt, nothing else. Make it clear, specific, and actionable.
+
+PROMPT:"""
+
 
 def build_system_prompt(author_profile) -> str:
     style = author_profile.style_guide

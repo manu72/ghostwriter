@@ -121,9 +121,10 @@ Another valid paragraph.
                 EOFError(),  # Simulate Ctrl+D to end input
             ]
 
-            # Mock prompt for the follow-up question
+            # Mock prompt for the new workflow (choice + manual prompt)
             mock_prompt.ask.side_effect = [
-                "Write about the topic",  # prompt
+                "1",  # Choose manual prompt entry (choice)
+                "Write about the topic",  # The actual prompt
             ]
 
             initial_size = builder.dataset.size
@@ -153,8 +154,11 @@ Another valid paragraph.
             # Mock empty input (EOF immediately)
             mock_console.input.side_effect = [EOFError()]
 
-            # Mock prompt for the follow-up question
-            mock_prompt.ask.side_effect = ["Some prompt"]
+            # Mock prompt for the new workflow (choice + manual prompt)
+            mock_prompt.ask.side_effect = [
+                "1",  # Choose manual prompt entry (choice)
+                "Some prompt",  # The actual prompt
+            ]
 
             initial_size = builder.dataset.size
             builder._add_from_writing_samples()
@@ -178,8 +182,11 @@ Another valid paragraph.
                 EOFError(),  # Simulate Ctrl+D to end input
             ]
 
-            # Mock empty prompt
-            mock_prompt.ask.side_effect = [""]
+            # Mock empty prompt in new workflow
+            mock_prompt.ask.side_effect = [
+                "1",  # Choose manual prompt entry (choice)
+                "",  # Empty prompt
+            ]
 
             initial_size = builder.dataset.size
             builder._add_from_writing_samples()
@@ -285,10 +292,12 @@ Another valid paragraph.
             mock_path.exists.return_value = True
             mock_path_class.return_value = mock_path
 
-            # Mock user inputs
+            # Mock user inputs for new workflow
             mock_prompt.ask.side_effect = [
                 "/path/to/file.txt",  # file path
+                "1",  # Choose manual prompt entry for first section
                 "What prompt for first paragraph?",  # prompt for first section
+                "1",  # Choose manual prompt entry for second section
                 "What prompt for second paragraph?",  # prompt for second section
             ]
             mock_confirm.ask.side_effect = [True, True]  # Include both sections
@@ -771,6 +780,7 @@ class TestDatasetBuilderIntegration:
                 EOFError(),  # Simulate Ctrl+D to end input
             ]
             mock_prompt.ask.side_effect = [
+                "1",  # Choose manual prompt entry
                 "Generate sample content",  # prompt
             ]
 
@@ -807,8 +817,11 @@ class TestDatasetBuilderMarkdown:
                 EOFError(),  # Simulate Ctrl+D to end input
             ]
 
-            # Mock prompt for the follow-up question
-            mock_prompt.ask.side_effect = ["Write about technology"]
+            # Mock prompt for the new workflow
+            mock_prompt.ask.side_effect = [
+                "1",  # Choose manual prompt entry
+                "Write about technology",  # The actual prompt
+            ]
 
             builder._add_from_writing_samples()
 
@@ -886,9 +899,10 @@ class TestDatasetBuilderMarkdown:
                     "core.dataset.builder.Prompt"
                 ) as mock_prompt, patch("core.dataset.builder.Confirm") as mock_confirm:
 
-                    # Mock user inputs
+                    # Mock user inputs for new workflow
                     mock_prompt.ask.side_effect = [
                         temp_file_path,  # file path
+                        "1",  # Choose manual prompt entry
                         "Describe the topic thoroughly",  # prompt for section
                     ]
                     mock_confirm.ask.side_effect = [True]  # Include the section
@@ -1017,3 +1031,185 @@ Assistant response: AI technology is advancing rapidly with new breakthroughs in
             assert examples_dir.exists()
             assert examples_dir.is_dir()
             assert examples_dir.parent == builder.storage.author_dir
+
+
+class TestDatasetBuilderReverseEngineering:
+    """Test the new reverse-engineering prompt functionality."""
+
+    @patch("core.dataset.builder.console")
+    @patch("core.dataset.builder.Prompt")
+    def test_collect_prompt_manual_choice(
+        self, mock_prompt, mock_console, temp_data_dir, mock_settings
+    ):
+        """Test _collect_prompt_for_content with manual choice."""
+        with patch("core.storage.settings", mock_settings):
+            builder = DatasetBuilder("test_author")
+
+            mock_prompt.ask.side_effect = [
+                "1",  # Choose manual prompt entry
+                "Write about productivity",  # Manual prompt
+            ]
+
+            result = builder._collect_prompt_for_content(
+                "Sample content about productivity"
+            )
+
+            assert result == "Write about productivity"
+            assert mock_prompt.ask.call_count == 2
+
+    @patch("core.dataset.builder.console")
+    @patch("core.dataset.builder.Prompt")
+    @patch("core.dataset.builder.OpenAIAdapter")
+    def test_collect_prompt_ai_choice_accept(
+        self,
+        mock_adapter_class,
+        mock_prompt,
+        mock_console,
+        temp_data_dir,
+        mock_settings,
+    ):
+        """Test _collect_prompt_for_content with AI choice and accept suggestion."""
+        with patch("core.storage.settings", mock_settings):
+            builder = DatasetBuilder("test_author")
+
+            # Mock OpenAI adapter
+            mock_adapter = Mock()
+            mock_adapter.generate_text.return_value = (
+                "Write a blog post about productivity tips"
+            )
+            mock_adapter_class.return_value = mock_adapter
+
+            mock_prompt.ask.side_effect = [
+                "2",  # Choose AI-assisted prompt
+                "accept",  # Accept AI suggestion
+            ]
+
+            result = builder._collect_prompt_for_content(
+                "Sample content about productivity"
+            )
+
+            assert result == "Write a blog post about productivity tips"
+            assert mock_adapter.generate_text.called
+
+    @patch("core.dataset.builder.console")
+    @patch("core.dataset.builder.Prompt")
+    @patch("core.dataset.builder.OpenAIAdapter")
+    def test_collect_prompt_ai_choice_edit(
+        self,
+        mock_adapter_class,
+        mock_prompt,
+        mock_console,
+        temp_data_dir,
+        mock_settings,
+    ):
+        """Test _collect_prompt_for_content with AI choice and edit suggestion."""
+        with patch("core.storage.settings", mock_settings):
+            builder = DatasetBuilder("test_author")
+
+            # Mock OpenAI adapter
+            mock_adapter = Mock()
+            mock_adapter.generate_text.return_value = (
+                "Write a blog post about productivity"
+            )
+            mock_adapter_class.return_value = mock_adapter
+
+            mock_prompt.ask.side_effect = [
+                "2",  # Choose AI-assisted prompt
+                "edit",  # Edit AI suggestion
+                "Write a detailed blog post about productivity tips",  # Edited prompt
+            ]
+
+            result = builder._collect_prompt_for_content(
+                "Sample content about productivity"
+            )
+
+            assert result == "Write a detailed blog post about productivity tips"
+            assert mock_adapter.generate_text.called
+
+    @patch("core.dataset.builder.console")
+    @patch("core.dataset.builder.Prompt")
+    @patch("core.dataset.builder.OpenAIAdapter")
+    def test_collect_prompt_ai_choice_fallback_to_manual(
+        self,
+        mock_adapter_class,
+        mock_prompt,
+        mock_console,
+        temp_data_dir,
+        mock_settings,
+    ):
+        """Test _collect_prompt_for_content with AI choice but fallback to manual."""
+        with patch("core.storage.settings", mock_settings):
+            builder = DatasetBuilder("test_author")
+
+            # Mock OpenAI adapter
+            mock_adapter = Mock()
+            mock_adapter.generate_text.return_value = (
+                "Write a blog post about productivity"
+            )
+            mock_adapter_class.return_value = mock_adapter
+
+            mock_prompt.ask.side_effect = [
+                "2",  # Choose AI-assisted prompt
+                "manual",  # Reject AI, go manual
+                "My custom prompt",  # Manual prompt
+            ]
+
+            result = builder._collect_prompt_for_content(
+                "Sample content about productivity"
+            )
+
+            assert result == "My custom prompt"
+            assert mock_adapter.generate_text.called
+
+    @patch("core.dataset.builder.console")
+    @patch("core.dataset.builder.Prompt")
+    @patch("core.dataset.builder.OpenAIAdapter")
+    def test_reverse_engineer_prompt_api_error_fallback(
+        self,
+        mock_adapter_class,
+        mock_prompt,
+        mock_console,
+        temp_data_dir,
+        mock_settings,
+    ):
+        """Test _collect_prompt_for_content with API error fallback to manual."""
+        with patch("core.storage.settings", mock_settings):
+            builder = DatasetBuilder("test_author")
+
+            # Mock OpenAI adapter to raise an error
+            mock_adapter_class.side_effect = ValueError("API key not found")
+
+            mock_prompt.ask.side_effect = [
+                "2",  # Choose AI-assisted prompt
+                "Fallback manual prompt",  # Manual prompt after API error
+            ]
+
+            result = builder._collect_prompt_for_content(
+                "Sample content about productivity"
+            )
+
+            assert result == "Fallback manual prompt"
+
+    @patch("core.dataset.builder.OpenAIAdapter")
+    def test_reverse_engineer_prompt_content_truncation(
+        self, mock_adapter_class, temp_data_dir, mock_settings
+    ):
+        """Test that reverse_engineer_prompt truncates long content."""
+        with patch("core.storage.settings", mock_settings):
+            builder = DatasetBuilder("test_author")
+
+            # Mock OpenAI adapter
+            mock_adapter = Mock()
+            mock_adapter.generate_text.return_value = "Suggested prompt"
+            mock_adapter_class.return_value = mock_adapter
+
+            # Create content longer than 2000 characters
+            long_content = "This is a test sentence. " * 100  # About 2500 characters
+
+            result = builder._reverse_engineer_prompt(long_content)
+
+            assert result == "Suggested prompt"
+            # Check that truncation occurred in API call
+            call_args = mock_adapter.generate_text.call_args
+            prompt_content = call_args[1]["prompt"]
+            assert "[Content truncated for analysis...]" in prompt_content
