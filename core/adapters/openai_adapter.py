@@ -5,6 +5,7 @@ from pathlib import Path
 from typing import Any, Dict, List, Optional
 
 import openai
+from openai.types.chat import ChatCompletionMessageParam
 from rich.console import Console
 from rich.panel import Panel
 from rich.progress import Progress, SpinnerColumn, TextColumn
@@ -230,7 +231,7 @@ class OpenAIAdapter:
     def generate_chat_response(
         self,
         model_id: str,
-        messages: List[Dict[str, Any]],
+        messages: List[ChatCompletionMessageParam],
         max_completion_tokens: int = 500,
     ) -> str:
         """Generate response for a chat conversation with full message history."""
@@ -255,8 +256,8 @@ class OpenAIAdapter:
             raise
 
     def _truncate_messages(
-        self, messages: List[Dict[str, Any]], max_completion_tokens: int
-    ) -> List[Dict[str, Any]]:
+        self, messages: List[ChatCompletionMessageParam], max_completion_tokens: int
+    ) -> List[ChatCompletionMessageParam]:
         """Truncate message history to stay within context window limits.
 
         Basic implementation - keeps most recent messages.
@@ -275,7 +276,7 @@ class OpenAIAdapter:
             return messages
 
         # Otherwise, keep most recent messages that fit
-        truncated = []
+        truncated: List[ChatCompletionMessageParam] = []
         char_count = 0
 
         # Process in reverse to keep most recent
