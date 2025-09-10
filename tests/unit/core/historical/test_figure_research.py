@@ -2,8 +2,9 @@
 Unit tests for historical figure research module.
 """
 
-import pytest
 from unittest.mock import Mock, patch
+
+import pytest
 
 from core.historical.figure_research import (
     FigureAnalysis,

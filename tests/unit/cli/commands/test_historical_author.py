@@ -2,15 +2,16 @@
 Unit tests for historical author CLI commands.
 """
 
-import pytest
 from unittest.mock import Mock, patch
+
+import pytest
 from typer.testing import CliRunner
 
 from cli.commands.historical_author import (
-    historical_app,
     create_historical_author_interactive,
+    historical_app,
 )
-from core.historical import HistoricalFigure, FigureAnalysis, FigureVerification
+from core.historical import FigureAnalysis, FigureVerification, HistoricalFigure
 from core.models import AuthorProfile, AuthorSource, StyleGuide
 
 
@@ -193,11 +194,11 @@ class TestBasicCLIFunctionality:
 
     def test_historical_module_imports(self):
         """Test that historical modules can be imported."""
-        from core.historical import HistoricalFigure, FigureAnalysis, FigureVerification
         from cli.commands.historical_author import (
-            historical_app,
             create_historical_author_interactive,
+            historical_app,
         )
+        from core.historical import FigureAnalysis, FigureVerification, HistoricalFigure
 
         # Basic smoke test - objects can be created
         figure = HistoricalFigure(

@@ -2,8 +2,9 @@
 Unit tests for historical dataset generator module.
 """
 
-import pytest
 from unittest.mock import Mock, patch
+
+import pytest
 
 from core.historical.dataset_generator import HistoricalDatasetGenerator
 from core.historical.figure_research import FigureAnalysis

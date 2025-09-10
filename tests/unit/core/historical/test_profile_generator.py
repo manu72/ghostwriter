@@ -2,9 +2,10 @@
 Unit tests for historical profile generator module.
 """
 
-import pytest
 from datetime import datetime
 from unittest.mock import Mock, patch
+
+import pytest
 
 from core.historical.figure_research import FigureAnalysis
 from core.historical.profile_generator import HistoricalProfileGenerator

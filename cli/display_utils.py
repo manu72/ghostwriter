@@ -6,6 +6,7 @@ across different CLI commands and views.
 """
 
 from typing import Union
+
 from core.models import AuthorProfile, AuthorSource
 
 

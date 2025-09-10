@@ -6,7 +6,7 @@ from rich.panel import Panel
 from rich.prompt import Confirm, Prompt
 from rich.table import Table
 
-from cli.display_utils import get_author_type_short, get_author_type_full
+from cli.display_utils import get_author_type_full, get_author_type_short
 from core.models import AuthorProfile, StyleGuide
 from core.storage import AuthorStorage, get_author_profile, list_authors
 
