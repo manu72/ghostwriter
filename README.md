@@ -1,16 +1,16 @@
 # Ghostwriter
 
-Ghostwriter is a tool that empowers non technical users to create their own personal writing AI.
-It helps you finetune a language model so it learns your style, tone, and preferences.
+Ghostwriter is a tool that empowers non-technical users to create their own personal writing AI.
+It helps you fine-tune a language model so it learns your style, tone, and preferences, or create AI authors based on historical figures.
 Over time, your Ghostwriter becomes a unique voice or author that improves through feedback and edits you provide.
 
 ---
 
 ## Vision
 
-The goal of Ghostwriter is to democratise finetuning. Anyone, not just developers, should be able to:
+The goal of Ghostwriter is to democratise fine-tuning. Anyone, not just developers, should be able to:
 
-- Collect and structure a small dataset of writing samples.
+- Collect and structure a small dataset of writing samples, or create authors based on historical figures.
 - Fine-tune an existing large language model (LLM) into a personal voice or author.
 - Generate content that reflects their voice: blog posts, articles, essays, or even books.
 - Provide feedback on drafts and see the author evolve continuously.
@@ -19,22 +19,32 @@ The goal of Ghostwriter is to democratise finetuning. Anyone, not just developer
 
 ## Features (Stage 1)
 
+### Core Features
 - **Dataset Builder**: Guided prompts help you prepare a small training dataset in the correct format for the LLM.
-- **Fine-Tune Runner**: Simple CLI to start a finetuning job with a commercial LLM.
+- **Fine-Tune Runner**: Simple CLI to start a fine-tuning job with a commercial LLM.
 - **Author Runtime**: Generate drafts from your tuned author with a single command.
 - **Content Persistence**: All generated content is automatically saved as markdown files with metadata.
 - **Feedback Loop**: Rate or edit drafts, turning feedback into new training examples.
+
+### NEW: Historical Figure Authors ✨
+- **AI-Powered Discovery**: Search for historical figures based on your criteria (e.g., "famous poets", "20th century scientists")
+- **Automatic Style Analysis**: AI analyzes the figure's documented writing style, tone, and characteristics
+- **Profile Generation**: Automatically creates author profiles with appropriate style guides
+- **Training Dataset Creation**: AI generates 15-30 training examples in the historical figure's authentic voice
+- **One-Command Setup**: Complete author creation from discovery to training-ready dataset
+- **Cost-Effective**: Full historical author setup typically costs $0.10-0.30
 
 ---
 
 ## Roadmap
 
-### Stage 1: Terminal based POC
+### Stage 1: Terminal based POC ✅
 
 - CLI tool for dataset building, validation, and fine-tuning.
 - Adaptor for a single commercial provider (OpenAI or Gemini).
 - Feedback mechanism for turning edits into new examples.
 - Local storage of datasets (.jsonl) and author profiles.
+- **NEW**: AI-powered historical figure author creation with discovery, analysis, and dataset generation.
 
 ### Stage 2: Basic Browser UI
 
@@ -69,12 +79,23 @@ The goal of Ghostwriter is to democratise finetuning. Anyone, not just developer
 ```
 ghostwriter/
 ├── cli/                    # Typer-based CLI entrypoints
+│   └── commands/
+│       ├── author.py      # Manual author creation
+│       ├── historical_author.py  # 🆕 Historical figure authors
+│       ├── dataset.py     # Dataset building
+│       ├── train.py       # Fine-tuning
+│       └── generate.py    # Content generation
 ├── core/
 │   ├── adapters/          # openai_adapter.py, gemini_adapter.py
 │   ├── dataset/           # builders, validators, splitters
 │   ├── feedback/          # edit diff, new examples from feedback
 │   ├── eval/              # style metrics, safety checks
+│   ├── historical/        # 🆕 Historical figure processing
+│   │   ├── figure_research.py    # AI figure discovery & analysis
+│   │   ├── profile_generator.py  # Convert analysis to profiles
+│   │   └── dataset_generator.py  # Generate historical training data
 │   └── prompts/           # system templates
+│       └── historical_templates.py  # 🆕 Historical figure prompts
 ├── data/
 │   └── authors/<author_id>/
 │       ├── style_guide.yml
@@ -83,6 +104,11 @@ ghostwriter/
 │       ├── content/       # generated content as markdown
 │       ├── edits/
 │       └── models.json    # fine-tune job metadata
+├── tests/                 # Comprehensive test suite
+│   ├── unit/
+│   │   └── core/
+│   │       └── historical/  # 🆕 Historical feature tests
+│   └── integration/
 ├── .env.example           # API keys and secrets
 ├── requirements.txt
 └── README.md
@@ -117,7 +143,11 @@ cp .env.example .env
 4. Run the CLI:
 
 ```bash
+# Traditional manual author creation
 python -m cli.main init
+
+# Or try the new historical figure author creation
+python -m cli.main historical create
 ```
 
 ---
@@ -127,47 +157,75 @@ python -m cli.main init
 ### Author Management
 
 ```bash
-# Initialize a new author profile
+# Initialize a new author profile (manual creation)
 python -m cli.main init
 
-# List all authors
-python -m cli.main list
+# List all authors (shows both manual and historical)
+python -m cli.main author list
+
+# Show detailed author information
+python -m cli.main author show <author_id>
+```
+
+### Historical Figure Authors (NEW!)
+
+```bash
+# Create historical figure author (interactive)
+python -m cli.main historical create
+
+# Search for historical figures
+python -m cli.main historical search "famous American poets"
+
+# Analyze a specific figure's writing style
+python -m cli.main historical analyze "Emily Dickinson"
+
+# Create with specific parameters
+python -m cli.main historical create --figure "Mark Twain" --id twain_author --dataset-size 25
 ```
 
 ### Dataset Building
 
 ```bash
-# Build training dataset interactively
+# Build training dataset interactively (manual authors)
 python -m cli.main dataset build <author_id>
 
-# Import examples from files
-python -m cli.main dataset import <author_id> <file_path>
+# Historical authors come with pre-built datasets, but can be extended
+python -m cli.main dataset build <historical_author_id>
+
+# Validate dataset quality
+python -m cli.main dataset validate <author_id>
+
+# Show dataset information
+python -m cli.main dataset show <author_id>
 ```
 
 ### Fine-tuning
 
 ```bash
-# Start fine-tuning job
+# Start fine-tuning job (works for both manual and historical authors)
 python -m cli.main train start <author_id>
 
 # Check training status
 python -m cli.main train status <author_id>
 
-# Wait for completion
-python -m cli.main train wait <author_id>
+# Test fine-tuned model
+python -m cli.main train test <author_id>
 ```
 
 ### Content Generation
 
 ```bash
-# Generate single piece of content
+# Generate single piece of content (works for both manual and historical authors)
 python -m cli.main generate text <author_id> --prompt "Write about productivity"
 
-# Disable content saving
-python -m cli.main generate text <author_id> --prompt "Quick note" --no-save
+# Generate content in Mark Twain's style
+python -m cli.main generate text twain_author --prompt "Write about modern technology"
 
 # Interactive generation session
 python -m cli.main generate interactive <author_id>
+
+# Start a chat session with your author
+python -m cli.main generate chat <author_id>
 ```
 
 ---
@@ -267,12 +325,20 @@ tests/
 ├── unit/                          # Unit tests (90%+ coverage target)
 │   ├── test_models.py            # Pydantic model validation
 │   ├── test_config.py            # Settings and environment
-│   └── core/
-│       ├── test_dataset_builder.py    # Dataset processing logic
-│       ├── test_markdown_utils.py     # Markdown content generation
-│       ├── test_storage.py           # File I/O and data persistence
-│       └── adapters/
-│           └── test_openai_adapter.py # API integration (mocked)
+│   ├── test_historical_templates.py  # 🆕 Historical prompt templates
+│   ├── core/
+│   │   ├── test_dataset_builder.py    # Dataset processing logic
+│   │   ├── test_markdown_utils.py     # Markdown content generation
+│   │   ├── test_storage.py           # File I/O and data persistence
+│   │   ├── historical/               # 🆕 Historical feature tests
+│   │   │   ├── test_figure_research.py
+│   │   │   ├── test_profile_generator.py
+│   │   │   └── test_dataset_generator.py
+│   │   └── adapters/
+│   │       └── test_openai_adapter.py # API integration (mocked)
+│   └── cli/
+│       └── commands/
+│           └── test_historical_author.py  # 🆕 Historical CLI tests
 ├── integration/                   # End-to-end workflow tests
 │   └── test_cli_workflows.py     # Complete CLI command testing
 └── fixtures/                     # Sample data and API responses
@@ -294,6 +360,8 @@ tests/
 - **Markdown Utils**: Content generation, filename sanitization, metadata handling
 - **Dataset Builder**: Content processing, imports, user interactions
 - **OpenAI Adapter**: Full API mocking, job management, error scenarios
+- **Historical Features**: Figure research, profile generation, dataset creation, CLI commands
+- **Prompt Templates**: Template validation, formatting, cost estimation
 - **CLI Commands**: End-to-end command testing with Typer
 
 ### Writing Tests

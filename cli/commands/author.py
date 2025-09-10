@@ -40,8 +40,11 @@ def list_authors_cmd() -> None:
 
     if not authors:
         console.print(
-            "[yellow]No authors found. Run 'ghostwriter author create' to create one.[/yellow]"
+            "[yellow]No authors found.[/yellow]"
         )
+        console.print("Create one with:")
+        console.print("• [cyan]ghostwriter author create[/cyan] - Manual creation")
+        console.print("• [cyan]ghostwriter historical create[/cyan] - Historical figure")
         return
 
     console.print(f"\n[bold blue]Authors ({len(authors)})[/bold blue]")
@@ -49,8 +52,9 @@ def list_authors_cmd() -> None:
     table = Table(show_header=True, header_style="bold magenta")
     table.add_column("ID", style="cyan")
     table.add_column("Name", style="white")
-    table.add_column("Description", max_width=50)
-    table.add_column("Style", max_width=30)
+    table.add_column("Type", width=8)
+    table.add_column("Description", max_width=40)
+    table.add_column("Style", max_width=25)
     table.add_column("Created", style="dim")
 
     for author_id in authors:
@@ -64,13 +68,18 @@ def list_authors_cmd() -> None:
             if hasattr(profile, "created_at")
             else "Unknown"
         )
+        
+        # Get source type with fallback for older profiles
+        source_type = getattr(profile, 'source_type', 'manual')
+        type_display = "🏛️ Hist" if source_type == "historical" else "👤 Man"
 
         table.add_row(
             author_id,
             profile.name,
+            type_display,
             (
-                profile.description[:47] + "..."
-                if len(profile.description) > 50
+                profile.description[:37] + "..."
+                if len(profile.description) > 40
                 else profile.description
             ),
             style_summary,
@@ -94,6 +103,13 @@ def show_author(
     # Profile info
     console.print(f"\n[bold blue]Author: {profile.name}[/bold blue]")
     console.print(f"[dim]ID: {profile.author_id}[/dim]")
+    
+    # Show source type if available (for historical figures)
+    source_type = getattr(profile, 'source_type', 'manual')
+    if source_type == 'historical':
+        console.print(f"[dim]Type: 🏛️ Historical Figure[/dim]")
+    else:
+        console.print(f"[dim]Type: 👤 Manual Creation[/dim]")
 
     if profile.description:
         console.print(f"\n{profile.description}")
