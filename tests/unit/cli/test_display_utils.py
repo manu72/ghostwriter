@@ -4,7 +4,11 @@ Unit tests for CLI display utilities.
 
 import pytest
 
-from cli.display_utils import get_author_source_type, get_author_type_short, get_author_type_full
+from cli.display_utils import (
+    get_author_source_type,
+    get_author_type_short,
+    get_author_type_full,
+)
 from core.models import AuthorProfile, AuthorSource, StyleGuide
 
 
