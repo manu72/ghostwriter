@@ -24,7 +24,9 @@ app.add_typer(train_app, name="train", help="Fine-tune and manage models")
 app.add_typer(
     generate_app, name="generate", help="Generate content with fine-tuned models"
 )
-app.add_typer(historical_app, name="historical", help="Create authors based on historical figures")
+app.add_typer(
+    historical_app, name="historical", help="Create authors based on historical figures"
+)
 
 
 @app.command()
@@ -93,9 +95,9 @@ def status() -> None:
             status = "📊 Dataset Ready"
         else:
             status = "📝 Setup Needed"
-        
+
         # Get source type with fallback for older profiles
-        source_type = getattr(profile, 'source_type', 'manual')
+        source_type = getattr(profile, "source_type", "manual")
         type_display = "🏛️ Hist" if source_type == "historical" else "👤 Man"
 
         table.add_row(
@@ -115,7 +117,9 @@ def status() -> None:
 
     console.print("\n[dim]Commands:[/dim]")
     console.print("• [cyan]ghostwriter author list[/cyan] - Manage authors")
-    console.print("• [cyan]ghostwriter historical create[/cyan] - Create historical figure author")
+    console.print(
+        "• [cyan]ghostwriter historical create[/cyan] - Create historical figure author"
+    )
     console.print(
         "• [cyan]ghostwriter dataset build <author>[/cyan] - Build training dataset"
     )

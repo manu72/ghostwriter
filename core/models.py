@@ -84,7 +84,9 @@ class AuthorProfile(BaseModel):
     author_id: str = Field(description="Unique identifier for the author")
     name: str = Field(description="Display name for the author")
     description: str = Field(default="", description="Brief description of the author")
-    source_type: AuthorSource = Field(default=AuthorSource.MANUAL, description="How this author was created")
+    source_type: AuthorSource = Field(
+        default=AuthorSource.MANUAL, description="How this author was created"
+    )
     style_guide: StyleGuide = Field(default_factory=StyleGuide)
     created_at: datetime = Field(default_factory=utc_now)
     updated_at: datetime = Field(default_factory=utc_now)

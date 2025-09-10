@@ -21,7 +21,7 @@ from .dataset_generator import HistoricalDatasetGenerator
 
 __all__ = [
     "HistoricalFigure",
-    "FigureAnalysis", 
+    "FigureAnalysis",
     "FigureVerification",
     "HistoricalFigureResearcher",
     "HistoricalProfileGenerator",

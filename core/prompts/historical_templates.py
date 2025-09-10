@@ -186,27 +186,28 @@ Focus on figures who have well-documented writing styles and substantial written
 
 # Cost estimation constants for planning
 ESTIMATED_TOKENS = {
-    "figure_discovery": 800,      # Discovery of 5 figures
-    "figure_analysis": 1200,      # Detailed style analysis
+    "figure_discovery": 800,  # Discovery of 5 figures
+    "figure_analysis": 1200,  # Detailed style analysis
     "style_guide_generation": 400,  # Converting analysis to guide
-    "figure_verification": 300,   # Verification check
-    "example_generation": 600,    # Per training example generated
-    "search_refinement": 600,     # Refining search results
+    "figure_verification": 300,  # Verification check
+    "example_generation": 600,  # Per training example generated
+    "search_refinement": 600,  # Refining search results
 }
+
 
 def estimate_cost(operation: str, count: int = 1) -> float:
     """Estimate the cost of historical figure operations.
-    
+
     Args:
         operation: Type of operation (key from ESTIMATED_TOKENS)
         count: Number of operations (e.g., number of examples to generate)
-        
+
     Returns:
         Estimated cost in USD (rough estimate assuming $0.002 per 1000 tokens)
     """
     if operation not in ESTIMATED_TOKENS:
         return 0.0
-    
+
     tokens = ESTIMATED_TOKENS[operation] * count
     # Rough estimate: $0.002 per 1000 tokens (average of input/output costs)
     return round((tokens / 1000) * 0.002, 6)
