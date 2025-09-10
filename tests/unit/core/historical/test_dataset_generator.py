@@ -377,3 +377,26 @@ class TestHistoricalDatasetGenerator:
         cost = self.generator.estimate_generation_cost(10)
         assert isinstance(cost, float)
         assert cost > 0
+
+    def test_fallback_parse_examples_ignores_leading_text(self):
+        """Test fallback parsing ignores text before any valid prompt."""
+        response = """
+        Some random leading text that should be ignored
+        This is not a prompt or response
+        Random content here
+        
+        User prompt: First valid prompt
+        Assistant response: First response
+        Additional response text
+        
+        User prompt: Second valid prompt  
+        Assistant response: Second response
+        """
+
+        examples = self.generator._fallback_parse_examples(response)
+
+        assert len(examples) == 2
+        assert examples[0].messages[1]["content"] == "First valid prompt"
+        assert examples[0].messages[2]["content"] == "First response\nAdditional response text"
+        assert examples[1].messages[1]["content"] == "Second valid prompt"
+        assert examples[1].messages[2]["content"] == "Second response"

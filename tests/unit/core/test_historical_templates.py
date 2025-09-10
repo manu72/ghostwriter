@@ -251,10 +251,22 @@ class TestEstimateCost:
             assert cost < 0.01
 
     def test_estimate_cost_invalid_operation(self):
-        """Test cost estimation for invalid operation."""
-        cost = estimate_cost("invalid_operation")
+        """Test cost estimation for invalid operation raises error."""
+        with pytest.raises(ValueError, match="Unknown operation 'invalid_operation'"):
+            estimate_cost("invalid_operation")
 
-        assert cost == 0.0
+    def test_estimate_cost_invalid_operation_error_message(self):
+        """Test that error message includes available operations."""
+        with pytest.raises(ValueError) as exc_info:
+            estimate_cost("typo_operation")
+        
+        error_message = str(exc_info.value)
+        assert "Unknown operation 'typo_operation'" in error_message
+        assert "Available operations:" in error_message
+        # Should contain all known operations
+        assert "figure_discovery" in error_message
+        assert "figure_analysis" in error_message
+        assert "style_guide_generation" in error_message
 
     def test_estimate_cost_zero_count(self):
         """Test cost estimation with zero count."""

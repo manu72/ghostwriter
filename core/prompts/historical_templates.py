@@ -206,7 +206,10 @@ def estimate_cost(operation: str, count: int = 1) -> float:
         Estimated cost in USD (rough estimate assuming $0.002 per 1000 tokens)
     """
     if operation not in ESTIMATED_TOKENS:
-        return 0.0
+        available_operations = ", ".join(ESTIMATED_TOKENS.keys())
+        raise ValueError(
+            f"Unknown operation '{operation}'. Available operations: {available_operations}"
+        )
 
     tokens = ESTIMATED_TOKENS[operation] * count
     # Rough estimate: $0.002 per 1000 tokens (average of input/output costs)

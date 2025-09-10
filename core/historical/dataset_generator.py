@@ -289,7 +289,8 @@ class HistoricalDatasetGenerator:
                 current_response_lines = [line.split(":", 1)[1].strip()]
 
             elif (
-                current_response_lines is not None
+                current_prompt is not None
+                and current_response_lines is not None
                 and line
                 and not line.startswith(("User prompt:", "EXAMPLE"))
             ):

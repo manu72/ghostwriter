@@ -350,14 +350,14 @@ class HistoricalFigureResearcher:
     def _extract_field(self, text: str, field_markers: List[str]) -> Optional[str]:
         """Extract a single field value from text using multiple possible markers."""
         for marker in field_markers:
-            # Look for the marker, then capture until next line that starts with ** or end
-            pattern = rf"{re.escape(marker)}\s*(.+?)(?=\n\s*\*\*|\Z)"
+            # Look for the marker, then capture until next field (bold or dash prefix) or end
+            pattern = rf"{re.escape(marker)}\s*(.+?)(?=\n\s*[\*\-]|\Z)"
             match = re.search(pattern, text, re.DOTALL | re.IGNORECASE)
             if match:
                 # Get the captured text and clean it up
                 value = match.group(1).strip()
                 # Remove any trailing content that looks like another field
-                value = re.sub(r"\n\s*\*\*.*", "", value)
+                value = re.sub(r"\n\s*[\*\-].*", "", value)
                 return value.strip()
         return None
 
