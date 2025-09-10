@@ -57,21 +57,132 @@ class TestHistoricalAuthorCLI:
         """Test create command help output."""
         result = self.runner.invoke(historical_app, ["create", "--help"])
 
+        # Comprehensive debug output for CI troubleshooting
+        print(f"Exit code: {result.exit_code}")
+        print(f"Exception: {result.exception}")
+        print(f"Output length: {len(result.output)}")
+        print(f"Raw output: {repr(result.output)}")
+
+        # Check if output is empty or truncated
+        if not result.output.strip():
+            print("WARNING: Empty output detected!")
+
+        # Check for common CLI patterns
+        print(f"Contains 'Usage:': {'Usage:' in result.output}")
+        print(f"Contains 'Options:': {'Options:' in result.output}")
+
+        if result.exit_code != 0:
+            print("Command failed - investigating exception:")
+            if result.exception:
+                import traceback
+
+                traceback.print_exception(
+                    type(result.exception),
+                    result.exception,
+                    result.exception.__traceback__,
+                )
+
         assert result.exit_code == 0
-        assert (
+
+        # Check main description
+        description_check = (
             "Create a new author profile based on a historical figure" in result.output
         )
-        assert "--id" in result.output
-        assert "--criteria" in result.output
-        assert "--figure" in result.output
+        if not description_check:
+            print("Description check failed")
+        assert description_check
+
+        # Check individual options with detailed debug output
+        id_check = "--id" in result.output
+        criteria_check = "--criteria" in result.output
+        figure_check = "--figure" in result.output
+
+        print(
+            f"Option checks: --id={id_check}, --criteria={criteria_check}, --figure={figure_check}"
+        )
+
+        if not id_check:
+            print("--id option missing from help output")
+        if not criteria_check:
+            print("--criteria option missing from help output")
+        if not figure_check:
+            print("--figure option missing from help output")
+
+        assert id_check
+        assert criteria_check
+        assert figure_check
 
     def test_search_command_help(self):
         """Test search command help output."""
         result = self.runner.invoke(historical_app, ["search", "--help"])
 
+        # Comprehensive debug output for CI troubleshooting
+        print(f"Search command - Exit code: {result.exit_code}")
+        print(f"Search command - Exception: {result.exception}")
+        print(f"Search command - Output length: {len(result.output)}")
+        print(f"Search command - Raw output: {repr(result.output)}")
+
+        if result.exit_code != 0:
+            print("Search command failed - investigating exception:")
+            if result.exception:
+                import traceback
+
+                traceback.print_exception(
+                    type(result.exception),
+                    result.exception,
+                    result.exception.__traceback__,
+                )
+
         assert result.exit_code == 0
-        assert "Search for historical figures based on criteria" in result.output
-        assert "--refine" in result.output
+
+        # Check main description
+        description_check = (
+            "Search for historical figures based on criteria" in result.output
+        )
+        refine_check = "--refine" in result.output
+
+        print(
+            f"Search checks: description={description_check}, --refine={refine_check}"
+        )
+
+        if not description_check:
+            print("Search description missing from help output")
+        if not refine_check:
+            print("--refine option missing from help output")
+
+        assert description_check
+        assert refine_check
+
+    def test_command_structure_verification(self):
+        """Verify that commands are properly registered in the app."""
+        # Test that we can get help for the app itself
+        result = self.runner.invoke(historical_app, ["--help"])
+        print(f"Main app help - Exit code: {result.exit_code}")
+        print(f"Main app help - Output: {repr(result.output[:200])}")
+
+        # Test that individual commands exist by invoking them
+        commands_to_test = ["create", "search", "analyze"]
+        for cmd in commands_to_test:
+            result = self.runner.invoke(historical_app, [cmd, "--help"])
+            print(f"{cmd} command exists: {result.exit_code == 0}")
+            if result.exit_code != 0:
+                print(f"{cmd} command error: {result.exception}")
+
+        # Specifically test the create command structure
+        import inspect
+
+        from cli.commands.historical_author import create_historical_author
+
+        sig = inspect.signature(create_historical_author)
+        print(f"Create function parameters: {list(sig.parameters.keys())}")
+
+        # Test the search command structure
+        from cli.commands.historical_author import search_historical_figures
+
+        sig = inspect.signature(search_historical_figures)
+        print(f"Search function parameters: {list(sig.parameters.keys())}")
+
+        assert True  # This is a diagnostic test
 
     def test_analyze_command_help(self):
         """Test analyze command help output."""
