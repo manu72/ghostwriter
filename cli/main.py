@@ -8,6 +8,7 @@ from cli.commands.dataset import dataset_app
 from cli.commands.generate import generate_app
 from cli.commands.historical_author import historical_app
 from cli.commands.train import train_app
+from cli.display_utils import get_author_type_short
 
 console = Console()
 
@@ -96,9 +97,7 @@ def status() -> None:
         else:
             status = "📝 Setup Needed"
 
-        # Get source type with fallback for older profiles
-        source_type = getattr(profile, "source_type", "manual")
-        type_display = "🏛️ Hist" if source_type == "historical" else "👤 Man"
+        type_display = get_author_type_short(profile)
 
         table.add_row(
             profile.name,

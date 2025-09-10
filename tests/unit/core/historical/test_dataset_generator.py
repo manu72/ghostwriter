@@ -397,6 +397,9 @@ class TestHistoricalDatasetGenerator:
 
         assert len(examples) == 2
         assert examples[0].messages[1]["content"] == "First valid prompt"
-        assert examples[0].messages[2]["content"] == "First response\nAdditional response text"
+        assert (
+            examples[0].messages[2]["content"]
+            == "First response\nAdditional response text"
+        )
         assert examples[1].messages[1]["content"] == "Second valid prompt"
         assert examples[1].messages[2]["content"] == "Second response"

@@ -6,6 +6,7 @@ from rich.panel import Panel
 from rich.prompt import Confirm, Prompt
 from rich.table import Table
 
+from cli.display_utils import get_author_type_short, get_author_type_full
 from core.models import AuthorProfile, StyleGuide
 from core.storage import AuthorStorage, get_author_profile, list_authors
 
@@ -69,9 +70,7 @@ def list_authors_cmd() -> None:
             else "Unknown"
         )
 
-        # Get source type with fallback for older profiles
-        source_type = getattr(profile, "source_type", "manual")
-        type_display = "🏛️ Hist" if source_type == "historical" else "👤 Man"
+        type_display = get_author_type_short(profile)
 
         table.add_row(
             author_id,
@@ -105,11 +104,7 @@ def show_author(
     console.print(f"[dim]ID: {profile.author_id}[/dim]")
 
     # Show source type if available (for historical figures)
-    source_type = getattr(profile, "source_type", "manual")
-    if source_type == "historical":
-        console.print(f"[dim]Type: 🏛️ Historical Figure[/dim]")
-    else:
-        console.print(f"[dim]Type: 👤 Manual Creation[/dim]")
+    console.print(f"[dim]Type: {get_author_type_full(profile)}[/dim]")
 
     if profile.description:
         console.print(f"\n{profile.description}")
