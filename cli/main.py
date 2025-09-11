@@ -6,7 +6,9 @@ from rich.table import Table
 from cli.commands.author import author_app
 from cli.commands.dataset import dataset_app
 from cli.commands.generate import generate_app
+from cli.commands.historical_author import historical_app
 from cli.commands.train import train_app
+from cli.display_utils import get_author_type_short
 
 console = Console()
 
@@ -22,6 +24,9 @@ app.add_typer(dataset_app, name="dataset", help="Build and manage training datas
 app.add_typer(train_app, name="train", help="Fine-tune and manage models")
 app.add_typer(
     generate_app, name="generate", help="Generate content with fine-tuned models"
+)
+app.add_typer(
+    historical_app, name="historical", help="Create authors based on historical figures"
 )
 
 
@@ -62,7 +67,8 @@ def status() -> None:
 
     table = Table(show_header=True, header_style="bold magenta")
     table.add_column("Author", style="cyan")
-    table.add_column("Description", max_width=40)
+    table.add_column("Type", width=8)
+    table.add_column("Description", max_width=35)
     table.add_column("Dataset Size", justify="right")
     table.add_column("Models", justify="right")
     table.add_column("Status", style="green")
@@ -91,11 +97,14 @@ def status() -> None:
         else:
             status = "📝 Setup Needed"
 
+        type_display = get_author_type_short(profile)
+
         table.add_row(
             profile.name,
+            type_display,
             (
-                profile.description[:37] + "..."
-                if len(profile.description) > 40
+                profile.description[:32] + "..."
+                if len(profile.description) > 35
                 else profile.description
             ),
             str(dataset_size),
@@ -107,6 +116,9 @@ def status() -> None:
 
     console.print("\n[dim]Commands:[/dim]")
     console.print("• [cyan]ghostwriter author list[/cyan] - Manage authors")
+    console.print(
+        "• [cyan]ghostwriter historical create[/cyan] - Create historical figure author"
+    )
     console.print(
         "• [cyan]ghostwriter dataset build <author>[/cyan] - Build training dataset"
     )

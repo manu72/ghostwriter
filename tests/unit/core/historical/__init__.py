@@ -1,0 +1,1 @@
+"""Tests for the historical figure analysis and author generation modules."""

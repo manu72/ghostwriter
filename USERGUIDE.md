@@ -1,6 +1,6 @@
 # Ghostwriter Stage 1 POC - User Guide
 
-This guide will help you test the core functionality of Ghostwriter's Stage 1 Proof of Concept. You can create a personal AI author that writes in your style through a simple 4-step process.
+This guide will help you test the core functionality of Ghostwriter's Stage 1 Proof of Concept. You can create a personal AI author that writes in your style through a simple 4-step process, or use AI to create authors based on historical figures.
 
 ## Prerequisites
 
@@ -43,6 +43,10 @@ OPENAI_ORG_ID=your_openai_org_id_here_optional
 
 ### Step 1: Create Your First Author
 
+You have two options for creating authors:
+
+#### Option A: Manual Author Creation (Original Method)
+
 Start with the init command for a guided setup:
 
 ```bash
@@ -62,7 +66,48 @@ This will walk you through creating an author profile with:
 python -m cli.main author create my_author --name "My Author" --description "Test author"
 ```
 
+#### Option B: Historical Figure Author Creation (NEW!)
+
+Create an AI author based on a historical figure's writing style:
+
+```bash
+python -m cli.main historical create
+```
+
+This AI-assisted process will:
+
+1. **Discover Historical Figures** - Search for figures matching your criteria
+2. **Analyze Writing Style** - AI analyzes the figure's documented writing characteristics  
+3. **Generate Author Profile** - Automatically creates style guide based on analysis
+4. **Create Training Dataset** - AI generates training examples in the figure's style
+5. **Ready for Training** - Seamlessly integrates with existing training workflow
+
+**Example workflow:**
+```bash
+# Interactive discovery and creation
+python -m cli.main historical create
+
+# Direct figure specification  
+python -m cli.main historical create --figure "Mark Twain" --id twain_author
+
+# Search for figures first
+python -m cli.main historical search "famous American authors"
+
+# Analyze a specific figure's style
+python -m cli.main historical analyze "Virginia Woolf"
+```
+
+**Benefits of Historical Authors:**
+- No need to manually define writing style - AI does the analysis
+- Automatically generates training examples matching the figure's voice
+- Creates diverse, high-quality datasets based on documented writing patterns
+- Perfect for exploring different writing styles or emulating admired authors
+
+**Cost:** AI analysis and dataset generation typically costs $0.10-0.30 total per historical author.
+
 ### Step 2: Build a Training Dataset
+
+#### For Manual Authors (Option A)
 
 Create training examples that represent your writing style:
 
@@ -79,6 +124,21 @@ This opens an interactive menu where you can:
 5. **Generate more examples from existing examples** - Use AI to create additional examples based on your existing ones (requires OpenAI API)
 
 **Minimum recommendation**: Add 10-20 examples for basic fine-tuning.
+
+#### For Historical Authors (Option B)
+
+**Great news!** If you created a historical author, your training dataset was automatically generated during the creation process. The AI:
+
+- Generated 10-50 training examples in the historical figure's authentic style
+- Created appropriate prompts that the figure might have responded to
+- Ensured historical accuracy and style consistency
+- Allowed you to review and approve each example
+
+You can still add more examples using the standard dataset building process if desired:
+
+```bash
+python -m cli.main dataset build your_historical_author_id
+```
 
 #### AI-Assisted Prompt Creation
 
@@ -183,7 +243,7 @@ python -m cli.main generate interactive my_author
 python -m cli.main status
 ```
 
-Shows all authors, dataset sizes, and training status.
+Shows all authors, dataset sizes, and training status. Historical authors are marked with 🏛️ while manual authors show 👤.
 
 ### View Author Details
 
@@ -205,7 +265,7 @@ python -m cli.main dataset show my_author
 
 ## Testing Scenarios
 
-### Scenario 1: Complete Happy Path
+### Scenario 1: Complete Happy Path (Manual Author)
 
 1. Run `init` and create author with guided setup
 2. Build dataset with 5-10 examples using different input methods
@@ -214,6 +274,17 @@ python -m cli.main dataset show my_author
 5. Start training and wait for completion
 6. Generate content with various prompts
 7. Verify generated content matches author's style
+
+### Scenario 1b: Historical Author Happy Path (NEW!)
+
+1. Run `python -m cli.main historical create`
+2. Search for historical figures with criteria like "famous American authors"
+3. Select a figure from the AI-suggested list (e.g., Mark Twain)
+4. Review AI analysis of the figure's writing style
+5. Approve or customize the generated author profile
+6. Review and approve AI-generated training examples (15-30 examples)
+7. Start training immediately (dataset already complete)
+8. Generate content and verify it matches the historical figure's style
 
 ### Scenario 2: Error Handling
 
@@ -247,6 +318,19 @@ python -m cli.main dataset show my_author
 3. Clear and rebuild datasets
 4. Export datasets to JSONL format
 5. Test AI generation with different types of existing examples
+
+### Scenario 6: Historical Figure Discovery (NEW!)
+
+1. Test figure discovery with different criteria:
+   - "famous poets" 
+   - "20th century scientists who wrote"
+   - "influential philosophers"
+   - "American Civil War era writers"
+2. Use search refinement when initial results aren't suitable
+3. Test figure verification with both valid and invalid figures
+4. Compare AI analysis quality across different historical periods
+5. Test figure analysis for figures with different writing mediums (books, letters, speeches)
+6. Create multiple historical authors from different eras and compare styles
 
 ## Expected Behavior
 
@@ -297,6 +381,7 @@ python -m cli.main dataset show my_author
 ```bash
 python -m cli.main --help
 python -m cli.main author --help
+python -m cli.main historical --help
 python -m cli.main dataset --help
 ```
 
@@ -313,7 +398,8 @@ Fine-tuning costs with OpenAI (as of 2024):
 **AI-assisted features:**
 - AI-suggested prompts: ~$0.001 per prompt suggestion
 - AI-generated examples: ~$0.002-0.01 per generated example
-- Both features show cost estimates before making API calls
+- Historical figure analysis & dataset generation: ~$0.10-0.30 per complete historical author
+- All AI features show cost estimates before making API calls
 
 ## Success Criteria
 

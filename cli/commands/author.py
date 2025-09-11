@@ -6,6 +6,7 @@ from rich.panel import Panel
 from rich.prompt import Confirm, Prompt
 from rich.table import Table
 
+from cli.display_utils import get_author_type_full, get_author_type_short
 from core.models import AuthorProfile, StyleGuide
 from core.storage import AuthorStorage, get_author_profile, list_authors
 
@@ -39,8 +40,11 @@ def list_authors_cmd() -> None:
     authors = list_authors()
 
     if not authors:
+        console.print("[yellow]No authors found.[/yellow]")
+        console.print("Create one with:")
+        console.print("• [cyan]ghostwriter author create[/cyan] - Manual creation")
         console.print(
-            "[yellow]No authors found. Run 'ghostwriter author create' to create one.[/yellow]"
+            "• [cyan]ghostwriter historical create[/cyan] - Historical figure"
         )
         return
 
@@ -49,8 +53,9 @@ def list_authors_cmd() -> None:
     table = Table(show_header=True, header_style="bold magenta")
     table.add_column("ID", style="cyan")
     table.add_column("Name", style="white")
-    table.add_column("Description", max_width=50)
-    table.add_column("Style", max_width=30)
+    table.add_column("Type", width=8)
+    table.add_column("Description", max_width=40)
+    table.add_column("Style", max_width=25)
     table.add_column("Created", style="dim")
 
     for author_id in authors:
@@ -65,12 +70,15 @@ def list_authors_cmd() -> None:
             else "Unknown"
         )
 
+        type_display = get_author_type_short(profile)
+
         table.add_row(
             author_id,
             profile.name,
+            type_display,
             (
-                profile.description[:47] + "..."
-                if len(profile.description) > 50
+                profile.description[:37] + "..."
+                if len(profile.description) > 40
                 else profile.description
             ),
             style_summary,
@@ -94,6 +102,9 @@ def show_author(
     # Profile info
     console.print(f"\n[bold blue]Author: {profile.name}[/bold blue]")
     console.print(f"[dim]ID: {profile.author_id}[/dim]")
+
+    # Show source type if available (for historical figures)
+    console.print(f"[dim]Type: {get_author_type_full(profile)}[/dim]")
 
     if profile.description:
         console.print(f"\n{profile.description}")
