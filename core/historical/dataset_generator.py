@@ -258,8 +258,8 @@ class HistoricalDatasetGenerator:
         examples = []
         lines = response.split("\n")
 
-        current_prompt = None
-        current_response_lines = []
+        current_prompt: Optional[str] = None
+        current_response_lines: List[str] = []
 
         for line in lines:
             line = line.strip()
