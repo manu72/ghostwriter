@@ -327,7 +327,9 @@ class HistoricalDatasetGenerator:
         console.print("[blue]Please review each example:[/blue]")
 
         # Ask if user wants to accept all examples at once
-        if len(examples) > 1 and Confirm.ask("Would you like to accept all examples without individual review?"):
+        if len(examples) > 1 and Confirm.ask(
+            "Would you like to accept all examples without individual review?"
+        ):
             console.print(f"[green]✅ Accepted all {len(examples)} examples[/green]")
             return examples
 
