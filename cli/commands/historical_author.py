@@ -152,6 +152,96 @@ def analyze_historical_figure(
         raise typer.Exit(1)
 
 
+@historical_app.command("build")
+def build_historical_dataset(
+    author_id: str = typer.Argument(..., help="Author ID to build dataset for"),
+    count: int = typer.Option(10, "--count", "-c", help="Number of examples to generate"),
+) -> None:
+    """📊 Generate additional training examples for an existing historical author."""
+    
+    from core.models import AuthorSource
+    
+    profile = get_author_profile(author_id)
+    if not profile:
+        console.print(f"[red]Author '{author_id}' not found.[/red]")
+        console.print("Use 'ghostwriter historical create' to create a historical author first.")
+        raise typer.Exit(1)
+    
+    # Check if this is a historical author
+    if profile.source_type != AuthorSource.HISTORICAL:
+        console.print(f"[red]'{author_id}' is not a historical author.[/red]")
+        console.print("Use 'ghostwriter dataset build' for regular authors.")
+        raise typer.Exit(1)
+    
+    console.print(f"[bold blue]Building dataset for historical author: {profile.name}[/bold blue]")
+    
+    try:
+        # Initialize components
+        researcher = HistoricalFigureResearcher()
+        dataset_generator = HistoricalDatasetGenerator()
+        
+        # Re-analyze the figure (we don't store analysis currently)
+        console.print(f"[blue]Re-analyzing {profile.name} for dataset generation...[/blue]")
+        
+        # Verify figure first
+        verification = researcher.verify_figure(profile.name)
+        if not verification or verification.status != "VERIFIED":
+            console.print(f"[red]❌ Could not verify figure '{profile.name}'[/red]")
+            raise typer.Exit(1)
+        
+        # Perform detailed analysis
+        analysis = researcher.analyze_figure(profile.name)
+        if not analysis:
+            console.print(f"[red]❌ Could not analyze figure '{profile.name}'[/red]")
+            raise typer.Exit(1)
+        
+        # Load existing dataset
+        storage = AuthorStorage(author_id)
+        dataset = storage.load_dataset()
+        
+        if not dataset:
+            console.print(f"[red]No dataset found for '{author_id}'.[/red]")
+            console.print("This shouldn't happen for historical authors. Try recreating the author.")
+            raise typer.Exit(1)
+        
+        console.print(f"[green]Current dataset: {dataset.size} examples[/green]")
+        
+        # Generate additional examples
+        added_count = dataset_generator.add_examples_to_dataset(
+            dataset, profile, analysis, count
+        )
+        
+        if added_count > 0:
+            # Save updated dataset
+            storage.save_dataset(dataset)
+            console.print(
+                f"\n[green]🎉 Successfully added {added_count} examples to {profile.name}'s dataset![/green]"
+            )
+            console.print(f"[green]Total dataset size: {dataset.size} examples[/green]")
+            
+            # Show next steps
+            console.print(
+                Panel(
+                    f"[bold green]Dataset Updated! 🎉[/bold green]\n\n"
+                    f"[bold]What's Next?[/bold]\n\n"
+                    f"1. View your dataset:\n"
+                    f"   [cyan]ghostwriter dataset show {author_id}[/cyan]\n\n"
+                    f"2. Validate dataset quality:\n"
+                    f"   [cyan]ghostwriter dataset validate {author_id}[/cyan]\n\n"
+                    f"3. Start fine-tuning:\n"
+                    f"   [cyan]ghostwriter train start {author_id}[/cyan]",
+                    title="🚀 Ready for training!",
+                    border_style="green",
+                )
+            )
+        else:
+            console.print("[yellow]No examples were added to the dataset.[/yellow]")
+            
+    except Exception as e:
+        console.print(f"[red]❌ Error building dataset: {str(e)}[/red]")
+        raise typer.Exit(1)
+
+
 def create_historical_author_interactive(
     author_id: Optional[str] = None,
     initial_criteria: Optional[str] = None,
