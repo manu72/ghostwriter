@@ -64,7 +64,7 @@ class HistoricalDatasetGenerator:
         dataset = Dataset(author_id=profile.author_id)
 
         # Generate examples in batches to manage context length
-        batch_size = 3  # Generate 3 examples at a time
+        batch_size = 10  # Generate 10 examples at a time
         batches = [(i, min(batch_size, count - i)) for i in range(0, count, batch_size)]
 
         total_generated = 0
@@ -133,7 +133,7 @@ class HistoricalDatasetGenerator:
         initial_size = dataset.size
 
         # Generate examples in batches
-        batch_size = 3
+        batch_size = 10
         batches = [(i, min(batch_size, count - i)) for i in range(0, count, batch_size)]
 
         for batch_start, batch_count in batches:
@@ -325,6 +325,11 @@ class HistoricalDatasetGenerator:
             f"\n[green]✅ Generated {len(examples)} examples for {figure_name}[/green]"
         )
         console.print("[blue]Please review each example:[/blue]")
+
+        # Ask if user wants to accept all examples at once
+        if len(examples) > 1 and Confirm.ask("Would you like to accept all examples without individual review?"):
+            console.print(f"[green]✅ Accepted all {len(examples)} examples[/green]")
+            return examples
 
         approved = []
 
