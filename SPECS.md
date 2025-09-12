@@ -48,6 +48,15 @@ This document defines the **vision, principles, architecture, feature scope, and
 5. Feedback collection (ratings + edits).
 6. Dataset regeneration and retraining from feedback.
 
+### NEW: Historical Figure Authors ✨
+
+- **AI-Powered Discovery**: Search for historical figures based on your criteria (e.g., "famous poets", "20th century scientists")
+- **Automatic Style Analysis**: AI analyzes the figure's documented writing style, tone, and characteristics
+- **Profile Generation**: Automatically creates author profiles with appropriate style guides
+- **Training Dataset Creation**: AI generates 15-30 training examples in the historical figure's authentic voice
+- **One-Command Setup**: Complete author creation from discovery to training-ready dataset
+- **Cost-Effective**: Full historical author setup typically costs $0.10-0.30
+
 ### Stage 2 Browser UI
 
 - Basic web interface with inline editing.
