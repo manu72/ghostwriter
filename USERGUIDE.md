@@ -134,7 +134,24 @@ This opens an interactive menu where you can:
 - Ensured historical accuracy and style consistency
 - Allowed you to review and approve each example
 
-You can still add more examples using the standard dataset building process if desired:
+**Need More Examples?** Historical authors have a specialized command for generating additional examples:
+
+```bash
+# Generate 10 more examples (default)
+python -m cli.main historical build your_historical_author_id
+
+# Generate specific number of examples
+python -m cli.main historical build your_historical_author_id --count 20
+```
+
+This command:
+- Re-analyzes the historical figure's writing style
+- Generates high-quality examples in their authentic voice  
+- Uses the same bulk accept feature as creation (accept all at once or review individually)
+- Maintains historical accuracy and style consistency
+- Automatically saves the expanded dataset
+
+**Alternative:** You can also use the standard dataset building process:
 
 ```bash
 python -m cli.main dataset build your_historical_author_id
@@ -223,17 +240,109 @@ Options:
 - `--wait` - Wait for training to complete (20+ minutes)
 - `--model gpt-4o-mini` - Specify base model (default)
 
-### Step 5: Generate Content
+#### Quick Test Generation
 
-Once training is complete, test your fine-tuned model:
+Test your model immediately after training completes:
 
 ```bash
-# Single generation
+# Generate test content during training workflow
+python -m cli.main train generate my_author --prompt "Write a test paragraph"
+```
+
+This is useful for quick validation that your model is working correctly.
+
+### Step 5: Generate Content
+
+Once training is complete, you have several options for generating content with your fine-tuned model:
+
+#### Single Text Generation
+
+Generate a single piece of content with a specific prompt:
+
+```bash
+# Single generation with prompt
 python -m cli.main generate text my_author --prompt "Write about productivity"
 
-# Interactive session
+# Interactive prompt entry
+python -m cli.main generate text my_author
+```
+
+Options:
+- `--max-completion-tokens 500` - Control response length
+- `--save/--no-save` - Enable/disable saving generated content to files (default: enabled)
+
+#### Interactive Generation Session
+
+For multiple generations in a session without conversation memory:
+
+```bash
 python -m cli.main generate interactive my_author
 ```
+
+This opens an interactive session where you can:
+- Enter multiple prompts one after another
+- Each generation is independent (no conversation memory)
+- Type 'quit', 'exit', or 'q' to end the session
+- Generated content is automatically saved to files
+
+#### Chat Sessions (Conversation Mode)
+
+**NEW!** Have full ChatGPT-style conversations with your fine-tuned model:
+
+```bash
+# Start new chat session
+python -m cli.main generate chat my_author
+
+# Resume existing session
+python -m cli.main generate chat my_author --session <session_id>
+
+# Disable auto-save (not recommended)
+python -m cli.main generate chat my_author --no-save
+```
+
+**Chat Features:**
+- **Conversation Memory**: Your model remembers the entire conversation context
+- **Session Persistence**: Chat sessions are automatically saved and can be resumed
+- **Rich Interface**: Beautiful formatting with timestamps and clear message distinction
+- **Auto-Save**: All conversations are automatically saved unless disabled
+
+**Chat Commands:**
+During a chat session, use these commands:
+
+- `/help` - Show available commands
+- `/clear` - Clear conversation history (start fresh)
+- `/history` - Show full conversation history
+- `/save` - Manually save current session
+- `/export` - Export chat as formatted markdown file
+- `/info` - Show session information (ID, message count, timestamps)
+- `/sessions` - List available saved sessions
+- `/quit` or `/exit` - End chat session
+
+**Example Chat Session:**
+```
+💬 Chat Session
+Author: My Author
+Session: abc123...
+Messages: 0
+
+💬 Type your message to chat, or use /help for commands.
+
+💬 Hello! Can you help me write a blog post about remote work?
+
+🤖 My Author: Of course! I'd be happy to help you write a blog post about remote work. 
+Let me start with an engaging introduction and outline some key points...
+
+💬 Great! Can you make it more focused on productivity tips?
+
+🤖 My Author: Absolutely! Let me refine that to focus specifically on productivity 
+strategies for remote workers...
+```
+
+**Benefits of Chat Mode:**
+- **Context Awareness**: Model remembers what you've discussed
+- **Iterative Refinement**: Ask for changes, improvements, or different approaches
+- **Natural Conversation**: More like working with a human writing partner
+- **Session Management**: Pick up conversations where you left off
 
 ## Monitoring and Management
 
@@ -262,6 +371,45 @@ python -m cli.main train status my_author
 ```bash
 python -m cli.main dataset show my_author
 ```
+
+### Dataset Management
+
+Additional dataset commands:
+
+```bash
+# Export dataset to JSONL file
+python -m cli.main dataset export my_author --output my_dataset.jsonl
+
+# Clear all training examples (be careful!)
+python -m cli.main dataset clear my_author
+```
+
+### Training Job Management
+
+List and manage training jobs:
+
+```bash
+# List all training jobs for an author
+python -m cli.main train list my_author
+
+# Test a specific model quickly
+python -m cli.main train test my_author
+```
+
+### Generated Content & Session Storage
+
+**Content Storage:**
+All generated content is automatically saved to your author's directory:
+- `data/authors/<author_id>/content/` - Generated text files
+- `data/authors/<author_id>/chats/` - Chat session files
+- Files are named with timestamps for easy organization
+
+**Chat Session Management:**
+Chat sessions are persistent and stored locally:
+- Sessions auto-save during conversation
+- Resume any session using its ID
+- Export conversations to markdown format
+- Sessions include full conversation history and metadata
 
 ## Testing Scenarios
 
@@ -332,6 +480,32 @@ python -m cli.main dataset show my_author
 5. Test figure analysis for figures with different writing mediums (books, letters, speeches)
 6. Create multiple historical authors from different eras and compare styles
 
+### Scenario 7: Historical Author Dataset Building (NEW!)
+
+1. Create a historical author with initial dataset
+2. Test `historical build` with default count (10 examples)
+3. Test with custom count: `--count 20`
+4. Test bulk accept feature (accept all without review)
+5. Test individual review process (accept some, edit some, skip some)
+6. Verify dataset consistency between initial and additional examples
+7. Compare quality of AI-generated examples across different historical figures
+
+### Scenario 8: Chat Conversation Testing (NEW!)
+
+1. Start new chat session and test basic conversation
+2. Test conversation memory (model remembers previous messages)
+3. Test all chat commands:
+   - `/clear` - Clear conversation history
+   - `/history` - Show conversation history
+   - `/save` - Manual save
+   - `/export` - Export to markdown
+   - `/info` - Session information
+   - `/sessions` - List available sessions
+4. Test session resumption (exit and resume same conversation)
+5. Test multiple concurrent sessions with different authors
+6. Test long conversations (20+ message exchanges)
+7. Export chat sessions and verify markdown format
+
 ## Expected Behavior
 
 ### ✅ Success Indicators
@@ -374,6 +548,33 @@ python -m cli.main dataset show my_author
 - Ensure write permissions in project directory
 - Try running from project root
 
+**Chat session issues**
+
+**"Chat session not found"**
+- Check session ID spelling/case
+- Use `/sessions` command to list available sessions
+- Start new session if needed
+
+**Chat commands not working**
+- Ensure commands start with `/` (e.g., `/help` not `help`)
+- Type `/help` to see all available commands
+
+**Generated content not saving**
+- Check disk space in project directory
+- Verify write permissions in `data/authors/<id>/` directory
+- Use `--save` flag explicitly if needed
+
+**Historical author build failing**
+
+**"Could not verify figure"**
+- Historical figure name may be ambiguous
+- Try more specific name (e.g., "Mark Twain" instead of "Twain")
+- Use `historical analyze <name>` first to test
+
+**"Not a historical author"**
+- Use `historical build` only for historical authors (created with `historical create`)
+- Use `dataset build` for manually created authors
+
 ### Getting Help
 
 **View command help:**
@@ -383,7 +584,47 @@ python -m cli.main --help
 python -m cli.main author --help
 python -m cli.main historical --help
 python -m cli.main dataset --help
+python -m cli.main train --help
+python -m cli.main generate --help
 ```
+
+**Complete Command Reference:**
+
+**Author Management:**
+- `author create <id>` - Create new author profile
+- `author list` - List all authors
+- `author show <id>` - Show author details
+- `author edit <id>` - Edit author profile
+
+**Historical Figures:**
+- `historical create` - Create author from historical figure
+- `historical search <criteria>` - Search for historical figures
+- `historical analyze <name>` - Analyze figure's writing style
+- `historical build <id>` - Generate more examples for historical author
+
+**Dataset Management:**
+- `dataset build <id>` - Build training dataset interactively
+- `dataset show <id>` - Show dataset information
+- `dataset validate <id>` - Validate dataset quality
+- `dataset export <id>` - Export dataset to JSONL
+- `dataset clear <id>` - Clear all examples
+
+**Training:**
+- `train start <id>` - Start fine-tuning
+- `train status <id>` - Check training progress
+- `train list <id>` - List training jobs
+- `train test <id>` - Quick model test
+- `train generate <id>` - Generate test content
+
+**Content Generation:**
+- `generate text <id>` - Single text generation
+- `generate interactive <id>` - Interactive generation session
+- `generate chat <id>` - Start chat conversation
+
+**System:**
+- `init` - Initialize and create first author
+- `status` - Show overview of all authors
+- `version` - Show version information
 
 **Check logs:** Look for error messages in terminal output - they provide specific guidance.
 
@@ -399,6 +640,8 @@ Fine-tuning costs with OpenAI (as of 2024):
 - AI-suggested prompts: ~$0.001 per prompt suggestion
 - AI-generated examples: ~$0.002-0.01 per generated example
 - Historical figure analysis & dataset generation: ~$0.10-0.30 per complete historical author
+- Historical author dataset building: ~$0.05-0.15 per 10 additional examples
+- Chat conversations: ~$0.01-0.05 per message exchange (depending on conversation length)
 - All AI features show cost estimates before making API calls
 
 ## Success Criteria
@@ -407,11 +650,15 @@ The Stage 1 POC is working correctly if:
 
 1. ✅ You can create an author profile in under 5 minutes
 2. ✅ Dataset building is intuitive and supports multiple input methods
-3. ✅ Validation provides clear feedback on dataset quality
-4. ✅ Fine-tuning completes without technical errors
-5. ✅ Generated content noticeably reflects the input writing style
-6. ✅ Error messages are helpful and actionable
-7. ✅ The complete workflow takes under 30 minutes (excluding training time)
+3. ✅ Historical author creation works end-to-end with AI analysis and generation
+4. ✅ Validation provides clear feedback on dataset quality
+5. ✅ Fine-tuning completes without technical errors
+6. ✅ Generated content noticeably reflects the input writing style
+7. ✅ Chat conversations maintain context and support all commands
+8. ✅ Session management works (save, resume, export)
+9. ✅ Historical author dataset building generates consistent style examples
+10. ✅ Error messages are helpful and actionable
+11. ✅ The complete workflow takes under 30 minutes (excluding training time)
 
 ---
 
