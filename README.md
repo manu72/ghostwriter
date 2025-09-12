@@ -13,6 +13,8 @@ The goal of Ghostwriter is to democratise fine-tuning. Anyone, not just develope
 - Collect and structure a small dataset of writing samples, or create authors based on historical figures.
 - Fine-tune an existing large language model (LLM) into a personal voice or author.
 - Generate content that reflects their voice: blog posts, articles, essays, or even books.
+- Have conversations with their fine-tuned author, maintaining context and memory across sessions.
+- Manage persistent chat sessions with save, resume, and export capabilities.
 - Provide feedback on drafts and see the author evolve continuously.
 
 ---
@@ -23,7 +25,9 @@ The goal of Ghostwriter is to democratise fine-tuning. Anyone, not just develope
 - **Dataset Builder**: Guided prompts help you prepare a small training dataset in the correct format for the LLM.
 - **Fine-Tune Runner**: Simple CLI to start a fine-tuning job with a commercial LLM.
 - **Author Runtime**: Generate drafts from your tuned author with a single command.
-- **Content Persistence**: All generated content is automatically saved as markdown files with metadata.
+- **Chat Conversations**: Full ChatGPT-style conversations with your fine-tuned model, including conversation memory and session persistence.
+- **Content Persistence**: All generated content and chat sessions are automatically saved as markdown files with metadata.
+- **Session Management**: Save, resume, and export chat conversations with full history tracking.
 - **Feedback Loop**: Rate or edit drafts, turning feedback into new training examples.
 
 ### NEW: Historical Figure Authors ✨
@@ -31,8 +35,10 @@ The goal of Ghostwriter is to democratise fine-tuning. Anyone, not just develope
 - **Automatic Style Analysis**: AI analyzes the figure's documented writing style, tone, and characteristics
 - **Profile Generation**: Automatically creates author profiles with appropriate style guides
 - **Training Dataset Creation**: AI generates 15-30 training examples in the historical figure's authentic voice
+- **Dataset Expansion**: Add more examples to existing historical authors with `historical build` command
+- **Bulk Accept Feature**: Accept all generated examples at once or review individually
 - **One-Command Setup**: Complete author creation from discovery to training-ready dataset
-- **Cost-Effective**: Full historical author setup typically costs $0.10-0.30
+- **Cost-Effective**: Full historical author setup typically costs $0.10-0.30, expansion ~$0.05-0.15
 
 ---
 
@@ -42,9 +48,13 @@ The goal of Ghostwriter is to democratise fine-tuning. Anyone, not just develope
 
 - CLI tool for dataset building, validation, and fine-tuning.
 - Adaptor for a single commercial provider (OpenAI or Gemini).
+- ChatGPT-style conversations with context memory and session persistence.
+- Content generation modes: single text, interactive, and chat sessions.
 - Feedback mechanism for turning edits into new examples.
 - Local storage of datasets (.jsonl) and author profiles.
-- **NEW**: AI-powered historical figure author creation with discovery, analysis, and dataset generation.
+- AI-powered historical figure author creation with discovery, analysis, and dataset generation.
+- Dataset expansion for historical authors with bulk accept functionality.
+- Comprehensive command-line interface with full feature coverage.
 
 ### Stage 2: Basic Browser UI
 
@@ -102,6 +112,7 @@ ghostwriter/
 │       ├── train.jsonl
 │       ├── examples/      # training examples as markdown
 │       ├── content/       # generated content as markdown
+│       ├── chats/         # 🆕 chat session files
 │       ├── edits/
 │       └── models.json    # fine-tune job metadata
 ├── tests/                 # Comprehensive test suite
@@ -148,6 +159,24 @@ python -m cli.main init
 
 # Or try the new historical figure author creation
 python -m cli.main historical create
+
+# After training, start a chat conversation
+python -m cli.main generate chat <author_id>
+```
+
+### 🚀 Quick Test
+
+Want to see Ghostwriter in action? Try creating a historical author:
+
+```bash
+# Create Shakespeare author with one command
+python -m cli.main historical create --figure "William Shakespeare" --id shakespeare
+
+# Train the model (after dataset is built)
+python -m cli.main train start shakespeare
+
+# Chat with Shakespeare!
+python -m cli.main generate chat shakespeare
 ```
 
 ---
@@ -181,6 +210,9 @@ python -m cli.main historical analyze "Emily Dickinson"
 
 # Create with specific parameters
 python -m cli.main historical create --figure "Mark Twain" --id twain_author --dataset-size 25
+
+# Add more examples to existing historical author
+python -m cli.main historical build twain_author --count 15
 ```
 
 ### Dataset Building
@@ -197,6 +229,12 @@ python -m cli.main dataset validate <author_id>
 
 # Show dataset information
 python -m cli.main dataset show <author_id>
+
+# Export dataset to JSONL format
+python -m cli.main dataset export <author_id> --output my_dataset.jsonl
+
+# Clear all training examples (use with caution)
+python -m cli.main dataset clear <author_id>
 ```
 
 ### Fine-tuning
@@ -208,8 +246,14 @@ python -m cli.main train start <author_id>
 # Check training status
 python -m cli.main train status <author_id>
 
-# Test fine-tuned model
+# List all training jobs for an author
+python -m cli.main train list <author_id>
+
+# Test fine-tuned model quickly
 python -m cli.main train test <author_id>
+
+# Generate test content during training workflow
+python -m cli.main train generate <author_id> --prompt "Test generation"
 ```
 
 ### Content Generation
@@ -221,11 +265,114 @@ python -m cli.main generate text <author_id> --prompt "Write about productivity"
 # Generate content in Mark Twain's style
 python -m cli.main generate text twain_author --prompt "Write about modern technology"
 
-# Interactive generation session
+# Interactive generation session (no conversation memory)
 python -m cli.main generate interactive <author_id>
 
-# Start a chat session with your author
+# Start a chat conversation with your author (with memory)
 python -m cli.main generate chat <author_id>
+
+# Resume an existing chat session
+python -m cli.main generate chat <author_id> --session <session_id>
+
+# Chat with auto-save disabled
+python -m cli.main generate chat <author_id> --no-save
+```
+
+#### Chat Session Commands
+
+Once in a chat session, you can use these commands:
+
+- `/help` - Show available commands
+- `/clear` - Clear conversation history
+- `/history` - Show full conversation
+- `/save` - Manually save session
+- `/export` - Export as markdown
+- `/info` - Session information
+- `/sessions` - List all sessions
+- `/quit` - End chat session
+
+---
+
+## Usage Examples
+
+### Complete Workflow: Historical Author
+
+```bash
+# 1. Create a historical author
+python -m cli.main historical create --figure "Virginia Woolf" --id woolf_author
+
+# 2. Add more examples if needed
+python -m cli.main historical build woolf_author --count 10
+
+# 3. Validate dataset
+python -m cli.main dataset validate woolf_author
+
+# 4. Start fine-tuning
+python -m cli.main train start woolf_author --wait
+
+# 5. Chat with Virginia Woolf
+python -m cli.main generate chat woolf_author
+```
+
+### Complete Workflow: Manual Author
+
+```bash
+# 1. Initialize author profile
+python -m cli.main init
+
+# 2. Build training dataset
+python -m cli.main dataset build my_author
+
+# 3. Validate and train
+python -m cli.main dataset validate my_author
+python -m cli.main train start my_author
+
+# 4. Generate content
+python -m cli.main generate text my_author --prompt "Write about creativity"
+
+# 5. Start interactive session
+python -m cli.main generate interactive my_author
+```
+
+### Chat Session Example
+
+```bash
+$ python -m cli.main generate chat woolf_author
+
+💬 Chat Session
+Author: Virginia Woolf
+Session: abc123...
+
+💬 Can you help me write about the concept of time in literature?
+
+🤖 Virginia Woolf: Time in literature is not the mechanical ticking of clocks, but 
+the fluid, subjective experience of consciousness. It flows and eddies, sometimes 
+rushing past like a river in flood, sometimes pooling in moments of profound 
+significance...
+
+💬 That's beautiful. Can you expand on how stream of consciousness relates to this?
+
+🤖 Virginia Woolf: Stream of consciousness attempts to capture this very fluidity - 
+the way thoughts layer upon thoughts, memories intrude upon present moments...
+
+💬 /export
+Chat exported to: woolf_author_chat_2024-01-15_142301.md
+```
+
+---
+
+## System Commands
+
+```bash
+# Get overview of all authors and their status
+python -m cli.main status
+
+# Show version information
+python -m cli.main version
+
+# Get help for any command
+python -m cli.main --help
+python -m cli.main generate --help
 ```
 
 ---
