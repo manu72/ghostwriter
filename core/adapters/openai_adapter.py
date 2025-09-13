@@ -35,6 +35,8 @@ class OpenAIAdapter:
                 return int(value)
         except Exception:
             return default
+        # Fallback: return default if no branch matched
+        return default
 
     @staticmethod
     def _safe_float(value: Any, default: float) -> float:
@@ -51,17 +53,8 @@ class OpenAIAdapter:
                 return float(value)
         except Exception:
             return default
-        try:
-            coerced = float(value)  # type: ignore[arg-type]
-            return coerced
-        except Exception:
-            return default
-        try:
-            # Handle mock objects gracefully
-            coerced = int(value)  # type: ignore[arg-type]
-            return coerced
-        except Exception:
-            return default
+        # Fallback: return default if no branch matched
+        return default
 
     def __init__(self) -> None:
         if not settings.has_openai_key():

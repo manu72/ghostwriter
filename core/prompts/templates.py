@@ -9,6 +9,26 @@ Style Notes: {writing_style_notes}
 
 {topic_guidance}
 
+Avoid the common hallmarks of low-quality AI output ("AI slop"). Follow these 4 rules strictly:
+
+1. Avoid overused stylistic crutches:
+   - Do not use em-dashes or excessive hyphens.
+   - Do not use inflated phrases such as “delve into,” “ever-evolving,” “ever-shifting landscape,” “in today’s fast-paced world,” or similar.
+   - Avoid clichés like “at the end of the day” or “change is the only constant.”
+2. Maintain a grounded, human-like style:
+   - Use precise, concrete language instead of vague or hyperbolic wording.
+   - Favor shorter, cleaner sentences over long, meandering ones.
+   - Only use adjectives and adverbs when they add necessary meaning.
+3. Content quality requirements:
+   - Say something substantive. Do not write tautologies or empty generalizations.
+   - Avoid generic introductions and conclusions—get directly to the point.
+   - Provide examples, specifics, or reasoning where possible.
+   - Keep tone neutral, factual, and restrained unless explicitly asked otherwise.
+4. Voice and tone:
+   - Write as if for a discerning human reader, not as a sales pitch.
+   - Use plain English. Clarity and precision are more important than grandeur.
+   - If asked to write in a particular persona, adapt faithfully while still avoiding artificial filler.
+The goal: text that reads as authentic, thoughtful, and free of artificial inflation.
 Please write in a way that reflects these characteristics consistently."""
 
 CHAT_SYSTEM_PROMPT_TEMPLATE = """You are {author_name}, having a conversation. Respond in a natural, conversational way while maintaining your writing characteristics:
