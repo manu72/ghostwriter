@@ -3,9 +3,9 @@ from rich.console import Console
 from rich.panel import Panel
 from rich.prompt import Prompt
 from rich.table import Table
-from rich.text import Text
 
 from core.adapters.openai_adapter import OpenAIAdapter
+from core.config import settings
 from core.models import ChatSession
 from core.storage import AuthorStorage, get_author_profile
 
@@ -20,7 +20,9 @@ def generate_text(
         None, "--prompt", "-p", help="Prompt for text generation"
     ),
     max_completion_tokens: int = typer.Option(
-        500, "--max-completion-tokens", help="Maximum tokens to generate"
+        settings.max_completion_tokens,
+        "--max-completion-tokens",
+        help="Maximum tokens to generate (default from .env)",
     ),
     save: bool = typer.Option(
         True, "--save/--no-save", help="Save generated content to file"
@@ -89,6 +91,11 @@ def generate_text(
 @generate_app.command("interactive")
 def interactive_generation(
     author_id: str = typer.Argument(..., help="Author ID for interactive generation"),
+    max_completion_tokens: int = typer.Option(
+        settings.max_completion_tokens,
+        "--max-completion-tokens",
+        help="Maximum tokens to generate (default from .env)",
+    ),
     save: bool = typer.Option(
         True, "--save/--no-save", help="Save generated content to files"
     ),
@@ -140,7 +147,7 @@ def interactive_generation(
 
             try:
                 response = adapter.generate_text(
-                    model_id, prompt, max_completion_tokens=500
+                    model_id, prompt, max_completion_tokens=max_completion_tokens
                 )
                 console.print(
                     Panel(
@@ -184,6 +191,16 @@ def chat_session(
     author_id: str = typer.Argument(..., help="Author ID for chat session"),
     session_id: str = typer.Option(
         None, "--session", "-s", help="Resume existing session or create new one"
+    ),
+    max_completion_tokens: int = typer.Option(
+        settings.max_completion_tokens,
+        "--max-completion-tokens",
+        help="Maximum tokens to generate (default from .env)",
+    ),
+    max_context_tokens: int = typer.Option(
+        settings.max_context_tokens,
+        "--max-context-tokens",
+        help="Maximum context tokens (default from .env)",
     ),
     save: bool = typer.Option(
         True, "--save/--no-save", help="Save chat session to file"
@@ -257,7 +274,10 @@ def chat_session(
                 # Generate response using conversation history with author profile
                 messages = session.get_openai_messages(author_profile=profile)
                 response = adapter.generate_chat_response(
-                    model_id, messages, max_completion_tokens=500
+                    model_id,
+                    messages,
+                    max_completion_tokens=max_completion_tokens,
+                    max_context_tokens=max_context_tokens,
                 )
 
                 # Add assistant response to session

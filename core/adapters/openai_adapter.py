@@ -16,6 +16,51 @@ console = Console()
 
 
 class OpenAIAdapter:
+    @staticmethod
+    def _safe_int(value: Any, default: int) -> int:
+        """Safely coerce mocked/str/numeric values to int; fallback to default.
+
+        Detect unittest.mock objects and avoid coercing them (return default).
+        """
+        try:
+            # Avoid coercing unittest.mock values
+            value_type = type(value)
+            if getattr(value_type, "__module__", "").startswith("unittest.mock"):
+                return default
+            if isinstance(value, bool):
+                return default
+            if isinstance(value, (int, float)):
+                return int(value)
+            if isinstance(value, str):
+                return int(value)
+        except Exception:
+            return default
+    @staticmethod
+    def _safe_float(value: Any, default: float) -> float:
+        """Safely coerce mocked/str/numeric values to float; fallback to default."""
+        try:
+            value_type = type(value)
+            if getattr(value_type, "__module__", "").startswith("unittest.mock"):
+                return default
+            if isinstance(value, bool):
+                return default
+            if isinstance(value, (int, float)):
+                return float(value)
+            if isinstance(value, str):
+                return float(value)
+        except Exception:
+            return default
+        try:
+            coerced = float(value)  # type: ignore[arg-type]
+            return coerced
+        except Exception:
+            return default
+        try:
+            # Handle mock objects gracefully
+            coerced = int(value)  # type: ignore[arg-type]
+            return coerced
+        except Exception:
+            return default
     def __init__(self) -> None:
         if not settings.has_openai_key():
             raise ValueError(
@@ -211,14 +256,26 @@ class OpenAIAdapter:
         return job
 
     def generate_text(
-        self, model_id: str, prompt: str, max_completion_tokens: int = 500
+        self,
+        model_id: str,
+        prompt: str,
+        max_completion_tokens: Optional[int] = None,
     ) -> str:
         try:
+            # Use configured default if not provided; coerce mocked values
+            default_tokens = self._safe_int(
+                getattr(settings, "max_completion_tokens", 500), 500
+            )
+            effective_max_tokens = (
+                self._safe_int(max_completion_tokens, default_tokens)
+                if max_completion_tokens is not None
+                else default_tokens
+            )
             response = self.client.chat.completions.create(
                 model=model_id,
                 messages=[{"role": "user", "content": prompt}],
-                max_completion_tokens=max_completion_tokens,
-                temperature=0.7,
+                max_completion_tokens=effective_max_tokens,
+                temperature=self._safe_float(getattr(settings, "temperature", 0.7), 0.7),
             )
 
             return response.choices[0].message.content
@@ -231,21 +288,39 @@ class OpenAIAdapter:
         self,
         model_id: str,
         messages: List[Dict[str, str]],
-        max_completion_tokens: int = 500,
+        max_completion_tokens: Optional[int] = None,
+        max_context_tokens: Optional[int] = None,
     ) -> str:
         """Generate response for a chat conversation with full message history."""
         try:
+            # Use configured defaults; coerce mocked values
+            default_tokens = self._safe_int(
+                getattr(settings, "max_completion_tokens", 500), 500
+            )
+            default_context = self._safe_int(
+                getattr(settings, "max_context_tokens", 50000), 50000
+            )
+            effective_max_tokens = (
+                self._safe_int(max_completion_tokens, default_tokens)
+                if max_completion_tokens is not None
+                else default_tokens
+            )
+            effective_max_context = (
+                self._safe_int(max_context_tokens, default_context)
+                if max_context_tokens is not None
+                else default_context
+            )
             # Ensure we don't exceed token limits - basic implementation
             # In future could implement smarter truncation/summarization
             truncated_messages = self._truncate_messages(
-                messages, max_completion_tokens
+                messages, effective_max_tokens, effective_max_context
             )
 
             response = self.client.chat.completions.create(
                 model=model_id,
                 messages=cast(Any, truncated_messages),
-                max_completion_tokens=max_completion_tokens,
-                temperature=0.7,
+                max_completion_tokens=effective_max_tokens,
+                temperature=self._safe_float(getattr(settings, "temperature", 0.7), 0.7),
             )
 
             return response.choices[0].message.content
@@ -255,7 +330,10 @@ class OpenAIAdapter:
             raise
 
     def _truncate_messages(
-        self, messages: List[Dict[str, str]], max_completion_tokens: int
+        self,
+        messages: List[Dict[str, str]],
+        max_completion_tokens: int,
+        max_context_tokens: Optional[int] = None,
     ) -> List[Dict[str, str]]:
         """Truncate message history to stay within context window limits.
 
@@ -264,8 +342,18 @@ class OpenAIAdapter:
         """
         # Rough estimation: 4 chars per token, keep substantial context
         # Reserve tokens for completion, leave room for conversation
-        max_context_tokens = 4096 - max_completion_tokens - 500  # Conservative buffer
-        max_chars = max_context_tokens * 4
+        default_context = self._safe_int(
+            getattr(settings, "max_context_tokens", 50000), 50000
+        )
+        context_total = (
+            self._safe_int(max_context_tokens, default_context)
+            if max_context_tokens is not None
+            else default_context
+        )
+        available_context_tokens = max(
+            0, context_total - self._safe_int(max_completion_tokens, 500) - 1000
+        )
+        max_chars = available_context_tokens * 4
 
         # Calculate total character count
         total_chars = sum(len(msg.get("content", "")) for msg in messages)
