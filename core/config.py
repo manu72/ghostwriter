@@ -2,7 +2,7 @@ from pathlib import Path
 from typing import Any, Optional
 
 from dotenv import load_dotenv
-from pydantic import AliasChoices, Field
+from pydantic import AliasChoices, Field, field_validator, model_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 load_dotenv()
@@ -29,6 +29,25 @@ class Settings(BaseSettings):
     gemini_model: str = Field(
         "gemini-2.5-flash",
         validation_alias=AliasChoices("gemini_model", "GEMINI_MODEL"),
+    )
+
+    # Token limits (can be overridden via .env)
+    max_completion_tokens: int = Field(
+        10000,
+        validation_alias=AliasChoices("max_completion_tokens", "MAX_COMPLETION_TOKENS"),
+        description="Default maximum tokens the model may generate in a completion",
+    )
+    max_context_tokens: int = Field(
+        50000,
+        validation_alias=AliasChoices("max_context_tokens", "MAX_CONTEXT_TOKENS"),
+        description="Approximate maximum tokens allowed in the model's context window",
+    )
+
+    # Generation controls
+    temperature: float = Field(
+        0.7,
+        validation_alias=AliasChoices("temperature", "TEMPERATURE"),
+        description="Sampling temperature for generation (0.0 - 2.0)",
     )
 
     # Optional training-specific model for OpenAI fine-tuning
@@ -62,8 +81,9 @@ class Settings(BaseSettings):
             self.ensure_directories()
 
     def ensure_directories(self) -> None:
-        self.data_dir.mkdir(parents=True, exist_ok=True)
-        self.authors_dir.mkdir(parents=True, exist_ok=True)
+        # Convert to Path explicitly to satisfy static typing tools
+        Path(self.data_dir).mkdir(parents=True, exist_ok=True)
+        Path(self.authors_dir).mkdir(parents=True, exist_ok=True)
 
     def has_openai_key(self) -> bool:
         return bool(self.openai_api_key)
@@ -104,6 +124,40 @@ class Settings(BaseSettings):
             return self.gemini_model
         else:
             return self.openai_training_model or self.openai_model
+
+    # --------------------------
+    # Validators and normalisers
+    # --------------------------
+    @field_validator("temperature")
+    @classmethod
+    def _clamp_temperature(cls, value: float) -> float:
+        # Ensure temperature is within a sensible range
+        if value is None:
+            return 0.7
+        return max(0.0, min(2.0, value))
+
+    @field_validator("max_context_tokens")
+    @classmethod
+    def _clamp_max_context(cls, value: int) -> int:
+        # Enforce an upper bound of 128k as requested and minimum of 1
+        if value is None:
+            return 50000
+        return max(1, min(128000, int(value)))
+
+    @field_validator("max_completion_tokens")
+    @classmethod
+    def _normalise_max_completion(cls, value: int) -> int:
+        # Ensure positive integer
+        if value is None:
+            return 10000
+        return max(1, int(value))
+
+    @model_validator(mode="after")
+    def _ensure_completion_less_than_context(self) -> "Settings":
+        # Guarantee completion tokens are less than context tokens
+        if self.max_completion_tokens >= self.max_context_tokens:
+            self.max_completion_tokens = max(1, self.max_context_tokens - 1)
+        return self
 
 
 settings = Settings()

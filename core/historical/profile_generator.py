@@ -105,7 +105,9 @@ class HistoricalProfileGenerator:
 
         try:
             response = self.adapter.generate_text(
-                model_id=self.model, prompt=prompt, max_completion_tokens=800
+                model_id=self.model,
+                prompt=prompt,
+                max_completion_tokens=settings.max_completion_tokens,
             )
 
             return self._parse_style_guide(response, figure_analysis.figure_name)

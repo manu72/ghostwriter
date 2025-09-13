@@ -22,6 +22,7 @@ The goal of Ghostwriter is to democratise fine-tuning. Anyone, not just develope
 ## Features (Stage 1)
 
 ### Core Features
+
 - **Dataset Builder**: Guided prompts help you prepare a small training dataset in the correct format for the LLM.
 - **Fine-Tune Runner**: Simple CLI to start a fine-tuning job with a commercial LLM.
 - **Author Runtime**: Generate drafts from your tuned author with a single command.
@@ -31,6 +32,7 @@ The goal of Ghostwriter is to democratise fine-tuning. Anyone, not just develope
 - **Feedback Loop**: Rate or edit drafts, turning feedback into new training examples.
 
 ### NEW: Historical Figure Authors ✨
+
 - **AI-Powered Discovery**: Search for historical figures based on your criteria (e.g., "famous poets", "20th century scientists")
 - **Automatic Style Analysis**: AI analyzes the figure's documented writing style, tone, and characteristics
 - **Profile Generation**: Automatically creates author profiles with appropriate style guides
@@ -144,11 +146,15 @@ source .venv/bin/activate
 pip install -r requirements.txt
 ```
 
-3. Copy `.env.example` → `.env` and add your API keys:
+3. Copy `.env.example` → `.env` and add your API keys (and optional defaults):
 
 ```bash
 cp .env.example .env
 # Edit .env to add your OPENAI_API_KEY and/or GEMINI_API_KEY
+# Optional defaults:
+#   MAX_COMPLETION_TOKENS=10000
+#   MAX_CONTEXT_TOKENS=50000
+#   TEMPERATURE=0.7
 ```
 
 4. Run the CLI:
@@ -345,14 +351,14 @@ Session: abc123...
 
 💬 Can you help me write about the concept of time in literature?
 
-🤖 Virginia Woolf: Time in literature is not the mechanical ticking of clocks, but 
-the fluid, subjective experience of consciousness. It flows and eddies, sometimes 
-rushing past like a river in flood, sometimes pooling in moments of profound 
+🤖 Virginia Woolf: Time in literature is not the mechanical ticking of clocks, but
+the fluid, subjective experience of consciousness. It flows and eddies, sometimes
+rushing past like a river in flood, sometimes pooling in moments of profound
 significance...
 
 💬 That's beautiful. Can you expand on how stream of consciousness relates to this?
 
-🤖 Virginia Woolf: Stream of consciousness attempts to capture this very fluidity - 
+🤖 Virginia Woolf: Stream of consciousness attempts to capture this very fluidity -
 the way thoughts layer upon thoughts, memories intrude upon present moments...
 
 💬 /export
