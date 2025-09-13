@@ -86,6 +86,14 @@ class TestChatSessionCommand:
         # Setup profile
         mock_profile = Mock(spec=AuthorProfile)
         mock_profile.name = "Test Author"
+        mock_profile.style_guide = Mock(spec=StyleGuide)
+        mock_profile.style_guide.tone = "friendly"
+        mock_profile.style_guide.voice = "first_person"
+        mock_profile.style_guide.formality = "casual"
+        mock_profile.style_guide.length_preference = "medium"
+        mock_profile.style_guide.topics = []
+        mock_profile.style_guide.avoid_topics = []
+        mock_profile.style_guide.writing_style_notes = "Test notes"
         mock_get_profile.return_value = mock_profile
 
         # Setup storage and model
@@ -421,6 +429,14 @@ class TestChatSessionIntegration:
         # Setup profile
         mock_profile = Mock(spec=AuthorProfile)
         mock_profile.name = "Test Author"
+        mock_profile.style_guide = Mock(spec=StyleGuide)
+        mock_profile.style_guide.tone = "friendly"
+        mock_profile.style_guide.voice = "first_person"
+        mock_profile.style_guide.formality = "casual"
+        mock_profile.style_guide.length_preference = "medium"
+        mock_profile.style_guide.topics = []
+        mock_profile.style_guide.avoid_topics = []
+        mock_profile.style_guide.writing_style_notes = "Test notes"
         mock_get_profile.return_value = mock_profile
 
         # Setup storage
@@ -480,6 +496,14 @@ class TestChatSessionIntegration:
         # Setup profile and storage
         mock_profile = Mock(spec=AuthorProfile)
         mock_profile.name = "Test Author"
+        mock_profile.style_guide = Mock(spec=StyleGuide)
+        mock_profile.style_guide.tone = "friendly"
+        mock_profile.style_guide.voice = "first_person"
+        mock_profile.style_guide.formality = "casual"
+        mock_profile.style_guide.length_preference = "medium"
+        mock_profile.style_guide.topics = []
+        mock_profile.style_guide.avoid_topics = []
+        mock_profile.style_guide.writing_style_notes = "Test notes"
         mock_get_profile.return_value = mock_profile
 
         mock_storage = Mock()
