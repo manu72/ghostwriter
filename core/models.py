@@ -150,9 +150,25 @@ class ChatSession(BaseModel):
         self.messages.append(message)
         self.updated_at = utc_now()
 
-    def get_openai_messages(self) -> List[Dict[str, str]]:
-        """Convert messages to OpenAI API format."""
-        return [{"role": msg.role, "content": msg.content} for msg in self.messages]
+    def get_openai_messages(self, author_profile=None) -> List[Dict[str, str]]:
+        """Convert messages to OpenAI API format.
+
+        Args:
+            author_profile: Optional AuthorProfile to build system prompt from
+
+        Returns:
+            List of messages in OpenAI format, with system prompt if profile provided
+        """
+        messages = [{"role": msg.role, "content": msg.content} for msg in self.messages]
+
+        # Add system prompt if author profile is provided
+        if author_profile is not None:
+            from core.prompts.templates import build_chat_system_prompt
+
+            system_prompt = build_chat_system_prompt(author_profile)
+            messages.insert(0, {"role": "system", "content": system_prompt})
+
+        return messages
 
     def clear_messages(self) -> None:
         """Clear all messages in the session."""

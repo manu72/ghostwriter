@@ -526,8 +526,8 @@ class TestChatSession:
         assert session.messages[2].role == "user"
         assert session.messages[2].content == "How are you?"
 
-    def test_get_openai_messages(self):
-        """Test converting messages to OpenAI format."""
+    def test_get_openai_messages_without_profile(self):
+        """Test converting messages to OpenAI format without author profile."""
         session = ChatSession(author_id="test_author")
 
         session.add_message("user", "Hello!")
@@ -540,6 +540,46 @@ class TestChatSession:
             {"role": "assistant", "content": "Hi there!"},
         ]
         assert openai_messages == expected
+
+    def test_get_openai_messages_with_profile(self):
+        """Test converting messages to OpenAI format with author profile."""
+        from unittest.mock import Mock, patch
+
+        session = ChatSession(author_id="test_author")
+        session.add_message("user", "Hello!")
+        session.add_message("assistant", "Hi there!")
+
+        # Create mock author profile
+        mock_profile = Mock()
+        mock_profile.name = "Test Author"
+        mock_profile.style_guide = Mock()
+        mock_profile.style_guide.tone = "friendly"
+        mock_profile.style_guide.voice = "first_person"
+        mock_profile.style_guide.formality = "casual"
+        mock_profile.style_guide.length_preference = "medium"
+        mock_profile.style_guide.topics = []
+        mock_profile.style_guide.avoid_topics = []
+        mock_profile.style_guide.writing_style_notes = "Test notes"
+
+        with patch(
+            "core.prompts.templates.build_chat_system_prompt"
+        ) as mock_build_prompt:
+            mock_build_prompt.return_value = (
+                "You are Test Author, having a conversation..."
+            )
+
+            openai_messages = session.get_openai_messages(author_profile=mock_profile)
+
+            expected = [
+                {
+                    "role": "system",
+                    "content": "You are Test Author, having a conversation...",
+                },
+                {"role": "user", "content": "Hello!"},
+                {"role": "assistant", "content": "Hi there!"},
+            ]
+            assert openai_messages == expected
+            mock_build_prompt.assert_called_once_with(mock_profile)
 
     def test_clear_messages(self, freeze_datetime):
         """Test clearing all messages."""

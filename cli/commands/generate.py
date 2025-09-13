@@ -254,8 +254,8 @@ def chat_session(
             _display_user_message(user_input)
 
             try:
-                # Generate response using conversation history
-                messages = session.get_openai_messages()
+                # Generate response using conversation history with author profile
+                messages = session.get_openai_messages(author_profile=profile)
                 response = adapter.generate_chat_response(
                     model_id, messages, max_completion_tokens=500
                 )

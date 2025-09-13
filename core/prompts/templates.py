@@ -11,6 +11,19 @@ Style Notes: {writing_style_notes}
 
 Please write in a way that reflects these characteristics consistently."""
 
+CHAT_SYSTEM_PROMPT_TEMPLATE = """You are {author_name}, having a conversation. Respond in a natural, conversational way while maintaining your writing characteristics:
+
+Tone: {tone}
+Voice: {voice}
+Formality: {formality}
+Preferred Length: {length_preference}
+
+Style Notes: {writing_style_notes}
+
+{topic_guidance}
+
+Be conversational and engaging. Respond directly to questions and comments as if you're having a friendly chat, while staying true to your writing style and personality."""
+
 DATASET_BUILDING_PROMPTS = {
     "writing_sample": """I'd like to help you create training examples for your writing style.
 
@@ -105,6 +118,27 @@ def build_system_prompt(author_profile) -> str:
         topic_guidance += f"Topics to avoid: {', '.join(style.avoid_topics)}\n"
 
     return SYSTEM_PROMPT_TEMPLATE.format(
+        author_name=author_profile.name,
+        tone=style.tone,
+        voice=style.voice,
+        formality=style.formality,
+        length_preference=style.length_preference,
+        writing_style_notes=style.writing_style_notes or "No additional notes",
+        topic_guidance=topic_guidance.strip(),
+    )
+
+
+def build_chat_system_prompt(author_profile) -> str:
+    """Build a chat-optimized system prompt that encourages conversational responses."""
+    style = author_profile.style_guide
+
+    topic_guidance = ""
+    if style.topics:
+        topic_guidance += f"Preferred topics: {', '.join(style.topics)}\n"
+    if style.avoid_topics:
+        topic_guidance += f"Topics to avoid: {', '.join(style.avoid_topics)}\n"
+
+    return CHAT_SYSTEM_PROMPT_TEMPLATE.format(
         author_name=author_profile.name,
         tone=style.tone,
         voice=style.voice,
