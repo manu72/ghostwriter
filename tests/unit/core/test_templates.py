@@ -3,7 +3,7 @@
 import pytest
 
 from core.models import AuthorProfile, StyleGuide
-from core.prompts.templates import build_system_prompt, build_chat_system_prompt
+from core.prompts.templates import build_chat_system_prompt, build_system_prompt
 
 
 class TestPromptTemplates:
