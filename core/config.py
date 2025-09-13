@@ -34,9 +34,7 @@ class Settings(BaseSettings):
     # Token limits (can be overridden via .env)
     max_completion_tokens: int = Field(
         10000,
-        validation_alias=AliasChoices(
-            "max_completion_tokens", "MAX_COMPLETION_TOKENS"
-        ),
+        validation_alias=AliasChoices("max_completion_tokens", "MAX_COMPLETION_TOKENS"),
         description="Default maximum tokens the model may generate in a completion",
     )
     max_context_tokens: int = Field(

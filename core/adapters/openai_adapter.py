@@ -35,6 +35,7 @@ class OpenAIAdapter:
                 return int(value)
         except Exception:
             return default
+
     @staticmethod
     def _safe_float(value: Any, default: float) -> float:
         """Safely coerce mocked/str/numeric values to float; fallback to default."""
@@ -61,6 +62,7 @@ class OpenAIAdapter:
             return coerced
         except Exception:
             return default
+
     def __init__(self) -> None:
         if not settings.has_openai_key():
             raise ValueError(
@@ -275,7 +277,9 @@ class OpenAIAdapter:
                 model=model_id,
                 messages=[{"role": "user", "content": prompt}],
                 max_completion_tokens=effective_max_tokens,
-                temperature=self._safe_float(getattr(settings, "temperature", 0.7), 0.7),
+                temperature=self._safe_float(
+                    getattr(settings, "temperature", 0.7), 0.7
+                ),
             )
 
             return response.choices[0].message.content
@@ -320,7 +324,9 @@ class OpenAIAdapter:
                 model=model_id,
                 messages=cast(Any, truncated_messages),
                 max_completion_tokens=effective_max_tokens,
-                temperature=self._safe_float(getattr(settings, "temperature", 0.7), 0.7),
+                temperature=self._safe_float(
+                    getattr(settings, "temperature", 0.7), 0.7
+                ),
             )
 
             return response.choices[0].message.content
