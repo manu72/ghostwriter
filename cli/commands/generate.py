@@ -1,3 +1,5 @@
+from typing import Tuple
+
 import typer
 from rich.console import Console
 from rich.panel import Panel
@@ -500,7 +502,7 @@ def _display_chat_help() -> None:
 
 def _enhance_prompt_for_length(
     prompt: str, max_tokens: int, length_preference: str
-) -> tuple[str, int]:
+) -> Tuple[str, int]:
     """Enhance prompt based on length requirements and adjust token limits."""
     import re
 
