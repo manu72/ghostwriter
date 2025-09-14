@@ -53,6 +53,10 @@ Thumbs.db
 .data/
 data/
 CLAUDE.md
+CLAUDE_Custom.md
+SPECS.md
+LONG_FORM_GENERATION_PLAN.md
+STAGE2_IMPLEMENTATION_PLAN.md
 
 # Logs
 *.log
