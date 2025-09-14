@@ -7,6 +7,7 @@ from rich.table import Table
 from core.adapters.openai_adapter import OpenAIAdapter
 from core.config import settings
 from core.models import ChatSession
+from core.prompts.templates import build_system_prompt
 from core.storage import AuthorStorage, get_author_profile
 
 console = Console()
@@ -51,12 +52,23 @@ def generate_text(
     if not prompt:
         prompt = Prompt.ask("Enter your prompt")
 
-    console.print(f"\n[yellow]Prompt:[/yellow] {prompt}")
+    # Build system prompt for the author
+    system_prompt = build_system_prompt(profile)
+
+    # Smart length detection and adjustment
+    enhanced_prompt, adjusted_tokens = _enhance_prompt_for_length(
+        prompt, max_completion_tokens, profile.style_guide.length_preference
+    )
+
+    console.print(f"\n[yellow]Prompt:[/yellow] {enhanced_prompt}")
     console.print(f"[dim]Using model: {model_id}[/dim]")
+    console.print(f"[dim]Max completion tokens: {adjusted_tokens}[/dim]")
 
     try:
         adapter = OpenAIAdapter()
-        response = adapter.generate_text(model_id, prompt, max_completion_tokens)
+        response = adapter.generate_text(
+            model_id, enhanced_prompt, adjusted_tokens, system_prompt=system_prompt
+        )
 
         console.print(
             Panel(
@@ -131,23 +143,36 @@ def interactive_generation(
         )
     )
 
+    # Build system prompt for the author
+    system_prompt = build_system_prompt(profile)
+
     try:
         adapter = OpenAIAdapter()
 
         while True:
-            prompt = Prompt.ask("\n[cyan]Enter your prompt[/cyan]")
+            user_prompt = Prompt.ask("\n[cyan]Enter your prompt[/cyan]")
 
-            if prompt.lower() in ["quit", "exit", "q"]:
+            if user_prompt.lower() in ["quit", "exit", "q"]:
                 console.print("[green]Session ended.[/green]")
                 break
 
-            if not prompt.strip():
+            if not user_prompt.strip():
                 console.print("[yellow]Please enter a prompt.[/yellow]")
                 continue
 
+            # Smart length detection and adjustment
+            enhanced_prompt, adjusted_tokens = _enhance_prompt_for_length(
+                user_prompt,
+                max_completion_tokens,
+                profile.style_guide.length_preference,
+            )
+
             try:
                 response = adapter.generate_text(
-                    model_id, prompt, max_completion_tokens=max_completion_tokens
+                    model_id,
+                    enhanced_prompt,
+                    adjusted_tokens,
+                    system_prompt=system_prompt,
                 )
                 console.print(
                     Panel(
@@ -471,3 +496,80 @@ def _display_chat_help() -> None:
 [dim]Just type your message to continue chatting![/dim]
 """
     console.print(Panel(help_text, title="💬 Chat Help", border_style="blue"))
+
+
+def _enhance_prompt_for_length(
+    prompt: str, max_tokens: int, length_preference: str
+) -> tuple[str, int]:
+    """Enhance prompt based on length requirements and adjust token limits."""
+    import re
+
+    # Detect explicit length requests in the prompt
+    length_patterns = [
+        r"(\d+)\s*words?",
+        r"(\d+)\s*pages?",
+        r"(short|long|brief|detailed|extensive)\s*(story|article|essay|piece|text)",
+        r"(novella|novel|short story|flash fiction)",
+    ]
+
+    enhanced_prompt = prompt
+    adjusted_tokens = max_tokens
+
+    # Check for explicit word counts
+    for pattern in length_patterns[:2]:  # Word and page patterns
+        match = re.search(pattern, prompt.lower())
+        if match:
+            if "word" in pattern:
+                word_count = int(match.group(1))
+                # Rough estimate: 1 token ≈ 0.75 words, so multiply by ~1.33
+                estimated_tokens = int(word_count * 1.33)
+                adjusted_tokens = min(
+                    estimated_tokens + 500, settings.max_context_tokens - 1000
+                )
+
+                # Add length guidance to prompt
+                enhanced_prompt = (
+                    f"{prompt}\n\nPlease write approximately {word_count} words."
+                )
+            elif "page" in pattern:
+                page_count = int(match.group(1))
+                # Estimate ~250 words per page
+                word_count = page_count * 250
+                estimated_tokens = int(word_count * 1.33)
+                adjusted_tokens = min(
+                    estimated_tokens + 500, settings.max_context_tokens - 1000
+                )
+
+                enhanced_prompt = f"{prompt}\n\nPlease write approximately {page_count} pages (about {word_count} words)."
+            break
+
+    # Check for descriptive length terms
+    if adjusted_tokens == max_tokens:  # No explicit length found
+        for pattern in length_patterns[2:]:
+            if re.search(pattern, prompt.lower()):
+                if any(term in prompt.lower() for term in ["short", "brief", "flash"]):
+                    adjusted_tokens = min(2000, max_tokens)
+                    enhanced_prompt = f"{prompt}\n\nPlease write a concise piece."
+                elif any(
+                    term in prompt.lower()
+                    for term in ["long", "detailed", "extensive", "novella", "novel"]
+                ):
+                    adjusted_tokens = min(20000, settings.max_context_tokens - 1000)
+                    enhanced_prompt = (
+                        f"{prompt}\n\nPlease write a detailed, comprehensive piece."
+                    )
+                break
+
+    # Apply length preference if no explicit length detected
+    if adjusted_tokens == max_tokens:
+        if length_preference == "long":
+            adjusted_tokens = min(15000, max_tokens * 2)
+            enhanced_prompt = (
+                f"{prompt}\n\nPlease provide a comprehensive, detailed response."
+            )
+        elif length_preference == "short":
+            adjusted_tokens = min(3000, max_tokens)
+            enhanced_prompt = f"{prompt}\n\nPlease provide a concise response."
+        # "medium" uses default tokens
+
+    return enhanced_prompt, adjusted_tokens

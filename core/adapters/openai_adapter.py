@@ -255,20 +255,28 @@ class OpenAIAdapter:
         model_id: str,
         prompt: str,
         max_completion_tokens: Optional[int] = None,
+        system_prompt: Optional[str] = None,
     ) -> str:
         try:
             # Use configured default if not provided; coerce mocked values
             default_tokens = self._safe_int(
-                getattr(settings, "max_completion_tokens", 500), 500
+                getattr(settings, "max_completion_tokens", 10000), 10000
             )
             effective_max_tokens = (
                 self._safe_int(max_completion_tokens, default_tokens)
                 if max_completion_tokens is not None
                 else default_tokens
             )
+
+            # Build messages array with optional system prompt
+            messages = []
+            if system_prompt:
+                messages.append({"role": "system", "content": system_prompt})
+            messages.append({"role": "user", "content": prompt})
+
             response = self.client.chat.completions.create(
                 model=model_id,
-                messages=[{"role": "user", "content": prompt}],
+                messages=messages,
                 max_completion_tokens=effective_max_tokens,
                 temperature=self._safe_float(
                     getattr(settings, "temperature", 0.7), 0.7
@@ -292,7 +300,7 @@ class OpenAIAdapter:
         try:
             # Use configured defaults; coerce mocked values
             default_tokens = self._safe_int(
-                getattr(settings, "max_completion_tokens", 500), 500
+                getattr(settings, "max_completion_tokens", 10000), 10000
             )
             default_context = self._safe_int(
                 getattr(settings, "max_context_tokens", 50000), 50000
@@ -350,7 +358,7 @@ class OpenAIAdapter:
             else default_context
         )
         available_context_tokens = max(
-            0, context_total - self._safe_int(max_completion_tokens, 500) - 1000
+            0, context_total - self._safe_int(max_completion_tokens, 10000) - 100
         )
         max_chars = available_context_tokens * 4
 
