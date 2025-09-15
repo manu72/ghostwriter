@@ -334,11 +334,23 @@ class OpenAIAdapter:
             ] = []
             for msg in truncated_messages:
                 if msg["role"] == "system":
-                    openai_messages.append(ChatCompletionSystemMessageParam(content=msg["content"], role="system"))
+                    openai_messages.append(
+                        ChatCompletionSystemMessageParam(
+                            content=msg["content"], role="system"
+                        )
+                    )
                 elif msg["role"] == "user":
-                    openai_messages.append(ChatCompletionUserMessageParam(content=msg["content"], role="user"))
+                    openai_messages.append(
+                        ChatCompletionUserMessageParam(
+                            content=msg["content"], role="user"
+                        )
+                    )
                 elif msg["role"] == "assistant":
-                    openai_messages.append(ChatCompletionAssistantMessageParam(content=msg["content"], role="assistant"))
+                    openai_messages.append(
+                        ChatCompletionAssistantMessageParam(
+                            content=msg["content"], role="assistant"
+                        )
+                    )
                 # Add other roles if necessary, though system/user/assistant are most common
 
             response = self.client.chat.completions.create(
