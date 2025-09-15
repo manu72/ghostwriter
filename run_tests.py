@@ -84,7 +84,6 @@ def check_dependencies():
         "pytest",
         "pytest-cov",
         "pytest-mock",
-        "pytest-typer",
         "responses",
         "freezegun",
     ]

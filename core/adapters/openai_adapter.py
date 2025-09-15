@@ -2,7 +2,7 @@ import json
 import tempfile
 import time
 from pathlib import Path
-from typing import Any, Dict, List, Optional, cast
+from typing import Any, Dict, List, Optional, Union, cast
 
 import openai
 from openai.types.chat import (
@@ -274,14 +274,26 @@ class OpenAIAdapter:
             )
 
             # Build messages array with optional system prompt
-            messages = []
+            # Convert generic dict messages to specific OpenAI message types
+            openai_messages: List[
+                Union[
+                    ChatCompletionSystemMessageParam,
+                    ChatCompletionUserMessageParam,
+                ]
+            ] = []
             if system_prompt:
-                messages.append({"role": "system", "content": system_prompt})
-            messages.append({"role": "user", "content": prompt})
+                openai_messages.append(
+                    ChatCompletionSystemMessageParam(
+                        content=system_prompt, role="system"
+                    )
+                )
+            openai_messages.append(
+                ChatCompletionUserMessageParam(content=prompt, role="user")
+            )
 
             response = self.client.chat.completions.create(
                 model=model_id,
-                messages=messages,
+                messages=openai_messages,
                 max_completion_tokens=effective_max_tokens,
                 temperature=self._safe_float(
                     getattr(settings, "temperature", 0.7), 0.7
@@ -328,9 +340,11 @@ class OpenAIAdapter:
 
             # Convert generic dict messages to specific OpenAI message types
             openai_messages: List[
-                ChatCompletionSystemMessageParam
-                | ChatCompletionUserMessageParam
-                | ChatCompletionAssistantMessageParam
+                Union[
+                    ChatCompletionSystemMessageParam,
+                    ChatCompletionUserMessageParam,
+                    ChatCompletionAssistantMessageParam,
+                ]
             ] = []
             for msg in truncated_messages:
                 if msg["role"] == "system":
