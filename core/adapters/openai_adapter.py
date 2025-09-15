@@ -3,6 +3,11 @@ import tempfile
 import time
 from pathlib import Path
 from typing import Any, Dict, List, Optional, cast
+from openai.types.chat import (
+    ChatCompletionSystemMessageParam,
+    ChatCompletionUserMessageParam,
+    ChatCompletionAssistantMessageParam,
+)
 
 import openai
 from rich.console import Console
@@ -321,9 +326,24 @@ class OpenAIAdapter:
                 messages, effective_max_tokens, effective_max_context
             )
 
+            # Convert generic dict messages to specific OpenAI message types
+            openai_messages: List[
+                ChatCompletionSystemMessageParam
+                | ChatCompletionUserMessageParam
+                | ChatCompletionAssistantMessageParam
+            ] = []
+            for msg in truncated_messages:
+                if msg["role"] == "system":
+                    openai_messages.append(ChatCompletionSystemMessageParam(content=msg["content"], role="system"))
+                elif msg["role"] == "user":
+                    openai_messages.append(ChatCompletionUserParam(content=msg["content"], role="user"))
+                elif msg["role"] == "assistant":
+                    openai_messages.append(ChatCompletionAssistantMessageParam(content=msg["content"], role="assistant"))
+                # Add other roles if necessary, though system/user/assistant are most common
+
             response = self.client.chat.completions.create(
                 model=model_id,
-                messages=cast(Any, truncated_messages),
+                messages=openai_messages,
                 max_completion_tokens=effective_max_tokens,
                 temperature=self._safe_float(
                     getattr(settings, "temperature", 0.7), 0.7
