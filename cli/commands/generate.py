@@ -188,7 +188,7 @@ def interactive_generation(
                 if save:
                     try:
                         content_path = storage.save_generated_content(
-                            prompt=prompt,
+                            prompt=user_prompt,
                             response=response,
                             author_name=profile.name,
                             model_id=model_id,
