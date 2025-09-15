@@ -377,6 +377,7 @@ class TestOpenAIAdapterTextGeneration:
         """Test text generation."""
         with patch("core.adapters.openai_adapter.settings") as mock_settings:
             mock_settings.has_openai_key.return_value = True
+            mock_settings.max_completion_tokens = 10000
 
             with patch("openai.OpenAI", return_value=mock_openai_client):
                 adapter = OpenAIAdapter()
@@ -391,9 +392,40 @@ class TestOpenAIAdapterTextGeneration:
                 mock_openai_client.chat.completions.create.assert_called_once()
                 call_args = mock_openai_client.chat.completions.create.call_args
                 assert call_args[1]["model"] == "ft:gpt-3.5-turbo:model:123"
+                assert len(call_args[1]["messages"]) == 1
+                assert call_args[1]["messages"][0]["role"] == "user"
                 assert call_args[1]["messages"][0]["content"] == "Test prompt"
-                assert call_args[1]["max_completion_tokens"] == 500
-                # Temperature parameter was removed for ChatGPT 5 compatibility TESTING ONLY
+                assert call_args[1]["max_completion_tokens"] == 10000
+
+    def test_generate_text_with_system_prompt(self, mock_openai_client):
+        """Test text generation with system prompt."""
+        with patch("core.adapters.openai_adapter.settings") as mock_settings:
+            mock_settings.has_openai_key.return_value = True
+            mock_settings.max_completion_tokens = 10000
+
+            with patch("openai.OpenAI", return_value=mock_openai_client):
+                adapter = OpenAIAdapter()
+
+                response = adapter.generate_text(
+                    model_id="ft:gpt-3.5-turbo:model:123",
+                    prompt="Test prompt",
+                    system_prompt="You are a helpful assistant with a specific style.",
+                )
+
+                assert response == "Test response from fine-tuned model"
+
+                # Verify API call includes system prompt
+                mock_openai_client.chat.completions.create.assert_called_once()
+                call_args = mock_openai_client.chat.completions.create.call_args
+                assert call_args[1]["model"] == "ft:gpt-3.5-turbo:model:123"
+                assert len(call_args[1]["messages"]) == 2
+                assert call_args[1]["messages"][0]["role"] == "system"
+                assert (
+                    call_args[1]["messages"][0]["content"]
+                    == "You are a helpful assistant with a specific style."
+                )
+                assert call_args[1]["messages"][1]["role"] == "user"
+                assert call_args[1]["messages"][1]["content"] == "Test prompt"
 
     def test_generate_text_custom_params(self, mock_openai_client):
         """Test text generation with custom parameters."""
@@ -641,11 +673,16 @@ class TestOpenAIAdapterChat:
                 )
 
                 assert response == "Hello! How can I help you today?"
+                # Use configured defaults instead of hard-coded values
+                from core.config import settings as real_settings
+
+                expected_tokens = real_settings.max_completion_tokens
+                expected_temp = real_settings.temperature
                 mock_openai_client.chat.completions.create.assert_called_once_with(
                     model="ft:gpt-3.5-turbo:model:123",
                     messages=messages,
-                    max_completion_tokens=500,
-                    temperature=0.7,
+                    max_completion_tokens=expected_tokens,
+                    temperature=expected_temp,
                 )
 
     def test_generate_chat_response_with_custom_tokens(self, mock_openai_client):
@@ -668,11 +705,14 @@ class TestOpenAIAdapterChat:
                 )
 
                 assert response == "Custom response"
+                from core.config import settings as real_settings
+
+                expected_temp = real_settings.temperature
                 mock_openai_client.chat.completions.create.assert_called_once_with(
                     model="ft:gpt-3.5-turbo:model:123",
                     messages=messages,
                     max_completion_tokens=1000,
-                    temperature=0.7,
+                    temperature=expected_temp,
                 )
 
     def test_generate_chat_response_error(self, mock_openai_client):

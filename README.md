@@ -1,17 +1,18 @@
 # Ghostwriter
 
 Ghostwriter is a tool that empowers non-technical users to create their own personal writing AI.
-It helps you fine-tune a language model so it learns your style, tone, and preferences, or create AI authors based on historical figures.
+It helps you finetune a language model so it learns your style, tone, and preferences, or create AI authors based on historical figures.
 Over time, your Ghostwriter becomes a unique voice or author that improves through feedback and edits you provide.
 
 ---
 
 ## Vision
 
-The goal of Ghostwriter is to democratise fine-tuning. Anyone, not just developers, should be able to:
+There are three ways to improve the quality of LLM output: prompt engineering, retrieval augmented generation (RAG), and finetuning.
+The goal of Ghostwriter is to democratise finetuning. Anyone, not just developers, should be able to:
 
 - Collect and structure a small dataset of writing samples, or create authors based on historical figures.
-- Fine-tune an existing large language model (LLM) into a personal voice or author.
+- Finetune an existing large language model (LLM) into a personal voice or author.
 - Generate content that reflects their voice: blog posts, articles, essays, or even books.
 - Have conversations with their fine-tuned author, maintaining context and memory across sessions.
 - Manage persistent chat sessions with save, resume, and export capabilities.
@@ -24,9 +25,9 @@ The goal of Ghostwriter is to democratise fine-tuning. Anyone, not just develope
 ### Core Features
 
 - **Dataset Builder**: Guided prompts help you prepare a small training dataset in the correct format for the LLM.
-- **Fine-Tune Runner**: Simple CLI to start a fine-tuning job with a commercial LLM.
+- **Fine-Tune Runner**: Simple CLI to start a finetuning job with a commercial LLM.
 - **Author Runtime**: Generate drafts from your tuned author with a single command.
-- **Chat Conversations**: Full ChatGPT-style conversations with your fine-tuned model, including conversation memory and session persistence.
+- **Chat Conversations**: Full ChatGPT-style conversations with your finetuned model, including conversation memory and session persistence.
 - **Content Persistence**: All generated content and chat sessions are automatically saved as markdown files with metadata.
 - **Session Management**: Save, resume, and export chat conversations with full history tracking.
 - **Feedback Loop**: Rate or edit drafts, turning feedback into new training examples.
@@ -34,7 +35,7 @@ The goal of Ghostwriter is to democratise fine-tuning. Anyone, not just develope
 ### NEW: Historical Figure Authors ✨
 
 - **AI-Powered Discovery**: Search for historical figures based on your criteria (e.g., "famous poets", "20th century scientists")
-- **Automatic Style Analysis**: AI analyzes the figure's documented writing style, tone, and characteristics
+- **Automatic Style Analysis**: AI analyses the figure's documented writing style, tone, and characteristics
 - **Profile Generation**: Automatically creates author profiles with appropriate style guides
 - **Training Dataset Creation**: AI generates 15-30 training examples in the historical figure's authentic voice
 - **Dataset Expansion**: Add more examples to existing historical authors with `historical build` command
@@ -69,7 +70,7 @@ The goal of Ghostwriter is to democratise fine-tuning. Anyone, not just develope
 
 - Support multiple LLMs (OpenAI, Gemini).
 - Local model support via Ollama (DeepSeek, Mistral Small).
-- LoRA or PEFT-based fine-tuning for open models.
+- LoRA or PEFT-based finetuning for open models.
 
 ### Stage 4: Multiple user accounts
 
@@ -192,7 +193,7 @@ python -m cli.main generate chat shakespeare
 ### Author Management
 
 ```bash
-# Initialize a new author profile (manual creation)
+# Initialise a new author profile (manual creation)
 python -m cli.main init
 
 # List all authors (shows both manual and historical)
@@ -211,8 +212,8 @@ python -m cli.main historical create
 # Search for historical figures
 python -m cli.main historical search "famous American poets"
 
-# Analyze a specific figure's writing style
-python -m cli.main historical analyze "Emily Dickinson"
+# Analyse a specific figure's writing style
+python -m cli.main historical analyse "Emily Dickinson"
 
 # Create with specific parameters
 python -m cli.main historical create --figure "Mark Twain" --id twain_author --dataset-size 25

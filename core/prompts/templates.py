@@ -11,7 +11,7 @@ Style Notes: {writing_style_notes}
 
 Additionally, you must avoid the common hallmarks of low-quality AI-generated output known as "AI slop". Follow these 3 rules strictly:
 1. Avoid overused stylistic crutches:
-   - Do not use em-dashes or excessive hyphens.
+   - Do not use em-dashes, en-dashes, colons, or hyphens.
    - Do not use inflated phrases such as “delve into,” “ever-evolving,” “ever-shifting landscape,” “in today’s fast-paced world,” or similar.
    - Avoid clichés like “at the end of the day” or “change is the only constant.”
    - Never use emojis.
