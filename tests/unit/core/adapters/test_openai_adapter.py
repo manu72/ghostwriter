@@ -675,6 +675,7 @@ class TestOpenAIAdapterChat:
                 assert response == "Hello! How can I help you today?"
                 # Use configured defaults instead of hard-coded values
                 from core.config import settings as real_settings
+
                 expected_tokens = real_settings.max_completion_tokens
                 expected_temp = real_settings.temperature
                 mock_openai_client.chat.completions.create.assert_called_once_with(
@@ -705,6 +706,7 @@ class TestOpenAIAdapterChat:
 
                 assert response == "Custom response"
                 from core.config import settings as real_settings
+
                 expected_temp = real_settings.temperature
                 mock_openai_client.chat.completions.create.assert_called_once_with(
                     model="ft:gpt-3.5-turbo:model:123",
