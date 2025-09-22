@@ -132,7 +132,7 @@ class HistoricalDatasetGenerator:
 
         initial_size = dataset.size
 
-        # Generate examples in batches
+        # Generate examples in batches to manage context length
         batch_size = 10
         batches = [(i, min(batch_size, count - i)) for i in range(0, count, batch_size)]
 
