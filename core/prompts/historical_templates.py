@@ -134,9 +134,10 @@ WRITING CONTEXT:
 
 Generate {count} training examples that demonstrate {figure_name}'s writing style. Each example should include a realistic prompt that might have been given to them, and a response written authentically in their voice.
 
-IMPORTANT: Create responses of varying lengths to teach the model flexibility:
-- Some responses should be 800-1200 words (detailed essays or analyses)
-- Some responses should be 1500-2500 words (comprehensive treatises or stories)
+IMPORTANT: Aim for responses of varying lengths to teach the model flexibility:
+- Target 800-1200 words for some responses (detailed essays or analyses)
+- Target ~1500-2500 words for a few responses when context allows (comprehensive treatises or stories)
+- If nearing token/context limits, prioritize coherent completion over length and truncate gracefully
 - Include both shorter and longer examples to show the author's range
 - Focus on substantial, well-developed content that showcases their full writing style
 
@@ -193,12 +194,12 @@ Focus on figures who have well-documented writing styles and substantial written
 
 # Cost estimation constants for planning
 ESTIMATED_TOKENS = {
-    "figure_discovery": 800,  # Discovery of 5 figures
-    "figure_analysis": 1200,  # Detailed style analysis
+    "figure_discovery": 1000,  # Discovery of 5 figures
+    "figure_analysis": 1500,  # Detailed style analysis
     "style_guide_generation": 400,  # Converting analysis to guide
     "figure_verification": 300,  # Verification check
     "example_generation": 2000,  # Per training example generated (increased for longer examples)
-    "search_refinement": 600,  # Refining search results
+    "search_refinement": 800,  # Refining search results
 }
 
 
@@ -219,5 +220,5 @@ def estimate_cost(operation: str, count: int = 1) -> float:
         )
 
     tokens = ESTIMATED_TOKENS[operation] * count
-    # Rough estimate: $0.002 per 1000 tokens (average of input/output costs)
-    return round((tokens / 1000) * 0.002, 6)
+    # Rough estimate: $0.005 per 1000 tokens (average of input/output costs)
+    return round((tokens / 1000) * 0.005, 6)
