@@ -198,7 +198,7 @@ ESTIMATED_TOKENS = {
     "figure_analysis": 1500,  # Detailed style analysis
     "style_guide_generation": 400,  # Converting analysis to guide
     "figure_verification": 300,  # Verification check
-    "example_generation": 5000,  # Per training example generated (increased for longer examples)
+    "example_generation": 2000,  # Per training example generated (increased for longer examples)
     "search_refinement": 800,  # Refining search results
 }
 
