@@ -134,24 +134,31 @@ WRITING CONTEXT:
 
 Generate {count} training examples that demonstrate {figure_name}'s writing style. Each example should include a realistic prompt that might have been given to them, and a response written authentically in their voice.
 
+IMPORTANT: Create responses of varying lengths to teach the model flexibility:
+- Some responses should be 800-1200 words (detailed essays or analyses)
+- Some responses should be 1500-2500 words (comprehensive treatises or stories)
+- Include both shorter and longer examples to show the author's range
+- Focus on substantial, well-developed content that showcases their full writing style
+
 Consider:
 - The historical context of their era
 - Their typical audience and purposes for writing
 - Their documented mannerisms and expressions
 - The types of topics they actually addressed
 - Their characteristic way of structuring arguments or ideas
+- How they developed complex thoughts over longer passages
 
 Format each example as:
 
 **EXAMPLE 1:**
 User prompt: [A realistic prompt that {figure_name} might have responded to]
-Assistant response: [Response written authentically in {figure_name}'s style]
+Assistant response: [Comprehensive response of 1000-2000+ words written authentically in {figure_name}'s style]
 
 **EXAMPLE 2:**
-User prompt: [Different prompt, same style]
-Assistant response: [Response matching the author's voice]
+User prompt: [Different prompt requesting detailed analysis or extended writing]
+Assistant response: [Substantial response matching the author's voice and demonstrating their ability to write at length]
 
-Make each example distinct in topic but consistent in style. Ensure the prompts are appropriate for the historical period and the figure's actual areas of expertise or communication.
+Make each example distinct in topic but consistent in style. Ensure the prompts are appropriate for the historical period and the figure's actual areas of expertise. Create responses that show how the author would develop ideas fully and comprehensively.
 """
 
 FIGURE_SEARCH_REFINEMENT_TEMPLATE = """The user is looking for a historical figure with these characteristics:
@@ -190,7 +197,7 @@ ESTIMATED_TOKENS = {
     "figure_analysis": 1200,  # Detailed style analysis
     "style_guide_generation": 400,  # Converting analysis to guide
     "figure_verification": 300,  # Verification check
-    "example_generation": 600,  # Per training example generated
+    "example_generation": 2000,  # Per training example generated (increased for longer examples)
     "search_refinement": 600,  # Refining search results
 }
 
