@@ -175,7 +175,7 @@ class HistoricalDatasetGenerator:
             response = self.adapter.generate_text(
                 model_id=self.model,
                 prompt=prompt,
-                max_completion_tokens=1200,  # Enough for multiple examples
+                max_completion_tokens=10000,  # Increased for longer training examples
             )
 
             return self._parse_generated_examples(response)
