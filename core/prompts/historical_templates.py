@@ -134,9 +134,10 @@ WRITING CONTEXT:
 
 Generate {count} training examples that demonstrate {figure_name}'s writing style. Each example should include a realistic prompt that might have been given to them, and a response written authentically in their voice.
 
-IMPORTANT: Create responses of varying lengths to teach the model flexibility:
-- Some responses should be 800-1200 words (detailed essays or analyses)
-- Some responses should be 1500-2500 words (comprehensive treatises or stories)
+IMPORTANT: Aim for responses of varying lengths to teach the model flexibility:
+- Target 800-1200 words for some responses (detailed essays or analyses)
+- Target ~1500-2500 words for a few responses when context allows (comprehensive treatises or stories)
+- If nearing token/context limits, prioritize coherent completion over length and truncate gracefully
 - Include both shorter and longer examples to show the author's range
 - Focus on substantial, well-developed content that showcases their full writing style
 
