@@ -9,6 +9,7 @@ import pytest
 from typer.testing import CliRunner
 
 from cli.commands.historical_author import (
+    _handle_verification_result,
     create_historical_author_interactive,
     historical_app,
 )
@@ -262,8 +263,9 @@ class TestHistoricalAuthorCLI:
             mock_researcher.analyze_figure.assert_called_once_with("Mark Twain")
 
     @patch("cli.commands.historical_author.HistoricalFigureResearcher")
-    def test_analyze_command_unverified_figure(self, mock_researcher_class):
-        """Test analyze command with unverified figure."""
+    @patch("cli.commands.historical_author.Confirm.ask")
+    def test_analyze_command_unverified_figure_user_declines(self, mock_confirm, mock_researcher_class):
+        """Test analyze command with unverified figure when user declines override."""
         mock_researcher = Mock()
         unverified = FigureVerification(
             figure_name="Fake Person",
@@ -274,12 +276,38 @@ class TestHistoricalAuthorCLI:
         )
         mock_researcher.verify_figure.return_value = unverified
         mock_researcher_class.return_value = mock_researcher
+        mock_confirm.return_value = False  # User declines override
 
         result = self.runner.invoke(historical_app, ["analyze", "Fake Person"])
 
         assert result.exit_code == 1
-        # Should not call analyze_figure for unverified figures
+        # Should not call analyze_figure for unverified figures when user declines
         mock_researcher.analyze_figure.assert_not_called()
+
+    @patch("cli.commands.historical_author.HistoricalFigureResearcher")
+    @patch("cli.commands.historical_author.Confirm.ask")
+    def test_analyze_command_unverified_figure_user_accepts(self, mock_confirm, mock_researcher_class):
+        """Test analyze command with unverified figure when user accepts override."""
+        mock_researcher = Mock()
+        unverified = FigureVerification(
+            figure_name="Fake Person",
+            status="UNVERIFIED",
+            reason="Fictional character",
+            available_sources="None",
+            concerns="Not a real person",
+        )
+        mock_researcher.verify_figure.return_value = unverified
+        mock_researcher.analyze_figure.return_value = self.test_analysis
+        mock_researcher_class.return_value = mock_researcher
+
+        # First call is for override confirmation (True), second is for proceeding with analysis (True)
+        mock_confirm.side_effect = [True, True]
+
+        result = self.runner.invoke(historical_app, ["analyze", "Fake Person"])
+
+        assert result.exit_code == 0
+        # Should call analyze_figure when user accepts override
+        mock_researcher.analyze_figure.assert_called_once_with("Fake Person")
 
     @patch("cli.commands.historical_author.HistoricalFigureResearcher")
     def test_analyze_command_verification_fails(self, mock_researcher_class):
@@ -332,3 +360,65 @@ class TestBasicCLIFunctionality:
         assert figure.name == "Test Figure"
         assert historical_app is not None
         assert create_historical_author_interactive is not None
+
+
+class TestVerificationHelper:
+    """Test the verification helper function."""
+
+    def setup_method(self):
+        """Set up test fixtures."""
+        self.verified = FigureVerification(
+            figure_name="Mark Twain",
+            status="VERIFIED",
+            reason="Extensive documented works",
+            available_sources="Books, letters, speeches",
+            concerns="None",
+        )
+
+        self.unverified = FigureVerification(
+            figure_name="Fake Person",
+            status="UNVERIFIED",
+            reason="Fictional character",
+            available_sources="None",
+            concerns="Not a real person",
+        )
+
+    @patch("cli.commands.historical_author.display_verification")
+    def test_handle_verification_none(self, mock_display):
+        """Test helper function with None verification."""
+        result = _handle_verification_result(None, "Test Figure")
+
+        assert result is False
+        mock_display.assert_not_called()
+
+    @patch("cli.commands.historical_author.display_verification")
+    def test_handle_verification_verified_figure(self, mock_display):
+        """Test helper function with verified figure."""
+        result = _handle_verification_result(self.verified, "Mark Twain")
+
+        assert result is True
+        mock_display.assert_called_once_with(self.verified)
+
+    @patch("cli.commands.historical_author.display_verification")
+    @patch("cli.commands.historical_author.Confirm.ask")
+    def test_handle_verification_unverified_user_declines(self, mock_confirm, mock_display):
+        """Test helper function with unverified figure when user declines."""
+        mock_confirm.return_value = False
+
+        result = _handle_verification_result(self.unverified, "Fake Person")
+
+        assert result is False
+        mock_display.assert_called_once_with(self.unverified)
+        mock_confirm.assert_called_once()
+
+    @patch("cli.commands.historical_author.display_verification")
+    @patch("cli.commands.historical_author.Confirm.ask")
+    def test_handle_verification_unverified_user_accepts(self, mock_confirm, mock_display):
+        """Test helper function with unverified figure when user accepts."""
+        mock_confirm.return_value = True
+
+        result = _handle_verification_result(self.unverified, "Fake Person")
+
+        assert result is True
+        mock_display.assert_called_once_with(self.unverified)
+        mock_confirm.assert_called_once()

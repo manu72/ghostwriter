@@ -13,6 +13,7 @@ from rich.panel import Panel
 from rich.prompt import Confirm, Prompt
 
 from core.historical import (
+    FigureVerification,
     HistoricalDatasetGenerator,
     HistoricalFigure,
     HistoricalFigureResearcher,
@@ -25,6 +26,50 @@ from core.storage import AuthorStorage, get_author_profile
 
 console = Console()
 historical_app = typer.Typer()
+
+
+def _handle_verification_result(
+    verification: Optional[FigureVerification], figure_name: str
+) -> bool:
+    """Handle verification result with optional user override for unverified figures.
+
+    Args:
+        verification: The verification result from the researcher
+        figure_name: Name of the figure being verified
+
+    Returns:
+        True if should proceed (verified or user override), False otherwise
+    """
+    if not verification:
+        console.print(f"[red]❌ Could not verify figure '{figure_name}'[/red]")
+        return False
+
+    display_verification(verification)
+
+    # If verified, proceed without question
+    if verification.status == "VERIFIED":
+        return True
+
+    # For unverified figures, show warning and ask for override
+    console.print(
+        f"\n[yellow]⚠️  Warning: Figure '{figure_name}' is not verified[/yellow]"
+    )
+    console.print(f"[yellow]Reason: {verification.reason}[/yellow]")
+
+    if verification.concerns and verification.concerns != "None specified":
+        console.print(f"[yellow]Concerns: {verification.concerns}[/yellow]")
+
+    console.print(
+        "\n[red]Proceeding with unverified figures may result in:[/red]"
+    )
+    console.print("[red]• Lower quality training data[/red]")
+    console.print("[red]• Inaccurate style analysis[/red]")
+    console.print("[red]• Poor model performance[/red]")
+
+    return Confirm.ask(
+        "\n[bold red]Are you sure you want to proceed with this unverified figure?[/bold red]",
+        default=False
+    )
 
 
 @historical_app.command("create")
@@ -123,16 +168,9 @@ def analyze_historical_figure(
 
         # Verify figure first
         verification = researcher.verify_figure(figure_name)
-        if not verification:
-            console.print("[red]❌ Could not verify figure[/red]")
-            raise typer.Exit(1)
 
-        display_verification(verification)
-
-        if verification.status != "VERIFIED":
-            console.print(
-                f"[red]❌ Figure verification failed: {verification.reason}[/red]"
-            )
+        # Use the helper function to handle verification and user override
+        if not _handle_verification_result(verification, figure_name):
             raise typer.Exit(1)
 
         if not Confirm.ask("Proceed with detailed analysis?"):
@@ -193,8 +231,9 @@ def build_historical_dataset(
 
         # Verify figure first
         verification = researcher.verify_figure(profile.name)
-        if not verification or verification.status != "VERIFIED":
-            console.print(f"[red]❌ Could not verify figure '{profile.name}'[/red]")
+
+        # Use the helper function to handle verification and user override
+        if not _handle_verification_result(verification, profile.name):
             raise typer.Exit(1)
 
         # Perform detailed analysis
@@ -294,16 +333,9 @@ def create_historical_author_interactive(
 
         # Verify the figure
         verification = researcher.verify_figure(selected_figure.name)
-        if not verification:
-            console.print("[red]❌ Could not verify figure[/red]")
-            return
 
-        display_verification(verification)
-
-        if verification.status != "VERIFIED":
-            console.print(f"[red]❌ Cannot proceed: {verification.reason}[/red]")
-            if verification.concerns:
-                console.print(f"[red]Concerns: {verification.concerns}[/red]")
+        # Use the helper function to handle verification and user override
+        if not _handle_verification_result(verification, selected_figure.name):
             return
 
         if not Confirm.ask("Proceed with creating author profile?"):
