@@ -93,7 +93,7 @@ python -m cli.main historical create --figure "Mark Twain" --id twain_author
 # Search for figures first
 python -m cli.main historical search "famous American authors"
 
-# Analyze a specific figure's style
+# Analyze a specific figure's style (includes verification check with override option)
 python -m cli.main historical analyze "Virginia Woolf"
 ```
 
@@ -104,6 +104,48 @@ python -m cli.main historical analyze "Virginia Woolf"
 - Perfect for exploring different writing styles or emulating admired authors
 
 **Cost:** AI analysis and dataset generation typically costs $0.10-0.30 total per historical author.
+
+#### Historical Figure Verification & User Override
+
+The AI system automatically verifies historical figures before proceeding with analysis and dataset generation. Here's how it works:
+
+**Verification Process:**
+1. **Smart Verification**: AI analyzes the figure's authenticity, available sources, and documentation quality
+2. **Detailed Report**: Shows verification status (VERIFIED/UNVERIFIED), reasoning, available sources, and concerns
+3. **User Override Option**: For unverified figures, you can choose to proceed after clear warnings
+
+**Example Verification Flow:**
+```bash
+$ python -m cli.main historical analyze "Fictional Character"
+
+✅ Verifying figure: Fictional Character...
+
+❌ Verification: UNVERIFIED
+
+Reason: Not a documented historical figure
+Available Sources: Limited or fictional content only
+Concerns: May result in inconsistent training data
+
+⚠️  Warning: Figure 'Fictional Character' is not verified
+Reason: Not a documented historical figure
+Concerns: May result in inconsistent training data
+
+Proceeding with unverified figures may result in:
+• Lower quality training data
+• Inaccurate style analysis
+• Poor model performance
+
+Are you sure you want to proceed with this unverified figure? [y/N]:
+```
+
+**When to Use Override:**
+- ✅ **Obscure but real figures**: Lesser-known historical figures the AI might not recognize
+- ✅ **Recent public figures**: Contemporary writers, journalists, or public figures
+- ✅ **Regional figures**: Historically significant people from specific regions or cultures
+- ❌ **Fictional characters**: Generally not recommended for authentic style modeling
+- ❌ **Composite personas**: Made-up figures combining traits from multiple people
+
+**Best Practice:** Always review the verification details carefully. The AI provides reasoning for its decision, which helps you make an informed choice about whether to proceed.
 
 ### Step 2: Build a Training Dataset
 
@@ -475,7 +517,10 @@ Chat sessions are persistent and stored locally:
    - "influential philosophers"
    - "American Civil War era writers"
 2. Use search refinement when initial results aren't suitable
-3. Test figure verification with both valid and invalid figures
+3. Test figure verification with both valid and invalid figures:
+   - Valid figures (should show VERIFIED status)
+   - Invalid/fictional figures (should show UNVERIFIED with override option)
+   - Test user override: decline and accept for unverified figures
 4. Compare AI analysis quality across different historical periods
 5. Test figure analysis for figures with different writing mediums (books, letters, speeches)
 6. Create multiple historical authors from different eras and compare styles
@@ -566,10 +611,14 @@ Chat sessions are persistent and stored locally:
 
 **Historical author build failing**
 
-**"Could not verify figure"**
-- Historical figure name may be ambiguous
-- Try more specific name (e.g., "Mark Twain" instead of "Twain")
-- Use `historical analyze <name>` first to test
+**"Could not verify figure" or "Figure verification failed"**
+- Historical figure name may be ambiguous - try more specific name (e.g., "Mark Twain" instead of "Twain")
+- Use `historical analyze <name>` first to test verification
+- **NEW**: If figure shows as UNVERIFIED, you can choose to proceed with override:
+  - Review the verification details and reasoning carefully
+  - Consider if this is a lesser-known but real historical figure
+  - Accept the override prompt if you're confident the figure is legitimate
+  - Expect potentially lower quality results with unverified figures
 
 **"Not a historical author"**
 - Use `historical build` only for historical authors (created with `historical create`)

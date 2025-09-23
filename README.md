@@ -36,6 +36,8 @@ The goal of Ghostwriter is to democratise finetuning. Anyone, not just developer
 
 - **AI-Powered Discovery**: Search for historical figures based on your criteria (e.g., "famous poets", "20th century scientists")
 - **Automatic Style Analysis**: AI analyses the figure's documented writing style, tone, and characteristics
+- **Smart Verification**: AI verifies figure authenticity with detailed reasoning and available sources
+- **User Override Option**: Proceed with unverified figures after clear warnings and explicit confirmation
 - **Profile Generation**: Automatically creates author profiles with appropriate style guides
 - **Training Dataset Creation**: AI generates 15-30 training examples in the historical figure's authentic voice
 - **Dataset Expansion**: Add more examples to existing historical authors with `historical build` command
@@ -212,7 +214,7 @@ python -m cli.main historical create
 # Search for historical figures
 python -m cli.main historical search "famous American poets"
 
-# Analyse a specific figure's writing style
+# Analyse a specific figure's writing style (includes verification check)
 python -m cli.main historical analyse "Emily Dickinson"
 
 # Create with specific parameters

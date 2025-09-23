@@ -2,7 +2,8 @@
   "permissions": {
     "allow": [
       "Bash(source:*)",
-      "Bash(python:*)"
+      "Bash(python:*)",
+      "Bash(python3 -m pytest tests/unit/cli/commands/test_historical_author.py::TestVerificationHelper -v)"
     ],
     "deny": [],
     "ask": []
