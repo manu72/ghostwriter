@@ -593,8 +593,8 @@ class HistoricalDatasetGenerator:
                 style_characteristics=profile.style_guide.writing_style_notes
                 or "No specific notes",
                 primary_themes=(
-                    ", ".join(profile.style_guide.preferred_topics)
-                    if profile.style_guide.preferred_topics
+                    ", ".join(profile.style_guide.topics)
+                    if profile.style_guide.topics
                     else "General topics"
                 ),
             )
