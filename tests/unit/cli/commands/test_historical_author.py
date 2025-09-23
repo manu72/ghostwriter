@@ -214,7 +214,7 @@ class TestHistoricalAuthorCLI:
 
         assert result.exit_code == 0
         mock_researcher.discover_figures.assert_called_once_with(
-            "Famous American authors"
+            "Famous American authors", 5
         )
 
     @patch("cli.commands.historical_author.HistoricalFigureResearcher")
@@ -430,3 +430,183 @@ class TestVerificationHelper:
         assert result is True
         mock_display.assert_called_once_with(self.unverified)
         mock_confirm.assert_called_once()
+
+
+class TestEnhancedSearch:
+    """Test enhanced search functionality with count and modes."""
+
+    def setup_method(self):
+        """Set up test fixtures."""
+        self.runner = CliRunner()
+
+        self.test_figure = HistoricalFigure(
+            name="Mark Twain",
+            time_period="1835-1910",
+            writing_style="Satirical American vernacular",
+            notable_works="Tom Sawyer, Huckleberry Finn",
+            match_criteria="Exact name match",
+        )
+
+    @patch("cli.commands.historical_author.HistoricalFigureResearcher")
+    def test_search_with_count_option(self, mock_researcher_class):
+        """Test search command with count option."""
+        mock_researcher = Mock()
+        mock_researcher.discover_figures.return_value = [self.test_figure]
+        mock_researcher_class.return_value = mock_researcher
+
+        result = self.runner.invoke(
+            historical_app, ["search", "famous poets", "--count", "10"]
+        )
+
+        assert result.exit_code == 0
+        mock_researcher.discover_figures.assert_called_once_with("famous poets", 10)
+
+    @patch("cli.commands.historical_author.HistoricalFigureResearcher")
+    def test_search_name_mode(self, mock_researcher_class):
+        """Test search command in name mode."""
+        mock_researcher = Mock()
+        mock_researcher.search_by_name.return_value = [self.test_figure]
+        mock_researcher_class.return_value = mock_researcher
+
+        result = self.runner.invoke(
+            historical_app, ["search", "Mark Twain", "--mode", "name", "--count", "3"]
+        )
+
+        assert result.exit_code == 0
+        mock_researcher.search_by_name.assert_called_once_with("Mark Twain", 3)
+
+    @patch("cli.commands.historical_author.HistoricalFigureResearcher")
+    def test_search_description_mode(self, mock_researcher_class):
+        """Test search command in description mode."""
+        mock_researcher = Mock()
+        mock_researcher.discover_figures.return_value = [self.test_figure]
+        mock_researcher_class.return_value = mock_researcher
+
+        result = self.runner.invoke(
+            historical_app,
+            ["search", "Mark Twain", "--mode", "description", "--count", "8"],
+        )
+
+        assert result.exit_code == 0
+        mock_researcher.discover_figures.assert_called_once_with("Mark Twain", 8)
+
+    @patch("cli.commands.historical_author.HistoricalFigureResearcher")
+    @patch("cli.commands.historical_author._detect_search_mode")
+    def test_search_auto_mode_detects_name(self, mock_detect, mock_researcher_class):
+        """Test search command auto mode detecting name."""
+        mock_detect.return_value = "name"
+        mock_researcher = Mock()
+        mock_researcher.search_by_name.return_value = [self.test_figure]
+        mock_researcher_class.return_value = mock_researcher
+
+        result = self.runner.invoke(
+            historical_app, ["search", "Virginia Woolf", "--mode", "auto"]
+        )
+
+        assert result.exit_code == 0
+        mock_detect.assert_called_once_with("Virginia Woolf")
+        mock_researcher.search_by_name.assert_called_once_with("Virginia Woolf", 5)
+
+    @patch("cli.commands.historical_author.HistoricalFigureResearcher")
+    @patch("cli.commands.historical_author._detect_search_mode")
+    def test_search_auto_mode_detects_description(
+        self, mock_detect, mock_researcher_class
+    ):
+        """Test search command auto mode detecting description."""
+        mock_detect.return_value = "description"
+        mock_researcher = Mock()
+        mock_researcher.discover_figures.return_value = [self.test_figure]
+        mock_researcher_class.return_value = mock_researcher
+
+        result = self.runner.invoke(
+            historical_app, ["search", "famous American authors", "--mode", "auto"]
+        )
+
+        assert result.exit_code == 0
+        mock_detect.assert_called_once_with("famous American authors")
+        mock_researcher.discover_figures.assert_called_once_with(
+            "famous American authors", 5
+        )
+
+    @patch("cli.commands.historical_author.HistoricalFigureResearcher")
+    @patch("cli.commands.historical_author.Confirm.ask")
+    def test_search_name_fallback_to_description(
+        self, mock_confirm, mock_researcher_class
+    ):
+        """Test name search falling back to description search."""
+        mock_confirm.return_value = True
+        mock_researcher = Mock()
+        # First call (name search) returns empty, second call (description search) returns result
+        mock_researcher.search_by_name.return_value = []
+        mock_researcher.discover_figures.return_value = [self.test_figure]
+        mock_researcher_class.return_value = mock_researcher
+
+        result = self.runner.invoke(
+            historical_app, ["search", "Unknown Author", "--mode", "name"]
+        )
+
+        assert result.exit_code == 0
+        mock_researcher.search_by_name.assert_called_once_with("Unknown Author", 5)
+        mock_researcher.discover_figures.assert_called_once_with("Unknown Author", 5)
+        mock_confirm.assert_called_once_with(
+            "Try searching by description instead?", default=True
+        )
+
+    def test_search_invalid_mode(self):
+        """Test search command with invalid mode."""
+        result = self.runner.invoke(
+            historical_app, ["search", "test", "--mode", "invalid"]
+        )
+
+        assert result.exit_code == 1
+        assert "Invalid mode 'invalid'" in result.output
+
+    def test_search_invalid_count(self):
+        """Test search command with invalid count."""
+        result = self.runner.invoke(historical_app, ["search", "test", "--count", "25"])
+
+        assert result.exit_code != 0  # Should fail due to count validation
+
+
+class TestSearchModeDetection:
+    """Test the search mode auto-detection functionality."""
+
+    def test_detect_name_simple(self):
+        """Test detection of simple names."""
+        from cli.commands.historical_author import _detect_search_mode
+
+        assert _detect_search_mode("Mark Twain") == "name"
+        assert _detect_search_mode("Virginia Woolf") == "name"
+        assert _detect_search_mode("Ernest Hemingway") == "name"
+
+    def test_detect_name_with_titles(self):
+        """Test detection of names with titles."""
+        from cli.commands.historical_author import _detect_search_mode
+
+        assert _detect_search_mode("Dr. Martin Luther King") == "name"
+        assert _detect_search_mode("Sir Arthur Conan Doyle") == "name"
+        assert _detect_search_mode("Lord Byron") == "name"
+
+    def test_detect_description_obvious(self):
+        """Test detection of obvious descriptions."""
+        from cli.commands.historical_author import _detect_search_mode
+
+        assert _detect_search_mode("famous American authors") == "description"
+        assert _detect_search_mode("influential 20th century writers") == "description"
+        assert _detect_search_mode("great philosophers") == "description"
+
+    def test_detect_description_time_periods(self):
+        """Test detection of descriptions with time periods."""
+        from cli.commands.historical_author import _detect_search_mode
+
+        assert _detect_search_mode("Victorian era poets") == "description"
+        assert _detect_search_mode("Renaissance writers") == "description"
+        assert _detect_search_mode("19th century novelists") == "description"
+
+    def test_detect_ambiguous_defaults_description(self):
+        """Test that ambiguous cases default to description."""
+        from cli.commands.historical_author import _detect_search_mode
+
+        # Ambiguous cases should default to description
+        assert _detect_search_mode("Hemingway style") == "description"
+        assert _detect_search_mode("writers like Twain") == "description"

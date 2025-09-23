@@ -18,6 +18,7 @@ from core.config import settings
 from core.prompts.historical_templates import (
     FIGURE_ANALYSIS_TEMPLATE,
     FIGURE_DISCOVERY_TEMPLATE,
+    FIGURE_NAME_SEARCH_TEMPLATE,
     FIGURE_SEARCH_REFINEMENT_TEMPLATE,
     FIGURE_VERIFICATION_TEMPLATE,
     estimate_cost,
@@ -76,24 +77,31 @@ class HistoricalFigureResearcher:
         except ValueError as e:
             raise ValueError(f"Could not initialize OpenAI adapter: {e}")
 
-    def discover_figures(self, criteria: str) -> List[HistoricalFigure]:
+    def discover_figures(self, criteria: str, count: int = 5) -> List[HistoricalFigure]:
         """Discover historical figures based on user criteria.
 
         Args:
             criteria: User's description of what kind of figure they want
+            count: Number of figures to return (1-20, default 5)
 
         Returns:
             List of discovered historical figures
         """
+        # Validate count parameter
+        if count < 1 or count > 20:
+            raise ValueError("Count must be between 1 and 20")
+
+        if count != 5:
+            console.print(f"[dim]Requesting {count} figures[/dim]")
         console.print(
             f"[blue]🔍 Searching for historical figures matching: '{criteria}'[/blue]"
         )
 
         # Estimate cost and inform user
-        cost = estimate_cost("figure_discovery")
+        cost = estimate_cost("figure_discovery", count=count)
         console.print(f"[yellow]💰 Estimated cost: ${cost:.3f}[/yellow]")
 
-        prompt = FIGURE_DISCOVERY_TEMPLATE.format(criteria=criteria)
+        prompt = FIGURE_DISCOVERY_TEMPLATE.format(criteria=criteria, count=count)
 
         try:
             response = self.adapter.generate_text(
@@ -104,6 +112,43 @@ class HistoricalFigureResearcher:
 
         except Exception as e:
             console.print(f"[red]❌ Error discovering figures: {str(e)}[/red]")
+            return []
+
+    def search_by_name(self, name_query: str, count: int = 5) -> List[HistoricalFigure]:
+        """Search for historical figures by name or name similarity.
+
+        Args:
+            name_query: Name or partial name of the figure to search for
+            count: Number of figures to return (1-20, default 5)
+
+        Returns:
+            List of historical figures matching the name query
+        """
+        # Validate count parameter
+        if count < 1 or count > 20:
+            raise ValueError("Count must be between 1 and 20")
+
+        if count != 5:
+            console.print(f"[dim]Requesting {count} figures[/dim]")
+        console.print(
+            f"[blue]🔍 Searching for historical figures named: '{name_query}'[/blue]"
+        )
+
+        # Estimate cost and inform user
+        cost = estimate_cost("figure_name_search", count=count)
+        console.print(f"[yellow]💰 Estimated cost: ${cost:.3f}[/yellow]")
+
+        prompt = FIGURE_NAME_SEARCH_TEMPLATE.format(name_query=name_query, count=count)
+
+        try:
+            response = self.adapter.generate_text(
+                model_id=self.model, prompt=prompt, max_completion_tokens=1200
+            )
+
+            return self._parse_figure_name_search(response)
+
+        except Exception as e:
+            console.print(f"[red]❌ Error searching by name: {str(e)}[/red]")
             return []
 
     def analyze_figure(self, figure_name: str) -> Optional[FigureAnalysis]:
@@ -230,6 +275,54 @@ class HistoricalFigureResearcher:
                     writing_style=writing_style or "Not specified",
                     notable_works=notable_works or "Not specified",
                     match_criteria=match_criteria or "Not specified",
+                )
+                figures.append(figure)
+
+        return figures
+
+    def _parse_figure_name_search(self, response: str) -> List[HistoricalFigure]:
+        """Parse the AI response for name-based figure search."""
+        figures = []
+
+        # Split response into figure sections
+        # Look for pattern: **Figure N: [Name] ([Time Period])**
+        figure_pattern = r"\*\*Figure \d+: (.+?)\s*\(([^)]+)\)\*\*"
+        figure_matches = re.findall(figure_pattern, response)
+
+        # Split the response by figure headers to get content for each
+        figure_sections = re.split(r"\*\*Figure \d+:[^*]+\*\*", response)[
+            1:
+        ]  # Skip first empty section
+
+        for i, (name_match, period_match) in enumerate(figure_matches):
+            if i < len(figure_sections):
+                section = figure_sections[i]
+
+                # Extract the components using simple text processing
+                writing_style = self._extract_field(
+                    section, ["Writing Style:", "- Writing Style:"]
+                )
+                notable_works = self._extract_field(
+                    section, ["Notable Works:", "- Notable Works:"]
+                )
+                match_type = self._extract_field(
+                    section, ["Match Type:", "- Match Type:"]
+                )
+                also_known_as = self._extract_field(
+                    section, ["Also Known As:", "- Also Known As:"]
+                )
+
+                # Combine match type and aliases for match criteria
+                match_criteria = match_type or "Name match"
+                if also_known_as and also_known_as != "None":
+                    match_criteria += f" (Also: {also_known_as})"
+
+                figure = HistoricalFigure(
+                    name=name_match.strip(),
+                    time_period=period_match.strip(),
+                    writing_style=writing_style or "Not specified",
+                    notable_works=notable_works or "Not specified",
+                    match_criteria=match_criteria,
                 )
                 figures.append(figure)
 

@@ -9,7 +9,7 @@ FIGURE_DISCOVERY_TEMPLATE = """You are a knowledgeable research assistant helpin
 
 User criteria: {criteria}
 
-Please suggest 5 historical or public figures who match these criteria. For each figure, provide:
+Please suggest {count} historical or public figures who match these criteria. For each figure, provide:
 1. Name and time period
 2. Brief description of their writing style or communication approach
 3. Notable works or writings they're known for
@@ -29,7 +29,48 @@ Format your response as:
 - Notable Works: [List key works]
 - Match Criteria: [Why they fit]
 
-[Continue for all 5 figures...]
+[Continue for all {count} figures...]
+"""
+
+FIGURE_NAME_SEARCH_TEMPLATE = """You are a knowledgeable research assistant helping find specific historical figures based on their names.
+
+The user is looking for: {name_query}
+
+Please find up to {count} historical or public figures whose names match or are similar to "{name_query}". Consider:
+- Exact name matches
+- Alternative spellings or variations
+- Similar sounding names
+- Pen names or aliases
+- Figures commonly known by similar names
+
+For each matching figure, provide:
+1. Full name (and aliases if applicable)
+2. Time period and basic biographical info
+3. Brief description of their writing style or communication approach
+4. Notable works or writings they're known for
+5. Why they match the search (exact match, similar name, etc.)
+
+Focus on figures who have substantial written works or documented communication styles that could be analyzed.
+
+If you cannot find any figures matching "{name_query}", suggest the closest matches you can think of and explain why no exact matches were found.
+
+Format your response as:
+
+**Figure 1: [Full Name] ([Time Period])**
+- Also Known As: [Aliases/pen names if any]
+- Writing Style: [Brief description]
+- Notable Works: [List key works]
+- Match Type: [Exact match/Similar spelling/Alias/etc.]
+
+**Figure 2: [Full Name] ([Time Period])**
+- Also Known As: [Aliases/pen names if any]
+- Writing Style: [Brief description]
+- Notable Works: [List key works]
+- Match Type: [Exact match/Similar spelling/Alias/etc.]
+
+[Continue for all matching figures found, up to {count}...]
+
+If no matches found, explain why and suggest alternative search terms or similar figures.
 """
 
 FIGURE_ANALYSIS_TEMPLATE = """You are a literary analyst specializing in writing style analysis. Analyze the writing style and characteristics of {figure_name}.
@@ -194,7 +235,8 @@ Focus on figures who have well-documented writing styles and substantial written
 
 # Cost estimation constants for planning
 ESTIMATED_TOKENS = {
-    "figure_discovery": 1000,  # Discovery of 5 figures
+    "figure_discovery": 200,  # Base cost per figure in discovery (scaled by count)
+    "figure_name_search": 150,  # Base cost per figure in name search (scaled by count)
     "figure_analysis": 1500,  # Detailed style analysis
     "style_guide_generation": 400,  # Converting analysis to guide
     "figure_verification": 300,  # Verification check

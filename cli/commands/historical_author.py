@@ -28,6 +28,115 @@ console = Console()
 historical_app = typer.Typer()
 
 
+def _detect_search_mode(query: str) -> str:
+    """Detect whether a query is likely a name or description.
+
+    Args:
+        query: Search query string
+
+    Returns:
+        "name" if likely a name, "description" otherwise
+    """
+    # Convert to lowercase for analysis
+    query_lower = query.lower().strip()
+
+    # Check for obvious name patterns
+    name_indicators = [
+        # Has typical name structure (2+ capitalized words)
+        len([word for word in query.split() if word and word[0].isupper()]) >= 2,
+        # Contains common name particles
+        any(
+            particle in query_lower
+            for particle in [" de ", " da ", " von ", " van ", " el ", " al-"]
+        ),
+        # Shorter queries are more likely to be names
+        len(query.split()) <= 3 and len(query) <= 30,
+        # Contains personal titles
+        any(
+            title in query_lower
+            for title in [
+                "sir ",
+                "lord ",
+                "lady ",
+                "dr. ",
+                "professor ",
+                "saint ",
+                "st. ",
+            ]
+        ),
+    ]
+
+    # Check for description patterns
+    description_indicators = [
+        # Contains descriptive adjectives
+        any(
+            adj in query_lower
+            for adj in [
+                "famous",
+                "great",
+                "influential",
+                "notable",
+                "renowned",
+                "american",
+                "british",
+                "french",
+                "ancient",
+                "modern",
+                "classical",
+            ]
+        ),
+        # Contains plural forms suggesting categories
+        any(
+            plural in query_lower
+            for plural in [
+                "writers",
+                "authors",
+                "poets",
+                "philosophers",
+                "scientists",
+                "historians",
+                "politicians",
+            ]
+        ),
+        # Contains time periods
+        any(
+            period in query_lower
+            for period in [
+                "century",
+                "era",
+                "period",
+                "age",
+                "renaissance",
+                "medieval",
+                "victorian",
+                "modern",
+            ]
+        ),
+        # Longer descriptive queries
+        len(query.split()) > 4,
+        # Contains "who" or similar question words
+        any(
+            word in query_lower
+            for word in ["who", "what", "which", "type of", "kind of"]
+        ),
+    ]
+
+    # Count indicators
+    name_score = sum(name_indicators)
+    description_score = sum(description_indicators)
+
+    # If description indicators are strong, it's definitely a description
+    if description_score >= 2:
+        return "description"
+
+    # If name indicators are strong and no description indicators, it's likely a name
+    if name_score >= 2 and description_score == 0:
+        return "name"
+
+    # Default to description for ambiguous cases
+    return "description"
+
+
 def _handle_verification_result(
     verification: Optional[FigureVerification], figure_name: str
 ) -> bool:
@@ -116,12 +225,26 @@ def create_historical_author(
 
 @historical_app.command("search")
 def search_historical_figures(
-    criteria: str = typer.Argument(..., help="Search criteria for historical figures"),
+    query: str = typer.Argument(..., help="Search query (criteria or author name)"),
+    count: int = typer.Option(
+        5, "--count", "-c", min=1, max=20, help="Number of results to return (1-20)"
+    ),
+    mode: str = typer.Option(
+        "auto", "--mode", "-m", help="Search mode: 'auto', 'description', or 'name'"
+    ),
     refine: bool = typer.Option(
         False, "--refine", help="Refine previous search results"
     ),
 ) -> None:
-    """🔍 Search for historical figures based on criteria."""
+    """🔍 Search for historical figures based on criteria or name."""
+
+    # Validate mode parameter
+    valid_modes = ["auto", "description", "name"]
+    if mode not in valid_modes:
+        console.print(
+            f"[red]Invalid mode '{mode}'. Must be one of: {', '.join(valid_modes)}[/red]"
+        )
+        raise typer.Exit(1)
 
     try:
         researcher = HistoricalFigureResearcher()
@@ -131,23 +254,57 @@ def search_historical_figures(
             feedback = Prompt.ask(
                 "What would you like to change about the previous results?"
             )
-            figures = researcher.refine_search(criteria, feedback)
+            figures = researcher.refine_search(query, feedback)
             display_figures(figures, "Refined Search Results")
         else:
-            figures = researcher.discover_figures(criteria)
-            display_figures(figures, "Historical Figure Search Results")
+            # Determine search mode
+            if mode == "auto":
+                detected_mode = _detect_search_mode(query)
+                console.print(f"[dim]Auto-detected search mode: {detected_mode}[/dim]")
+                search_mode = detected_mode
+            else:
+                search_mode = mode
+
+            # Perform search based on mode
+            if search_mode == "name":
+                figures = researcher.search_by_name(query, count)
+                title = f"Name Search Results ({count} requested)"
+
+                # If no results found with name search, offer fallback to description search
+                if not figures:
+                    console.print(
+                        f"\n[yellow]No figures found with name '{query}'[/yellow]"
+                    )
+                    if Confirm.ask(
+                        "Try searching by description instead?", default=True
+                    ):
+                        console.print(
+                            f"[blue]Falling back to description search...[/blue]"
+                        )
+                        figures = researcher.discover_figures(query, count)
+                        title = (
+                            f"Description Search Results (fallback, {count} requested)"
+                        )
+            else:  # description mode
+                figures = researcher.discover_figures(query, count)
+                title = f"Description Search Results ({count} requested)"
+
+            display_figures(figures, title)
 
         if figures:
             console.print(
-                f"\n[green]Found {len(figures)} figures matching your criteria[/green]"
+                f"\n[green]Found {len(figures)} figures matching your search[/green]"
             )
             console.print(
-                "Use [cyan]ghostwriter author create-historical --figure <name>[/cyan] to create an author"
+                "Use [cyan]ghostwriter historical create --figure <name>[/cyan] to create an author"
             )
         else:
-            console.print("\n[yellow]No figures found matching your criteria[/yellow]")
-            console.print("Try different search terms or criteria")
+            console.print("\n[yellow]No figures found matching your search[/yellow]")
+            console.print("Try different search terms or increase --count")
 
+    except ValueError as e:
+        console.print(f"[red]❌ {str(e)}[/red]")
+        raise typer.Exit(1)
     except Exception as e:
         console.print(f"[red]Error searching for figures: {str(e)}[/red]")
         raise typer.Exit(1)
