@@ -34,7 +34,9 @@ The goal of Ghostwriter is to democratise finetuning. Anyone, not just developer
 
 ### NEW: Historical Figure Authors ✨
 
+- **Enhanced Figure Search**: Intelligent search with auto-detection (name vs. description), configurable result counts (1-20), and smart fallback options
 - **AI-Powered Discovery**: Search for historical figures based on your criteria (e.g., "famous poets", "20th century scientists")
+- **Direct Name Search**: Find specific authors by name with fuzzy matching and alias detection
 - **Automatic Style Analysis**: AI analyses the figure's documented writing style, tone, and characteristics
 - **Smart Verification**: AI verifies figure authenticity with detailed reasoning and available sources
 - **User Override Option**: Proceed with unverified figures after clear warnings and explicit confirmation
@@ -211,8 +213,18 @@ python -m cli.main author show <author_id>
 # Create historical figure author (interactive)
 python -m cli.main historical create
 
-# Search for historical figures
+# Search for historical figures (supports various modes and counts)
 python -m cli.main historical search "famous American poets"
+
+# NEW: Get more results (1-20)
+python -m cli.main historical search "famous poets" --count 15
+
+# NEW: Search by name with auto-detection
+python -m cli.main historical search "Virginia Woolf"
+
+# NEW: Explicit search modes
+python -m cli.main historical search "Hemingway" --mode name --count 10
+python -m cli.main historical search "Mark Twain" --mode description
 
 # Analyse a specific figure's writing style (includes verification check)
 python -m cli.main historical analyse "Emily Dickinson"
@@ -342,6 +354,33 @@ python -m cli.main generate text my_author --prompt "Write about creativity"
 # 5. Start interactive session
 python -m cli.main generate interactive my_author
 ```
+
+### Enhanced Historical Figure Search Examples
+
+```bash
+# Smart auto-detection examples
+python -m cli.main historical search "Mark Twain"           # → Detected as name search
+python -m cli.main historical search "famous American authors"  # → Detected as description search
+python -m cli.main historical search "Victorian era poets" # → Detected as description search
+python -m cli.main historical search "Dr. Martin Luther King"   # → Detected as name search
+
+# Get more results when needed
+python -m cli.main historical search "famous poets" --count 15
+python -m cli.main historical search "20th century American authors" --count 20
+
+# Explicit mode selection for precise control
+python -m cli.main historical search "Hemingway" --mode name --count 10
+python -m cli.main historical search "Shakespeare" --mode description  # Forces description search
+
+# Refine search results
+python -m cli.main historical search "American writers" --refine
+```
+
+**Smart Auto-Detection Features:**
+- **Name patterns**: Detects proper names, titles (Dr., Sir), and name particles (von, de)
+- **Description patterns**: Identifies adjectives, plurals, time periods, and question words
+- **Intelligent fallback**: Offers description search when name search finds no results
+- **Cost optimization**: Name searches are more cost-effective than description searches
 
 ### Chat Session Example
 
