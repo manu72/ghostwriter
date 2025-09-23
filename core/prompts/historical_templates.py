@@ -154,10 +154,20 @@ Provide a brief assessment:
 - **Available Sources:** [What types of writings are available]
 - **Concerns:** [Any ethical or practical concerns]
 
-If VERIFIED, also provide:
+If VERIFIED, also provide detailed corpus assessment:
 - **Time Period:** [When they lived/were active]
 - **Primary Medium:** [Books, letters, speeches, essays, etc.]
 - **Writing Volume:** [Extensive/Moderate/Limited]
+- **Corpus Richness:** [Rich/Moderate/Sparse - based on variety and volume of available works]
+- **Famous Works:** [List 3-5 of their most well-known works if applicable]
+- **Notable Quotes:** [Are they known for memorable quotations? Yes/No]
+- **Public Domain Status:** [Are their major works in public domain? Yes/No/Mixed/Unknown]
+- **Best Source Works:** [Which specific works would be best for style analysis?]
+- **Recommended Dataset Mode:** [Corpus-Heavy/Hybrid/Traditional - based on available material richness]
+
+For figures with extensive written works (novels, essays, speeches), prioritize actual excerpts over generated examples.
+For figures with rich quotable content, include famous quotes with proper context.
+For figures with limited documented works, rely more on traditional AI-generated examples.
 """
 
 HISTORICAL_EXAMPLE_GENERATION_TEMPLATE = """You are an expert writer skilled at emulating historical figures' writing styles. Generate training examples that capture {figure_name}'s authentic voice and style.
@@ -233,15 +243,130 @@ Focus on figures who have well-documented writing styles and substantial written
 - Available Content: [What's available]
 """
 
+ACTUAL_CONTENT_EXTRACTION_TEMPLATE = """You are a literary analyst helping to select the best excerpts from {figure_name}'s actual written works for training data.
+
+Based on the figure's corpus assessment:
+- Famous Works: {famous_works}
+- Best Source Works: {best_source_works}
+- Writing Style Characteristics: {style_characteristics}
+
+Identify specific excerpts that would be ideal for training data. For each recommended excerpt, provide:
+
+1. **Source Work:** [Title of the work]
+2. **Excerpt Location:** [Chapter/Section/Page reference if known]
+3. **Excerpt Length:** [Approximate word count: Short (200-500), Medium (500-1000), Long (1000-2500)]
+4. **Style Showcase:** [What specific writing characteristics this excerpt demonstrates]
+5. **Training Value:** [Why this excerpt would be valuable for style learning]
+6. **Content Type:** [Dialogue, narrative, descriptive, argumentative, etc.]
+
+Focus on excerpts that:
+- Showcase the author's distinctive voice and style
+- Represent different types of writing (dialogue, description, analysis)
+- Are substantial enough to demonstrate full development of ideas
+- Are from well-known works that define the author's reputation
+- Display signature techniques, phrases, or rhetorical patterns
+
+Recommend 8-12 specific excerpts that would create a comprehensive style training set.
+
+Format as:
+**EXCERPT 1: [Work Title]**
+- Location: [Chapter/Section]
+- Length: [Word count category]
+- Style Showcase: [What it demonstrates]
+- Training Value: [Why it's valuable]
+- Content Type: [Type of writing]
+
+**EXCERPT 2: [Work Title]**
+[Continue for all recommendations...]
+
+Prioritize excerpts that would be in the public domain and readily available.
+"""
+
+QUOTE_COLLECTION_TEMPLATE = """You are a literary researcher collecting famous quotes from {figure_name} for training data inclusion.
+
+Based on the figure's profile:
+- Notable for memorable quotations: {has_notable_quotes}
+- Writing characteristics: {style_characteristics}
+- Primary themes: {primary_themes}
+
+Identify 15-25 of their most famous, well-documented quotes that showcase their:
+- Distinctive voice and personality
+- Core beliefs and philosophies
+- Characteristic way of expressing ideas
+- Memorable turns of phrase
+- Intellectual or creative insights
+
+For each quote, provide:
+
+1. **Quote Text:** [The exact quotation]
+2. **Source/Context:** [Where it's from - work, speech, letter, interview, etc.]
+3. **Theme/Topic:** [What the quote is about]
+4. **Style Element:** [What writing characteristic it demonstrates]
+5. **Training Prompt:** [A realistic prompt that could have elicited this response]
+
+Focus on quotes that are:
+- Definitively attributed to the author
+- Representative of their thinking and expression
+- Varied in topic and tone
+- Substantial enough to show their voice (avoid very short phrases)
+- Suitable for training an AI to capture their communication style
+
+Format as:
+**QUOTE 1:**
+- Text: "[Full quotation]"
+- Source: [Origin/context]
+- Theme: [Subject matter]
+- Style Element: [What it showcases]
+- Training Prompt: [Prompt that might generate this response]
+
+**QUOTE 2:**
+[Continue for all quotes...]
+
+Ensure quotes span different topics and showcase the range of their expression.
+"""
+
+PROMPT_FOR_EXCERPT_TEMPLATE = """You are creating realistic training prompts for actual excerpts from {figure_name}'s written works.
+
+For the following actual excerpt from their work:
+
+SOURCE: {source_work}
+EXCERPT: {excerpt_text}
+CONTEXT: {excerpt_context}
+
+Create 2-3 different prompts that could realistically have generated this response from {figure_name}. The prompts should:
+
+1. Be appropriate for the historical period and the author's typical audience
+2. Match the content and tone of the excerpt
+3. Reflect the types of requests or questions the author might have encountered
+4. Be specific enough to generate the provided response
+5. Vary in approach (analytical request, creative prompt, direct question, etc.)
+
+Consider:
+- The author's area of expertise and interests
+- The style and content of the excerpt
+- The historical context and typical writing purposes
+- The audience the author typically addressed
+
+Format as:
+**PROMPT OPTION 1:** [First prompt possibility]
+**PROMPT OPTION 2:** [Second prompt possibility]
+**PROMPT OPTION 3:** [Third prompt possibility]
+
+Each prompt should be 1-3 sentences and feel natural for someone to have asked {figure_name}.
+"""
+
 # Cost estimation constants for planning
 ESTIMATED_TOKENS = {
     "figure_discovery": 200,  # Base cost per figure in discovery (scaled by count)
     "figure_name_search": 150,  # Base cost per figure in name search (scaled by count)
     "figure_analysis": 1500,  # Detailed style analysis
     "style_guide_generation": 400,  # Converting analysis to guide
-    "figure_verification": 300,  # Verification check
+    "figure_verification": 400,  # Enhanced verification check with corpus assessment
     "example_generation": 2000,  # Per training example generated (increased for longer examples)
     "search_refinement": 800,  # Refining search results
+    "content_extraction": 1200,  # Identifying best excerpts from actual works
+    "quote_collection": 1000,  # Collecting and contextualizing famous quotes
+    "prompt_for_excerpt": 300,  # Generating prompts for actual excerpts (per excerpt)
 }
 
 

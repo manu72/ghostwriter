@@ -40,6 +40,12 @@ The goal of Ghostwriter is to democratise finetuning. Anyone, not just developer
 - **Automatic Style Analysis**: AI analyses the figure's documented writing style, tone, and characteristics
 - **Smart Verification**: AI verifies figure authenticity with detailed reasoning and available sources
 - **User Override Option**: Proceed with unverified figures after clear warnings and explicit confirmation
+- **🆕 Corpus-Based Dataset Generation**: For well-documented authors (Hemingway, Austen, etc.), incorporates actual quotes and excerpts from their famous works
+- **🆕 Intelligent Dataset Modes**: Automatically selects optimal generation strategy:
+  - **Corpus-Heavy**: Rich authors get datasets with actual quotes + work excerpts
+  - **Hybrid**: Moderate corpus authors get mix of actual content + AI examples
+  - **Traditional**: Sparse corpus authors get AI-generated examples only
+- **🆕 Enhanced Verification**: Comprehensive corpus assessment including famous works, quote availability, and public domain status
 - **Profile Generation**: Automatically creates author profiles with appropriate style guides
 - **Training Dataset Creation**: AI generates 15-30 training examples in the historical figure's authentic voice
 - **Dataset Expansion**: Add more examples to existing historical authors with `historical build` command
@@ -60,6 +66,9 @@ The goal of Ghostwriter is to democratise finetuning. Anyone, not just developer
 - Feedback mechanism for turning edits into new examples.
 - Local storage of datasets (.jsonl) and author profiles.
 - AI-powered historical figure author creation with discovery, analysis, and dataset generation.
+- Corpus-based dataset generation for well-documented authors with actual quotes and excerpts.
+- Intelligent dataset mode selection (Corpus-Heavy/Hybrid/Traditional) based on content availability.
+- Enhanced verification system with comprehensive corpus assessment.
 - Dataset expansion for historical authors with bulk accept functionality.
 - Comprehensive command-line interface with full feature coverage.
 
@@ -319,8 +328,13 @@ Once in a chat session, you can use these commands:
 ### Complete Workflow: Historical Author
 
 ```bash
-# 1. Create a historical author
+# 1. Create a historical author (automatically uses corpus-based generation for well-documented figures)
 python -m cli.main historical create --figure "Virginia Woolf" --id woolf_author
+
+# System automatically detects: Corpus-Heavy mode for Virginia Woolf
+# → Incorporates actual quotes from "To the Lighthouse", "Mrs. Dalloway"
+# → Includes excerpts showcasing stream-of-consciousness technique
+# → Supplements with AI-generated examples matching her style
 
 # 2. Add more examples if needed
 python -m cli.main historical build woolf_author --count 10
@@ -333,6 +347,33 @@ python -m cli.main train start woolf_author --wait
 
 # 5. Chat with Virginia Woolf
 python -m cli.main generate chat woolf_author
+```
+
+### Corpus-Based Dataset Generation Examples
+
+The system automatically selects the optimal dataset generation mode based on the author's documented works:
+
+```bash
+# Corpus-Heavy Mode (Rich literary corpus)
+python -m cli.main historical create --figure "Ernest Hemingway" --id hemingway
+# → Dataset includes actual quotes: "The Sun Also Rises", "A Farewell to Arms"
+# → Incorporates excerpts showcasing his distinctive prose style
+# → AI generates additional examples matching his voice
+
+python -m cli.main historical create --figure "Jane Austen" --id austen
+# → Includes famous quotes about society and wit
+# → References excerpts from "Pride and Prejudice", "Emma"
+# → Shows her characteristic irony and social commentary
+
+# Hybrid Mode (Moderate corpus)
+python -m cli.main historical create --figure "Maya Angelou" --id angelou
+# → Mix of actual memorable quotes and AI-generated examples
+# → Balances authenticity with comprehensive style coverage
+
+# Traditional Mode (Sparse documented works)
+python -m cli.main historical create --figure "Unknown Historical Writer" --id unknown
+# → Falls back to AI-generated examples only
+# → Still captures documented style characteristics
 ```
 
 ### Complete Workflow: Manual Author
@@ -555,8 +596,9 @@ tests/
 - **Markdown Utils**: Content generation, filename sanitization, metadata handling
 - **Dataset Builder**: Content processing, imports, user interactions
 - **OpenAI Adapter**: Full API mocking, job management, error scenarios
-- **Historical Features**: Figure research, profile generation, dataset creation, CLI commands
-- **Prompt Templates**: Template validation, formatting, cost estimation
+- **Historical Features**: Figure research, profile generation, corpus-based dataset creation, CLI commands
+- **Corpus-Based Generation**: Dataset mode selection, quote collection, excerpt extraction
+- **Prompt Templates**: Template validation, formatting, cost estimation, new corpus templates
 - **CLI Commands**: End-to-end command testing with Typer
 
 ### Writing Tests

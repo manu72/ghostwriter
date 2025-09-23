@@ -545,7 +545,7 @@ def create_historical_author_interactive(
 
         # Generate initial dataset
         dataset = dataset_generator.generate_initial_dataset(
-            profile, analysis, dataset_size
+            profile, analysis, verification, dataset_size
         )
         if not dataset:
             console.print("[red]❌ Failed to generate dataset[/red]")
