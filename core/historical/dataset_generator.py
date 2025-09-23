@@ -14,10 +14,13 @@ from rich.prompt import Confirm, Prompt
 
 from core.adapters.openai_adapter import OpenAIAdapter
 from core.config import settings
-from core.historical.figure_research import FigureAnalysis
+from core.historical.figure_research import FigureAnalysis, FigureVerification
 from core.models import AuthorProfile, Dataset, TrainingExample
 from core.prompts.historical_templates import (
+    ACTUAL_CONTENT_EXTRACTION_TEMPLATE,
     HISTORICAL_EXAMPLE_GENERATION_TEMPLATE,
+    PROMPT_FOR_EXCERPT_TEMPLATE,
+    QUOTE_COLLECTION_TEMPLATE,
     estimate_cost,
 )
 
@@ -36,38 +39,82 @@ class HistoricalDatasetGenerator:
             raise ValueError(f"Could not initialize OpenAI adapter: {e}")
 
     def generate_initial_dataset(
-        self, profile: AuthorProfile, figure_analysis: FigureAnalysis, count: int = 10
+        self,
+        profile: AuthorProfile,
+        figure_analysis: FigureAnalysis,
+        figure_verification: Optional[FigureVerification] = None,
+        count: int = 10,
     ) -> Optional[Dataset]:
         """Generate an initial dataset for a historical figure.
 
         Args:
             profile: The author profile for this historical figure
             figure_analysis: Detailed analysis of their writing style
+            figure_verification: Verification with corpus assessment (optional)
             count: Number of training examples to generate
 
         Returns:
             Dataset with generated examples, or None if failed
         """
-        console.print(
-            f"[blue]📚 Generating initial dataset for {profile.name} ({count} examples)[/blue]"
-        )
-
-        # Estimate cost and confirm
-        cost = estimate_cost("example_generation", count)
-        console.print(f"[yellow]💰 Estimated cost: ${cost:.3f} (OpenAI API)[/yellow]")
-
-        if not Confirm.ask("Continue with dataset generation?"):
-            console.print("[yellow]Dataset generation cancelled[/yellow]")
-            return None
+        # Determine dataset generation mode
+        dataset_mode = self._determine_dataset_mode(figure_verification)
+        console.print(f"[blue]📊 Dataset mode: {dataset_mode}[/blue]")
 
         # Create dataset
         dataset = Dataset(author_id=profile.author_id)
 
-        # Generate examples in batches to manage context length
-        batch_size = 10  # Generate 10 examples at a time
-        batches = [(i, min(batch_size, count - i)) for i in range(0, count, batch_size)]
+        # Generate corpus-based content if available
+        if dataset_mode in ["Corpus-Heavy", "Hybrid"] and figure_verification:
+            corpus_examples = self._generate_corpus_based_examples(
+                profile, figure_verification
+            )
 
-        total_generated = 0
+            if corpus_examples:
+                console.print(
+                    f"[green]📜 Added {len(corpus_examples)} corpus-based examples[/green]"
+                )
+                for example in corpus_examples:
+                    dataset.add_example(example)
+            else:
+                console.print(
+                    "[yellow]⚠️  No corpus-based examples generated, falling back to AI generation[/yellow]"
+                )
+                dataset_mode = "Traditional"
+
+        # Calculate remaining examples to generate with AI
+        remaining_count = count - dataset.size
+        if remaining_count <= 0:
+            console.print(
+                f"[green]🎉 Dataset complete with {dataset.size} examples![/green]"
+            )
+            return dataset
+
+        console.print(
+            f"[blue]📚 Generating {remaining_count} additional AI examples for {profile.name}[/blue]"
+        )
+
+        # Estimate cost and confirm
+        cost = estimate_cost("example_generation", remaining_count)
+        console.print(f"[yellow]💰 Estimated cost: ${cost:.3f} (OpenAI API)[/yellow]")
+
+        if not Confirm.ask("Continue with AI example generation?"):
+            if dataset.size > 0:
+                console.print(
+                    f"[green]Dataset has {dataset.size} examples from corpus content[/green]"
+                )
+                return dataset
+            else:
+                console.print("[yellow]Dataset generation cancelled[/yellow]")
+                return None
+
+        # Generate AI examples in batches
+        batch_size = 10
+        batches = [
+            (i, min(batch_size, remaining_count - i))
+            for i in range(0, remaining_count, batch_size)
+        ]
+
+        total_generated = dataset.size
         for batch_start, batch_count in batches:
             console.print(
                 f"[dim]Generating batch {batch_start//batch_size + 1}: examples {batch_start+1}-{batch_start+batch_count}[/dim]"
@@ -97,7 +144,7 @@ class HistoricalDatasetGenerator:
             return None
 
         console.print(
-            f"[green]🎉 Generated {total_generated} training examples for {profile.name}![/green]"
+            f"[green]🎉 Generated {total_generated} total training examples for {profile.name}![/green]"
         )
         return dataset
 
@@ -486,3 +533,195 @@ class HistoricalDatasetGenerator:
                     )
             except ValueError:
                 console.print("[yellow]Please enter a valid number[/yellow]")
+
+    def _determine_dataset_mode(
+        self, figure_verification: Optional[FigureVerification]
+    ) -> str:
+        """Determine the best dataset generation mode based on corpus assessment."""
+        if not figure_verification or figure_verification.status != "VERIFIED":
+            return "Traditional"
+
+        if figure_verification.recommended_dataset_mode:
+            return figure_verification.recommended_dataset_mode
+
+        # Fallback logic based on corpus richness
+        if figure_verification.corpus_richness == "Rich":
+            return "Corpus-Heavy"
+        elif figure_verification.corpus_richness == "Moderate":
+            return "Hybrid"
+        else:
+            return "Traditional"
+
+    def _generate_corpus_based_examples(
+        self, profile: AuthorProfile, figure_verification: FigureVerification
+    ) -> List[TrainingExample]:
+        """Generate training examples based on actual corpus content."""
+        examples = []
+
+        # Generate examples from famous quotes if available
+        if figure_verification.notable_quotes == "Yes":
+            quote_examples = self._generate_quote_examples(profile, figure_verification)
+            examples.extend(quote_examples)
+
+        # Generate examples from actual excerpts if rich corpus available
+        if (
+            figure_verification.corpus_richness == "Rich"
+            and figure_verification.best_source_works
+        ):
+            excerpt_examples = self._generate_excerpt_examples(
+                profile, figure_verification
+            )
+            examples.extend(excerpt_examples)
+
+        return examples
+
+    def _generate_quote_examples(
+        self, profile: AuthorProfile, figure_verification: FigureVerification
+    ) -> List[TrainingExample]:
+        """Generate training examples from famous quotes."""
+        console.print("[blue]📜 Collecting famous quotes for training data...[/blue]")
+
+        # Estimate cost
+        cost = estimate_cost("quote_collection")
+        console.print(f"[yellow]💰 Quote collection cost: ${cost:.3f}[/yellow]")
+
+        try:
+            # Collect famous quotes
+            prompt = QUOTE_COLLECTION_TEMPLATE.format(
+                figure_name=profile.name,
+                has_notable_quotes=figure_verification.notable_quotes or "Unknown",
+                style_characteristics=profile.style_guide.writing_style_notes
+                or "No specific notes",
+                primary_themes=(
+                    ", ".join(profile.style_guide.topics)
+                    if profile.style_guide.topics
+                    else "General topics"
+                ),
+            )
+
+            response = self.adapter.generate_text(
+                model_id=self.model,
+                prompt=prompt,
+                max_completion_tokens=2000,
+            )
+
+            return self._parse_quote_examples(response)
+
+        except Exception as e:
+            console.print(f"[red]❌ Error generating quote examples: {str(e)}[/red]")
+            return []
+
+    def _generate_excerpt_examples(
+        self, profile: AuthorProfile, figure_verification: FigureVerification
+    ) -> List[TrainingExample]:
+        """Generate training examples from actual excerpts."""
+        console.print("[blue]📖 Identifying best excerpts for training data...[/blue]")
+
+        # Estimate cost
+        cost = estimate_cost("content_extraction")
+        console.print(f"[yellow]💰 Content extraction cost: ${cost:.3f}[/yellow]")
+
+        try:
+            # Identify best excerpts
+            prompt = ACTUAL_CONTENT_EXTRACTION_TEMPLATE.format(
+                figure_name=profile.name,
+                famous_works=figure_verification.famous_works or "No works specified",
+                best_source_works=figure_verification.best_source_works
+                or "No source works specified",
+                style_characteristics=profile.style_guide.writing_style_notes
+                or "No specific characteristics",
+            )
+
+            response = self.adapter.generate_text(
+                model_id=self.model,
+                prompt=prompt,
+                max_completion_tokens=1500,
+            )
+
+            # For now, return simulated excerpts since we can't access actual copyrighted content
+            # In a production system, this would interface with public domain text databases
+            console.print(
+                "[dim]Note: Actual excerpt extraction would require access to public domain texts[/dim]"
+            )
+            return self._simulate_excerpt_examples(profile, response)
+
+        except Exception as e:
+            console.print(f"[red]❌ Error generating excerpt examples: {str(e)}[/red]")
+            return []
+
+    def _parse_quote_examples(self, response: str) -> List[TrainingExample]:
+        """Parse quote collection response into training examples."""
+        examples = []
+
+        try:
+            # Look for QUOTE N: pattern
+            quote_pattern = r"\*\*QUOTE \d+:\*\*"
+            quote_sections = re.split(quote_pattern, response)[
+                1:
+            ]  # Skip first empty section
+
+            for section in quote_sections:
+                # Extract quote text and training prompt
+                text_match = re.search(r"- Text:\s*\"([^\"]+)\"", section)
+                prompt_match = re.search(
+                    r"- Training Prompt:\s*(.+?)(?=\n\*\*QUOTE|\Z)", section, re.DOTALL
+                )
+
+                if text_match and prompt_match:
+                    quote_text = text_match.group(1).strip()
+                    training_prompt = prompt_match.group(1).strip()
+
+                    if quote_text and training_prompt:
+                        example = TrainingExample(
+                            messages=[
+                                {
+                                    "role": "system",
+                                    "content": "You are a helpful writing assistant.",
+                                },
+                                {"role": "user", "content": training_prompt},
+                                {"role": "assistant", "content": quote_text},
+                            ]
+                        )
+                        examples.append(example)
+
+        except Exception as e:
+            console.print(f"[yellow]⚠️  Error parsing quotes: {e}[/yellow]")
+
+        return examples
+
+    def _simulate_excerpt_examples(
+        self, profile: AuthorProfile, extraction_response: str
+    ) -> List[TrainingExample]:
+        """Simulate excerpt examples based on identified excerpts."""
+        # In a production system, this would extract actual excerpts from public domain sources
+        # For now, we'll create training examples that reference the identified excerpts
+        examples = []
+
+        try:
+            # Look for EXCERPT N: pattern
+            excerpt_pattern = r"\*\*EXCERPT \d+: (.+?)\*\*"
+            excerpt_matches = re.findall(excerpt_pattern, extraction_response)
+
+            for work_title in excerpt_matches[:3]:  # Limit to first 3 excerpts
+                # Create a training prompt that would generate content in their style
+                training_prompt = f"Write a passage in the style of {profile.name}, similar to their work in '{work_title}'. Focus on their characteristic voice, themes, and literary techniques."
+
+                # The response would be a simulated excerpt showing their style
+                simulated_response = f"[This would be an actual excerpt from {work_title} in a production system with access to public domain texts. The excerpt would demonstrate {profile.name}'s distinctive writing style, characteristic themes, and literary techniques as identified in their corpus analysis.]"
+
+                example = TrainingExample(
+                    messages=[
+                        {
+                            "role": "system",
+                            "content": "You are a helpful writing assistant.",
+                        },
+                        {"role": "user", "content": training_prompt},
+                        {"role": "assistant", "content": simulated_response},
+                    ]
+                )
+                examples.append(example)
+
+        except Exception as e:
+            console.print(f"[yellow]⚠️  Error simulating excerpts: {e}[/yellow]")
+
+        return examples

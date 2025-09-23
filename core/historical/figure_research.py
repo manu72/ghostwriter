@@ -50,6 +50,11 @@ class FigureAnalysis:
     unique_characteristics: str
     topics_themes: str
     historical_context: str
+    corpus_richness: Optional[str] = None
+    famous_works: Optional[str] = None
+    notable_quotes: Optional[str] = None
+    best_source_works: Optional[str] = None
+    recommended_dataset_mode: Optional[str] = None
 
 
 @dataclass
@@ -64,6 +69,12 @@ class FigureVerification:
     time_period: Optional[str] = None
     primary_medium: Optional[str] = None
     writing_volume: Optional[str] = None
+    corpus_richness: Optional[str] = None
+    famous_works: Optional[str] = None
+    notable_quotes: Optional[str] = None
+    public_domain_status: Optional[str] = None
+    best_source_works: Optional[str] = None
+    recommended_dataset_mode: Optional[str] = None
 
 
 class HistoricalFigureResearcher:
@@ -387,6 +398,24 @@ class HistoricalFigureResearcher:
         writing_volume = self._extract_field(
             response, ["**Writing Volume:**", "Writing Volume:"]
         )
+        corpus_richness = self._extract_field(
+            response, ["**Corpus Richness:**", "Corpus Richness:"]
+        )
+        famous_works = self._extract_field(
+            response, ["**Famous Works:**", "Famous Works:"]
+        )
+        notable_quotes = self._extract_field(
+            response, ["**Notable Quotes:**", "Notable Quotes:"]
+        )
+        public_domain_status = self._extract_field(
+            response, ["**Public Domain Status:**", "Public Domain Status:"]
+        )
+        best_source_works = self._extract_field(
+            response, ["**Best Source Works:**", "Best Source Works:"]
+        )
+        recommended_dataset_mode = self._extract_field(
+            response, ["**Recommended Dataset Mode:**", "Recommended Dataset Mode:"]
+        )
 
         return FigureVerification(
             figure_name=figure_name,
@@ -397,6 +426,12 @@ class HistoricalFigureResearcher:
             time_period=time_period,
             primary_medium=primary_medium,
             writing_volume=writing_volume,
+            corpus_richness=corpus_richness,
+            famous_works=famous_works,
+            notable_quotes=notable_quotes,
+            public_domain_status=public_domain_status,
+            best_source_works=best_source_works,
+            recommended_dataset_mode=recommended_dataset_mode,
         )
 
     def _parse_figure_refinement(self, response: str) -> List[HistoricalFigure]:
@@ -550,6 +585,22 @@ def display_verification(verification: FigureVerification) -> None:
             info_text += f"[bold]Primary Medium:[/bold] {verification.primary_medium}\n"
         if verification.writing_volume:
             info_text += f"[bold]Writing Volume:[/bold] {verification.writing_volume}\n"
+        if verification.corpus_richness:
+            info_text += (
+                f"[bold]Corpus Richness:[/bold] {verification.corpus_richness}\n"
+            )
+        if verification.famous_works:
+            info_text += f"[bold]Famous Works:[/bold] {verification.famous_works}\n"
+        if verification.notable_quotes:
+            info_text += f"[bold]Notable Quotes:[/bold] {verification.notable_quotes}\n"
+        if verification.public_domain_status:
+            info_text += f"[bold]Public Domain Status:[/bold] {verification.public_domain_status}\n"
+        if verification.best_source_works:
+            info_text += (
+                f"[bold]Best Source Works:[/bold] {verification.best_source_works}\n"
+            )
+        if verification.recommended_dataset_mode:
+            info_text += f"[bold]Recommended Dataset Mode:[/bold] {verification.recommended_dataset_mode}\n"
 
     console.print(
         Panel(

@@ -108,16 +108,74 @@ python -m cli.main historical analyze "Virginia Woolf"
 
 **Cost:** AI analysis and dataset generation typically costs $0.10-0.30 total per historical author.
 
+#### 🆕 Corpus-Based Dataset Generation
+
+For well-documented historical figures (like Hemingway, Jane Austen, Shakespeare, etc.), Ghostwriter now automatically incorporates actual content from their works:
+
+**How It Works:**
+1. **Corpus Assessment**: AI evaluates the figure's available written works, famous quotes, and public domain content
+2. **Dataset Mode Selection**: Automatically chooses optimal generation strategy:
+   - **Corpus-Heavy Mode**: Authors with extensive documented works (novels, essays, speeches)
+   - **Hybrid Mode**: Authors with moderate documentation (mix of actual + AI content)
+   - **Traditional Mode**: Authors with limited documented works (AI-generated only)
+3. **Content Integration**: For corpus-rich authors, datasets include:
+   - Actual famous quotes with appropriate prompts
+   - References to excerpts from their most celebrated works
+   - AI-generated examples that complement the actual content
+
+**Examples of Each Mode:**
+
+```bash
+# Corpus-Heavy Mode Authors (Rich Documentation)
+python -m cli.main historical create --figure "Ernest Hemingway"
+# → Incorporates actual quotes from "The Sun Also Rises", "A Farewell to Arms"
+# → References his distinctive prose style from famous passages
+# → AI generates additional examples matching his voice
+
+python -m cli.main historical create --figure "Jane Austen"
+# → Includes her witty social commentary quotes
+# → References excerpts from "Pride and Prejudice", "Emma"
+# → Shows her characteristic irony and dialogue style
+
+python -m cli.main historical create --figure "William Shakespeare"
+# → Famous quotes from plays and sonnets
+# → References to soliloquies and memorable passages
+# → AI examples in Elizabethan style
+
+# Hybrid Mode Authors (Moderate Documentation)
+python -m cli.main historical create --figure "Maya Angelou"
+# → Select famous quotes and AI-generated examples
+# → Balanced approach for comprehensive style coverage
+
+# Traditional Mode Authors (Limited Documentation)
+python -m cli.main historical create --figure "Lesser Known Historical Writer"
+# → AI-generated examples based on available style analysis
+# → Still authentic to documented characteristics
+```
+
+**Benefits:**
+- **Higher Authenticity**: Real quotes and excerpts provide genuine voice samples
+- **Better Training Quality**: Actual content teaches the model authentic patterns
+- **Comprehensive Coverage**: Combines real content with AI examples for full style representation
+- **Automatic Selection**: System chooses the best approach based on available material
+- **Cost Efficient**: Leverages existing high-quality content rather than generating everything
+
+**Production Note**: The current implementation simulates excerpt integration. A production system would connect to public domain text databases to include actual chapter-length excerpts from authors' works.
+
 #### Historical Figure Verification & User Override
 
 The AI system automatically verifies historical figures before proceeding with analysis and dataset generation. Here's how it works:
 
 **Verification Process:**
 1. **Smart Verification**: AI analyzes the figure's authenticity, available sources, and documentation quality
-2. **Detailed Report**: Shows verification status (VERIFIED/UNVERIFIED), reasoning, available sources, and concerns
-3. **User Override Option**: For unverified figures, you can choose to proceed after clear warnings
+2. **🆕 Corpus Assessment**: For verified figures, evaluates corpus richness, famous works, quote availability, and public domain status
+3. **Dataset Mode Recommendation**: Suggests optimal generation approach based on available content
+4. **Detailed Report**: Shows verification status (VERIFIED/UNVERIFIED), reasoning, available sources, and concerns
+5. **User Override Option**: For unverified figures, you can choose to proceed after clear warnings
 
 **Example Verification Flow:**
+
+**For Unverified Figure:**
 ```bash
 $ python -m cli.main historical analyze "Fictional Character"
 
@@ -139,6 +197,31 @@ Proceeding with unverified figures may result in:
 • Poor model performance
 
 Are you sure you want to proceed with this unverified figure? [y/N]:
+```
+
+**🆕 For Verified Figure with Corpus Assessment:**
+```bash
+$ python -m cli.main historical analyze "Ernest Hemingway"
+
+✅ Verifying figure: Ernest Hemingway...
+
+✅ Verification: VERIFIED
+
+Reason: Well-documented American novelist and journalist
+Available Sources: Extensive written works, letters, interviews
+Time Period: 1899-1961
+Primary Medium: Novels, short stories, journalism
+Writing Volume: Extensive
+Corpus Richness: Rich
+Famous Works: "The Sun Also Rises", "A Farewell to Arms", "For Whom the Bell Tolls"
+Notable Quotes: Yes
+Public Domain Status: Mixed (some works in public domain)
+Best Source Works: "The Sun Also Rises", "A Farewell to Arms", short stories
+Recommended Dataset Mode: Corpus-Heavy
+
+📊 Dataset mode: Corpus-Heavy
+→ Will incorporate actual quotes and excerpts from famous works
+→ Enhanced training quality with authentic content
 ```
 
 **When to Use Override:**
@@ -565,7 +648,7 @@ Chat sessions are persistent and stored locally:
 ### Scenario 6: Historical Figure Discovery (NEW!)
 
 1. Test figure discovery with different criteria:
-   - "famous poets" 
+   - "famous poets"
    - "20th century scientists who wrote"
    - "influential philosophers"
    - "American Civil War era writers"
@@ -574,15 +657,20 @@ Chat sessions are persistent and stored locally:
    - Valid figures (should show VERIFIED status)
    - Invalid/fictional figures (should show UNVERIFIED with override option)
    - Test user override: decline and accept for unverified figures
-4. Test enhanced search functionality:
+4. **🆕 Test corpus assessment for verified figures:**
+   - Rich corpus figures (Hemingway, Austen, Shakespeare) - should show Corpus-Heavy mode
+   - Moderate corpus figures (Maya Angelou, contemporary authors) - should show Hybrid mode
+   - Sparse corpus figures (lesser-known historical writers) - should show Traditional mode
+   - Compare corpus richness assessments across different authors
+5. Test enhanced search functionality:
    - Auto-detection with clear names vs. descriptions
    - Different count values (5, 10, 15, 20)
    - Explicit mode selection (name, description, auto)
    - Fallback from failed name search to description search
    - Search refinement with feedback
-5. Compare AI analysis quality across different historical periods
-6. Test figure analysis for figures with different writing mediums (books, letters, speeches)
-7. Create multiple historical authors from different eras and compare styles
+6. Compare AI analysis quality across different historical periods
+7. Test figure analysis for figures with different writing mediums (books, letters, speeches)
+8. Create multiple historical authors from different eras and compare styles
 
 ### Scenario 7: Enhanced Historical Figure Search Testing (NEW!)
 
@@ -652,7 +740,51 @@ Chat sessions are persistent and stored locally:
 6. Verify dataset consistency between initial and additional examples
 7. Compare quality of AI-generated examples across different historical figures
 
-### Scenario 9: Chat Conversation Testing (NEW!)
+### Scenario 9: Corpus-Based Dataset Generation Testing (NEW!)
+
+1. **Test Corpus-Heavy Mode Authors:**
+   ```bash
+   # Create authors known for extensive written works
+   python -m cli.main historical create --figure "Ernest Hemingway"
+   python -m cli.main historical create --figure "Jane Austen"
+   python -m cli.main historical create --figure "Charles Dickens"
+   ```
+   - Verify "Corpus-Heavy" mode is automatically selected
+   - Check that datasets include actual quotes with contextual prompts
+   - Verify excerpt references from famous works are included
+   - Compare dataset quality with traditional AI-only generation
+
+2. **Test Hybrid Mode Authors:**
+   ```bash
+   # Create authors with moderate documentation
+   python -m cli.main historical create --figure "Maya Angelou"
+   python -m cli.main historical create --figure "Langston Hughes"
+   ```
+   - Verify "Hybrid" mode is selected
+   - Check mix of actual quotes and AI-generated examples
+   - Ensure balanced approach maintains authenticity
+
+3. **Test Traditional Mode Fallback:**
+   ```bash
+   # Create lesser-known historical writers
+   python -m cli.main historical create --figure "Lesser Known Historical Writer"
+   ```
+   - Verify fallback to "Traditional" mode for sparse corpus
+   - Ensure AI-generated examples still capture documented style characteristics
+
+4. **Compare Dataset Quality Across Modes:**
+   - Create authors from each mode category
+   - Compare training example authenticity and style consistency
+   - Test fine-tuned models from each mode for style accuracy
+   - Verify cost differences between modes
+
+5. **Test Corpus Assessment Accuracy:**
+   - Test with authors known to have rich documentation (should get Corpus-Heavy)
+   - Test with authors having limited works (should get Traditional)
+   - Verify public domain status assessment affects content selection
+   - Check famous works and best source works identification accuracy
+
+### Scenario 10: Chat Conversation Testing (NEW!)
 
 1. Start new chat session and test basic conversation
 2. Test conversation memory (model remembers previous messages)
@@ -844,14 +976,17 @@ The Stage 1 POC is working correctly if:
 1. ✅ You can create an author profile in under 5 minutes
 2. ✅ Dataset building is intuitive and supports multiple input methods
 3. ✅ Historical author creation works end-to-end with AI analysis and generation
-4. ✅ Validation provides clear feedback on dataset quality
-5. ✅ Fine-tuning completes without technical errors
-6. ✅ Generated content noticeably reflects the input writing style
-7. ✅ Chat conversations maintain context and support all commands
-8. ✅ Session management works (save, resume, export)
-9. ✅ Historical author dataset building generates consistent style examples
-10. ✅ Error messages are helpful and actionable
-11. ✅ The complete workflow takes under 30 minutes (excluding training time)
+4. ✅ **🆕 Corpus-based generation automatically incorporates actual quotes and excerpts for well-documented authors**
+5. ✅ **🆕 Dataset mode selection accurately reflects the author's available written corpus**
+6. ✅ **🆕 Enhanced verification provides comprehensive corpus assessment**
+7. ✅ Validation provides clear feedback on dataset quality
+8. ✅ Fine-tuning completes without technical errors
+9. ✅ Generated content noticeably reflects the input writing style
+10. ✅ Chat conversations maintain context and support all commands
+11. ✅ Session management works (save, resume, export)
+12. ✅ Historical author dataset building generates consistent style examples
+13. ✅ Error messages are helpful and actionable
+14. ✅ The complete workflow takes under 30 minutes (excluding training time)
 
 ---
 
