@@ -8,6 +8,7 @@ from core.prompts.historical_templates import (
     ESTIMATED_TOKENS,
     FIGURE_ANALYSIS_TEMPLATE,
     FIGURE_DISCOVERY_TEMPLATE,
+    FIGURE_NAME_SEARCH_TEMPLATE,
     FIGURE_SEARCH_REFINEMENT_TEMPLATE,
     FIGURE_VERIFICATION_TEMPLATE,
     HISTORICAL_EXAMPLE_GENERATION_TEMPLATE,
@@ -22,15 +23,35 @@ class TestHistoricalPromptTemplates:
     def test_figure_discovery_template_formatting(self):
         """Test FIGURE_DISCOVERY_TEMPLATE formatting."""
         criteria = "Famous American authors"
+        count = 5
 
-        formatted = FIGURE_DISCOVERY_TEMPLATE.format(criteria=criteria)
+        formatted = FIGURE_DISCOVERY_TEMPLATE.format(criteria=criteria, count=count)
 
         assert criteria in formatted
-        assert "suggest 5 historical or public figures" in formatted
+        assert f"suggest {count} historical or public figures" in formatted
         assert "**Figure 1:" in formatted
         assert "Writing Style:" in formatted
         assert "Notable Works:" in formatted
         assert "Match Criteria:" in formatted
+
+    def test_figure_name_search_template_formatting(self):
+        """Test FIGURE_NAME_SEARCH_TEMPLATE formatting."""
+        name_query = "Mark Twain"
+        count = 3
+
+        formatted = FIGURE_NAME_SEARCH_TEMPLATE.format(
+            name_query=name_query, count=count
+        )
+
+        assert name_query in formatted
+        assert f"find up to {count} historical or public figures" in formatted
+        assert "**Figure 1:" in formatted
+        assert "Also Known As:" in formatted
+        assert "Writing Style:" in formatted
+        assert "Notable Works:" in formatted
+        assert "Match Type:" in formatted
+        assert "exact match" in formatted.lower()
+        assert "similar spelling" in formatted.lower()
 
     def test_figure_analysis_template_formatting(self):
         """Test FIGURE_ANALYSIS_TEMPLATE formatting."""
@@ -127,6 +148,7 @@ class TestHistoricalPromptTemplates:
         """Test that all templates are strings."""
         templates = [
             FIGURE_DISCOVERY_TEMPLATE,
+            FIGURE_NAME_SEARCH_TEMPLATE,
             FIGURE_ANALYSIS_TEMPLATE,
             STYLE_GUIDE_GENERATION_TEMPLATE,
             FIGURE_VERIFICATION_TEMPLATE,
@@ -142,6 +164,11 @@ class TestHistoricalPromptTemplates:
         """Test that templates contain their expected format placeholders."""
         # Test FIGURE_DISCOVERY_TEMPLATE
         assert "{criteria}" in FIGURE_DISCOVERY_TEMPLATE
+        assert "{count}" in FIGURE_DISCOVERY_TEMPLATE
+
+        # Test FIGURE_NAME_SEARCH_TEMPLATE
+        assert "{name_query}" in FIGURE_NAME_SEARCH_TEMPLATE
+        assert "{count}" in FIGURE_NAME_SEARCH_TEMPLATE
 
         # Test FIGURE_ANALYSIS_TEMPLATE
         assert "{figure_name}" in FIGURE_ANALYSIS_TEMPLATE
@@ -181,6 +208,7 @@ class TestEstimatedTokens:
 
         expected_keys = [
             "figure_discovery",
+            "figure_name_search",
             "figure_analysis",
             "style_guide_generation",
             "figure_verification",
@@ -209,10 +237,15 @@ class TestEstimatedTokens:
             > ESTIMATED_TOKENS["figure_verification"]
         )
 
-        # Discovery should be more expensive than style guide generation
+        # For scaling operations (per-figure costs), test them in realistic scenarios
+        # Discovery for 5 figures should be more expensive than style guide generation
+        discovery_5_figures = ESTIMATED_TOKENS["figure_discovery"] * 5
+        assert discovery_5_figures > ESTIMATED_TOKENS["style_guide_generation"]
+
+        # Name search should be less expensive per figure than discovery per figure
         assert (
-            ESTIMATED_TOKENS["figure_discovery"]
-            > ESTIMATED_TOKENS["style_guide_generation"]
+            ESTIMATED_TOKENS["figure_name_search"]
+            < ESTIMATED_TOKENS["figure_discovery"]
         )
 
         # Example generation should be substantial (it's per example)
@@ -312,7 +345,10 @@ class TestTemplateIntegration:
         """Test that templates can be chained in a typical workflow."""
         # Step 1: Discovery
         criteria = "Famous poets"
-        discovery_prompt = FIGURE_DISCOVERY_TEMPLATE.format(criteria=criteria)
+        count = 5
+        discovery_prompt = FIGURE_DISCOVERY_TEMPLATE.format(
+            criteria=criteria, count=count
+        )
         assert criteria in discovery_prompt
 
         # Step 2: Analysis
@@ -352,7 +388,10 @@ class TestTemplateIntegration:
         """Test that missing placeholders raise appropriate errors."""
         # Should raise KeyError for missing required placeholder
         with pytest.raises(KeyError):
-            FIGURE_DISCOVERY_TEMPLATE.format()  # Missing criteria
+            FIGURE_DISCOVERY_TEMPLATE.format()  # Missing criteria and count
+
+        with pytest.raises(KeyError):
+            FIGURE_DISCOVERY_TEMPLATE.format(criteria="test")  # Missing count
 
         with pytest.raises(KeyError):
             FIGURE_ANALYSIS_TEMPLATE.format()  # Missing figure_name
@@ -374,6 +413,7 @@ class TestTemplateIntegration:
 
         all_templates = [
             FIGURE_DISCOVERY_TEMPLATE,
+            FIGURE_NAME_SEARCH_TEMPLATE,
             FIGURE_ANALYSIS_TEMPLATE,
             STYLE_GUIDE_GENERATION_TEMPLATE,
             FIGURE_VERIFICATION_TEMPLATE,
