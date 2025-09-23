@@ -90,8 +90,11 @@ python -m cli.main historical create
 # Direct figure specification  
 python -m cli.main historical create --figure "Mark Twain" --id twain_author
 
-# Search for figures first
-python -m cli.main historical search "famous American authors"
+# Search for figures with enhanced options
+python -m cli.main historical search "famous American authors"           # Auto-detected as description
+python -m cli.main historical search "Virginia Woolf"                   # Auto-detected as name
+python -m cli.main historical search "poets" --count 15                 # Get more results
+python -m cli.main historical search "Hemingway" --mode name --count 10 # Explicit name mode
 
 # Analyze a specific figure's style (includes verification check with override option)
 python -m cli.main historical analyze "Virginia Woolf"
@@ -146,6 +149,56 @@ Are you sure you want to proceed with this unverified figure? [y/N]:
 - ❌ **Composite personas**: Made-up figures combining traits from multiple people
 
 **Best Practice:** Always review the verification details carefully. The AI provides reasoning for its decision, which helps you make an informed choice about whether to proceed.
+
+#### Enhanced Historical Figure Search
+
+The historical figure search system now includes powerful features for finding exactly the authors you need:
+
+**Search Modes:**
+- **Auto Mode (default)**: Intelligently detects whether your query is a name or description
+- **Name Mode**: Searches specifically for figures matching the provided name
+- **Description Mode**: Searches for figures matching descriptive criteria
+
+**Smart Auto-Detection Examples:**
+```bash
+# These are automatically detected as NAME searches:
+python -m cli.main historical search "Mark Twain"
+python -m cli.main historical search "Dr. Martin Luther King"
+python -m cli.main historical search "Sir Arthur Conan Doyle"
+
+# These are automatically detected as DESCRIPTION searches:
+python -m cli.main historical search "famous American authors"
+python -m cli.main historical search "Victorian era poets"
+python -m cli.main historical search "influential philosophers"
+```
+
+**Advanced Search Options:**
+```bash
+# Get more results (1-20, default is 5)
+python -m cli.main historical search "poets" --count 15
+
+# Force specific search mode
+python -m cli.main historical search "Shakespeare" --mode name
+python -m cli.main historical search "Hemingway" --mode description
+
+# Combine options for precise control
+python -m cli.main historical search "British writers" --mode description --count 20
+```
+
+**Smart Fallback System:**
+When a name search finds no results, the system offers to automatically try a description search:
+```
+No figures found with name 'Unknown Author'
+Try searching by description instead? [Y/n]: y
+Falling back to description search...
+```
+
+**Search Tips:**
+- **Use name mode** when you know exactly who you're looking for
+- **Use description mode** for broad discovery of figures matching criteria
+- **Increase count** if initial results don't include who you're seeking
+- **Let auto-detection work** - it's accurate in most cases
+- **Name searches cost less** than description searches (more targeted)
 
 ### Step 2: Build a Training Dataset
 
@@ -521,11 +574,75 @@ Chat sessions are persistent and stored locally:
    - Valid figures (should show VERIFIED status)
    - Invalid/fictional figures (should show UNVERIFIED with override option)
    - Test user override: decline and accept for unverified figures
-4. Compare AI analysis quality across different historical periods
-5. Test figure analysis for figures with different writing mediums (books, letters, speeches)
-6. Create multiple historical authors from different eras and compare styles
+4. Test enhanced search functionality:
+   - Auto-detection with clear names vs. descriptions
+   - Different count values (5, 10, 15, 20)
+   - Explicit mode selection (name, description, auto)
+   - Fallback from failed name search to description search
+   - Search refinement with feedback
+5. Compare AI analysis quality across different historical periods
+6. Test figure analysis for figures with different writing mediums (books, letters, speeches)
+7. Create multiple historical authors from different eras and compare styles
 
-### Scenario 7: Historical Author Dataset Building (NEW!)
+### Scenario 7: Enhanced Historical Figure Search Testing (NEW!)
+
+1. Test smart auto-detection accuracy:
+   ```bash
+   # These should be detected as NAME searches:
+   python -m cli.main historical search "Virginia Woolf"
+   python -m cli.main historical search "Dr. Martin Luther King"
+   python -m cli.main historical search "Sir Arthur Conan Doyle"
+
+   # These should be detected as DESCRIPTION searches:
+   python -m cli.main historical search "famous American poets"
+   python -m cli.main historical search "Victorian era writers"
+   python -m cli.main historical search "influential 20th century philosophers"
+   ```
+
+2. Test configurable result counts:
+   ```bash
+   python -m cli.main historical search "poets" --count 3    # Small result set
+   python -m cli.main historical search "poets" --count 10   # Medium result set
+   python -m cli.main historical search "poets" --count 20   # Large result set
+   ```
+
+3. Test explicit mode selection:
+   ```bash
+   # Force name mode (should find specific author)
+   python -m cli.main historical search "Shakespeare" --mode name
+
+   # Force description mode (should find related figures)
+   python -m cli.main historical search "Shakespeare" --mode description
+
+   # Compare results between modes for same query
+   ```
+
+4. Test smart fallback system:
+   ```bash
+   # Search for non-existent or misspelled name (should offer fallback)
+   python -m cli.main historical search "Shakespear" --mode name
+   # Accept fallback when prompted: y
+
+   # Test declining fallback
+   python -m cli.main historical search "Unknown Writer" --mode name
+   # Decline fallback when prompted: n
+   ```
+
+5. Test edge cases and validation:
+   ```bash
+   # Invalid count (should show error)
+   python -m cli.main historical search "test" --count 25
+
+   # Invalid mode (should show error)
+   python -m cli.main historical search "test" --mode invalid
+   ```
+
+6. Performance and cost testing:
+   - Compare cost estimates between name and description searches
+   - Test search speed with different count values
+   - Verify cost scaling works correctly
+
+### Scenario 8: Historical Author Dataset Building (NEW!)
 
 1. Create a historical author with initial dataset
 2. Test `historical build` with default count (10 examples)
@@ -535,7 +652,7 @@ Chat sessions are persistent and stored locally:
 6. Verify dataset consistency between initial and additional examples
 7. Compare quality of AI-generated examples across different historical figures
 
-### Scenario 8: Chat Conversation Testing (NEW!)
+### Scenario 9: Chat Conversation Testing (NEW!)
 
 1. Start new chat session and test basic conversation
 2. Test conversation memory (model remembers previous messages)
@@ -624,6 +741,30 @@ Chat sessions are persistent and stored locally:
 - Use `historical build` only for historical authors (created with `historical create`)
 - Use `dataset build` for manually created authors
 
+**Enhanced search issues**
+
+**"No figures found matching your search"**
+- Try increasing the count: `--count 15` or `--count 20`
+- If using name mode, try description mode or let auto-detection decide
+- Check spelling of figure names
+- Try broader or more specific search terms
+
+**"Auto-detected search mode: [mode]" seems wrong**
+- Use explicit mode selection: `--mode name` or `--mode description`
+- For ambiguous queries, the system defaults to description mode for safety
+- Example: `"Shakespeare style"` → detected as description (use `--mode name` for the person)
+
+**Search results don't include expected figure**
+- Try different search terms or synonyms
+- Increase result count: `--count 15` or `--count 20`
+- Use name search for specific people: `--mode name`
+- Check if the figure might be known by different names or titles
+
+**"Invalid count" or "Invalid mode" errors**
+- Count must be between 1-20
+- Valid modes: auto, name, description
+- Check command spelling and syntax
+
 ### Getting Help
 
 **View command help:**
@@ -647,7 +788,10 @@ python -m cli.main generate --help
 
 **Historical Figures:**
 - `historical create` - Create author from historical figure
-- `historical search <criteria>` - Search for historical figures
+- `historical search <query> [OPTIONS]` - Search for historical figures
+  - `--count, -c INTEGER` - Number of results to return (1-20, default: 5)
+  - `--mode, -m TEXT` - Search mode: auto, description, name (default: auto)
+  - `--refine` - Refine previous search results
 - `historical analyze <name>` - Analyze figure's writing style
 - `historical build <id>` - Generate more examples for historical author
 
