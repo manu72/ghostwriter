@@ -264,7 +264,9 @@ class TestHistoricalAuthorCLI:
 
     @patch("cli.commands.historical_author.HistoricalFigureResearcher")
     @patch("cli.commands.historical_author.Confirm.ask")
-    def test_analyze_command_unverified_figure_user_declines(self, mock_confirm, mock_researcher_class):
+    def test_analyze_command_unverified_figure_user_declines(
+        self, mock_confirm, mock_researcher_class
+    ):
         """Test analyze command with unverified figure when user declines override."""
         mock_researcher = Mock()
         unverified = FigureVerification(
@@ -286,7 +288,9 @@ class TestHistoricalAuthorCLI:
 
     @patch("cli.commands.historical_author.HistoricalFigureResearcher")
     @patch("cli.commands.historical_author.Confirm.ask")
-    def test_analyze_command_unverified_figure_user_accepts(self, mock_confirm, mock_researcher_class):
+    def test_analyze_command_unverified_figure_user_accepts(
+        self, mock_confirm, mock_researcher_class
+    ):
         """Test analyze command with unverified figure when user accepts override."""
         mock_researcher = Mock()
         unverified = FigureVerification(
@@ -401,7 +405,9 @@ class TestVerificationHelper:
 
     @patch("cli.commands.historical_author.display_verification")
     @patch("cli.commands.historical_author.Confirm.ask")
-    def test_handle_verification_unverified_user_declines(self, mock_confirm, mock_display):
+    def test_handle_verification_unverified_user_declines(
+        self, mock_confirm, mock_display
+    ):
         """Test helper function with unverified figure when user declines."""
         mock_confirm.return_value = False
 
@@ -413,7 +419,9 @@ class TestVerificationHelper:
 
     @patch("cli.commands.historical_author.display_verification")
     @patch("cli.commands.historical_author.Confirm.ask")
-    def test_handle_verification_unverified_user_accepts(self, mock_confirm, mock_display):
+    def test_handle_verification_unverified_user_accepts(
+        self, mock_confirm, mock_display
+    ):
         """Test helper function with unverified figure when user accepts."""
         mock_confirm.return_value = True
 

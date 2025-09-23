@@ -59,16 +59,14 @@ def _handle_verification_result(
     if verification.concerns and verification.concerns != "None specified":
         console.print(f"[yellow]Concerns: {verification.concerns}[/yellow]")
 
-    console.print(
-        "\n[red]Proceeding with unverified figures may result in:[/red]"
-    )
+    console.print("\n[red]Proceeding with unverified figures may result in:[/red]")
     console.print("[red]• Lower quality training data[/red]")
     console.print("[red]• Inaccurate style analysis[/red]")
     console.print("[red]• Poor model performance[/red]")
 
     return Confirm.ask(
         "\n[bold red]Are you sure you want to proceed with this unverified figure?[/bold red]",
-        default=False
+        default=False,
     )
 
 
