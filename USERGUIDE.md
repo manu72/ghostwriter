@@ -213,7 +213,7 @@ Time Period: 1899-1961
 Primary Medium: Novels, short stories, journalism
 Writing Volume: Extensive
 Corpus Richness: Rich
-Famous Works: "The Sun Also Rises", "A Farewell to Arms", "For Whom the Bell Tolls"
+Famous Works: "The Sun Also Rises", "A Farewell to Arms", "For Whom the Bell Tolls", "The Old Man and the Sea"
 Notable Quotes: Yes
 Public Domain Status: Mixed (some works in public domain)
 Best Source Works: "The Sun Also Rises", "A Farewell to Arms", short stories
